@@ -88,6 +88,7 @@ const backToSignInTextStyle = {
   fontWeight: "700",
 };
 
+
 export function PasswordSuccessScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
@@ -97,6 +98,7 @@ export function PasswordSuccessScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={scrollContentStyle}
       >
+        {/* Logo */}
         <View style={logoContainerStyle}>
           <Image
             source={require("../assets/ERef-Logo.png")}
@@ -105,6 +107,7 @@ export function PasswordSuccessScreen({ navigation }) {
           />
         </View>
 
+        {/* Success Icon */}
         <View style={successIconContainerStyle}>
           <View style={successIconCircleStyle}>
             <Text style={successIconTextStyle}>
@@ -113,6 +116,7 @@ export function PasswordSuccessScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Success Message */}
         <View style={successMessageContainerStyle}>
           <Text style={successTitleStyle}>
             Password Updated!
@@ -125,6 +129,7 @@ export function PasswordSuccessScreen({ navigation }) {
           </Text>
         </View>
 
+        {/* Button */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() =>

@@ -14,6 +14,10 @@ import { useNavigation } from "@react-navigation/native";
 
 const BRAND = "#16567b";
 
+// ─────────────────────────────────────────────────────────────
+// Inline styles moved to the top
+// ─────────────────────────────────────────────────────────────
+
 const keyboardAvoidingViewStyle = {
   flex: 1,
   backgroundColor: "#FFFFFF",
@@ -146,6 +150,10 @@ const modalCloseTextStyle = {
   fontWeight: "700",
 };
 
+// ─────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────
+
 export function ForgotPasswordScreen() {
   const navigation = useNavigation();
 
@@ -177,6 +185,7 @@ export function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
       >
+        {/* Logo + Description */}
         <View style={logoContainerStyle}>
           <Image
             source={require("../assets/ERef-Logo.png")}
@@ -189,6 +198,7 @@ export function ForgotPasswordScreen() {
           </Text>
         </View>
 
+        {/* Title */}
         <View style={titleContainerStyle}>
           <Text style={titleStyle}>
             Forgot your password?
@@ -199,6 +209,7 @@ export function ForgotPasswordScreen() {
           </Text>
         </View>
 
+        {/* Email */}
         <View style={emailContainerStyle}>
           <Text style={emailLabelStyle}>
             Verify Your Email:
@@ -218,12 +229,14 @@ export function ForgotPasswordScreen() {
           />
         </View>
 
+        {/* Error */}
         {error ? (
           <Text style={errorTextStyle}>
             {error}
           </Text>
         ) : null}
 
+        {/* Enter Button */}
         <TouchableOpacity
           onPress={handleEnter}
           activeOpacity={0.8}
@@ -234,6 +247,7 @@ export function ForgotPasswordScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      {/* Notice Modal */}
       <Modal
         visible={showNotice}
         transparent

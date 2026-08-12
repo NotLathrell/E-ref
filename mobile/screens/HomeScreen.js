@@ -200,9 +200,34 @@ const categoryCountStyle = {
 
 function SectionPill({ label }) {
   return (
-    <View className="flex-row items-center mb-3">
-      <View style={sectionPillDotStyle} />
-      <Text style={sectionPillTextStyle}>{label}</Text>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+      }}
+    >
+      <View
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          backgroundColor: BRAND,
+          marginRight: 8,
+        }}
+      />
+
+      <Text
+        style={{
+          color: "#0f172a",
+          fontWeight: "700",
+          fontSize: 16,
+          textTransform: "uppercase",
+          letterSpacing: 0.8,
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }

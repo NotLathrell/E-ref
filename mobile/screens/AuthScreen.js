@@ -371,25 +371,3 @@ export function AuthScreen() {
           disabled={isLoading}
           style={submitButtonStyle(isLoading)}
         >
-          <Text style={submitButtonTextStyle}>
-            {isLoading ? "Please wait..." : isSignIn ? "Sign In" : "Sign Up"}
-          </Text>
-        </TouchableOpacity>
-
-        {isSignIn && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate("ForgotPassword")}
-          >
-            <Text style={switchLinkTextStyle}>
-              Forgot your password?
-              <Text style={switchLinkHighlightStyle}>
-                {" "}
-                Reset Password
-              </Text>
-            </Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
