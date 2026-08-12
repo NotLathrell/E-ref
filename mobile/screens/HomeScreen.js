@@ -1,138 +1,373 @@
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { useInventory } from '../context/InventoryContext';
+import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { useInventory } from "../context/InventoryContext";
 
-const BRAND = '#16567b';
+const BRAND = "#16567b";
+
+const scrollContentStyle = {
+  paddingHorizontal: 20,
+  paddingTop: 40,
+  paddingBottom: 120,
+};
+
+const sectionPillDotStyle = {
+  height: 10,
+  width: 10,
+  borderRadius: 9999,
+  marginRight: 8,
+  backgroundColor: BRAND,
+};
+
+const sectionPillTextStyle = {
+  color: "#0f172a", // slate-900
+  fontWeight: "bold",
+  fontSize: 16,
+  textTransform: "uppercase",
+  letterSpacing: 0.05 * 16, // tracking-wide
+};
+
+const greetingContainerStyle = {
+  marginBottom: 18,
+};
+
+const greetingTextStyle = {
+  fontSize: 30,
+  fontWeight: "800",
+  color: "#000000",
+  lineHeight: 40,
+};
+
+const heroBannerStyle = {
+  height: 120,
+  borderRadius: 18,
+  overflow: "hidden",
+  marginBottom: 14,
+  backgroundColor: BRAND,
+};
+
+const heroImageStyle = {
+  width: "100%",
+  height: "100%",
+  position: "absolute",
+  opacity: 0.35,
+};
+
+const heroOverlayStyle = {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.15)",
+  justifyContent: "center",
+  padding: 22,
+};
+
+const heroQuoteStyle = {
+  color: "#FFFFFF",
+  fontSize: 18,
+  fontWeight: "800",
+  textAlign: "center",
+  lineHeight: 24,
+};
+
+const overviewCardStyle = {
+  backgroundColor: "#F1F5F9",
+  borderRadius: 22,
+  padding: 18,
+  marginBottom: 28,
+};
+
+const overviewTopRowStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+};
+
+const overviewTitleContainerStyle = {
+  flex: 1,
+  paddingRight: 12,
+};
+
+const overviewTitleStyle = {
+  color: "#111827",
+  fontSize: 20,
+  fontWeight: "800",
+};
+
+const overviewSubtitleStyle = {
+  color: "#64748B",
+  fontSize: 14,
+  marginTop: 5,
+};
+
+const overviewImageContainerStyle = {
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: "#FFFFFF",
+  overflow: "hidden",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const overviewImageStyle = {
+  width: "100%",
+  height: "100%",
+};
+
+const riskBarContainerStyle = {
+  height: 9,
+  borderRadius: 10,
+  backgroundColor: "#CBD5E1",
+  overflow: "hidden",
+};
+
+const riskBarFillStyle = (riskPct) => ({
+  height: "100%",
+  width: `${Math.min(100, riskPct)}%`,
+  borderRadius: 10,
+  backgroundColor: riskPct >= 55 ? "#EF4444" : BRAND,
+});
+
+const riskInfoRowStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 8,
+};
+
+const riskLabelStyle = {
+  color: "#64748B",
+  fontSize: 12,
+};
+
+const riskValueStyle = {
+  color: "#111827",
+  fontSize: 13,
+  fontWeight: "800",
+};
+
+const riskFooterStyle = {
+  color: "#94A3B8",
+  fontSize: 12,
+  marginTop: 6,
+};
+
+const categoriesGridStyle = {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginHorizontal: -5,
+  marginBottom: 20,
+};
+
+const categoryItemStyle = {
+  width: "50%",
+  paddingHorizontal: 5,
+  marginBottom: 10,
+};
+
+const categoryCardStyle = {
+  backgroundColor: "#F1F5F9",
+  borderRadius: 22,
+  padding: 18,
+  minHeight: 125,
+  justifyContent: "space-between",
+};
+
+const categoryIconContainerStyle = {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: "#FFFFFF",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const categoryInfoStyle = {
+  marginTop: 14,
+};
+
+const categoryLabelStyle = {
+  color: "#111827",
+  fontSize: 16,
+  fontWeight: "800",
+};
+
+const categoryCountStyle = {
+  color: "#94A3B8",
+  fontSize: 13,
+  marginTop: 3,
+};
 
 function SectionPill({ label }) {
   return (
-    <View className="self-start rounded-full px-4 py-1.5 mb-3" style={{ backgroundColor: BRAND }}>
-      <Text className="text-white text-sm font-semibold">{label}</Text>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+      }}
+    >
+      <View
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          backgroundColor: BRAND,
+          marginRight: 8,
+        }}
+      />
+
+      <Text
+        style={{
+          color: "#0f172a",
+          fontWeight: "700",
+          fontSize: 16,
+          textTransform: "uppercase",
+          letterSpacing: 0.8,
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
 
 export function HomeScreen() {
   const navigation = useNavigation();
-  const { user, soonToSpoil, prioritized, items, unreadAlertCount } = useInventory();
+  const { soonToSpoil, items, user } = useInventory();
 
-  const topRisk = soonToSpoil[0] || prioritized[0];
+  const displayName = user?.name || "Food Saver";
+
+  const topRisk = soonToSpoil[0] || null;
   const riskPct = topRisk ? Math.round(topRisk.riskScore * 100) : 0;
-  const displayName = user?.name || 'Food Saver';
 
-  const categoryCounts = ['Produce', 'Dairy', 'Meat', 'Pantry'].map((cat) => ({
+  const categoryCounts = ["Produce", "Dairy", "Meat", "Pantry"].map((cat) => ({
     label: cat,
-    count: items.filter((i) => i.category === cat).length
+    count: items.filter((i) => i.category === cat).length,
   }));
 
   return (
     <ScrollView
       className="flex-1 bg-white"
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 52, paddingBottom: 120 }}
+      contentContainerStyle={scrollContentStyle}
     >
-      <View className="flex-row items-center justify-between mb-5">
-        <Text className="text-2xl font-bold text-slate-900">Home</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Alerts')} hitSlop={12} className="relative">
-          <Ionicons name="notifications-outline" size={24} color="#0f172a" />
-          {unreadAlertCount > 0 ? (
-            <View className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-red-500 items-center justify-center">
-              <Text className="text-white text-[10px] font-bold">{unreadAlertCount}</Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
+      {/* Greeting */}
+      <View style={greetingContainerStyle}>
+        <Text style={greetingTextStyle}>Hello, {displayName}</Text>
       </View>
 
-      <Text className="text-4xl font-bold text-slate-950 mb-5 leading-tight">Hello {displayName}</Text>
-
-      <View className="rounded-3xl overflow-hidden mb-6 h-48">
+      {/* Hero Banner */}
+      <View style={heroBannerStyle}>
         <Image
-          source={{
-            uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80'
-          }}
-          className="absolute inset-0 h-full w-full"
+          source={require("../assets/home-banner (2).png")}
+          style={heroImageStyle}
+          resizeMode="cover"
         />
-        <View className="absolute inset-0 bg-black/45 items-center justify-center px-7">
-          <Text className="text-center text-white text-lg font-bold leading-6">
-            &quot;Freeze excess food to extend its shelf life for future use.&quot;
+
+        <View style={heroOverlayStyle}>
+          <Text style={heroQuoteStyle}>
+            "Freeze excess food to{"\n"}
+            extend its shelf life for{"\n"}
+            future use."
           </Text>
         </View>
       </View>
 
+      {/* Overview */}
       <SectionPill label="Overview" />
 
       <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => (topRisk ? navigation.navigate('Shelf') : navigation.navigate('Scan'))}
-        className="rounded-3xl bg-slate-100 px-5 py-5 mb-6"
+        activeOpacity={0.9}
+        onPress={() =>
+          topRisk ? navigation.navigate("Shelf") : navigation.navigate("Scan")
+        }
+        style={overviewCardStyle}
       >
-        <View className="flex-row items-start justify-between mb-4">
-          <View className="flex-1 pr-3">
-            <Text className="text-slate-900 font-bold text-lg">Soon to Spoil</Text>
-            <Text className="text-slate-500 mt-1">
+        {/* Top Row */}
+        <View style={overviewTopRowStyle}>
+          <View style={overviewTitleContainerStyle}>
+            <Text style={overviewTitleStyle}>Soon to Spoil</Text>
+
+            <Text style={overviewSubtitleStyle}>
               {topRisk
-                ? `${topRisk.title} — ${topRisk.daysLabel}`
-                : 'No urgent items. Scan food to start monitoring.'}
+                ? `${topRisk.title} · ${topRisk.daysLabel}`
+                : "No items are close to spoiling."}
             </Text>
           </View>
-          <View className="h-14 w-14 rounded-full overflow-hidden bg-white border border-slate-200 items-center justify-center">
+
+          {/* Food Image / Icon */}
+          <View style={overviewImageContainerStyle}>
             {topRisk?.imageUri ? (
-              <Image source={{ uri: topRisk.imageUri }} className="h-full w-full" />
+              <Image
+                source={{ uri: topRisk.imageUri }}
+                style={overviewImageStyle}
+                resizeMode="cover"
+              />
             ) : (
               <Ionicons name="nutrition-outline" size={28} color={BRAND} />
             )}
           </View>
         </View>
 
-        <View className="flex-row items-center justify-between mb-1">
-          <View className="flex-1 h-2.5 rounded-full bg-slate-300 overflow-hidden mr-3">
-            <View
-              className="h-full rounded-full"
-              style={{ width: `${Math.min(100, riskPct)}%`, backgroundColor: riskPct >= 55 ? '#ef4444' : '#0f172a' }}
-            />
-          </View>
-          <Text className="text-sm font-bold text-slate-900">{riskPct}%</Text>
+        {/* Risk Bar */}
+        <View style={riskBarContainerStyle}>
+          <View style={riskBarFillStyle(riskPct)} />
         </View>
-        <Text className="text-xs text-slate-500 mt-1">
-          Weighted risk · {soonToSpoil.length} item(s) within 72 hours
+
+        {/* Risk Information */}
+        <View style={riskInfoRowStyle}>
+          <Text style={riskLabelStyle}>Weighted risk</Text>
+
+          <Text style={riskValueStyle}>{riskPct}%</Text>
+        </View>
+
+        {/* Bottom Status */}
+        <Text style={riskFooterStyle}>
+          {soonToSpoil.length} item(s) within 72 hours
         </Text>
       </TouchableOpacity>
 
-      <SectionPill label="Priority Queue" />
-      <View className="mb-6">
-        {prioritized.slice(0, 3).map((item) => (
-          <View key={item.id} className="rounded-2xl border border-slate-200 px-4 py-3 mb-2 flex-row items-center">
-            <View className="h-8 w-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: BRAND }}>
-              <Text className="text-white font-bold text-xs">#{item.priorityRank}</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="font-semibold text-slate-900">{item.title}</Text>
-              <Text className="text-xs text-slate-500">
-                {item.daysLabel} · {item.recommendations.primaryAction.label}
-              </Text>
-            </View>
-            <Text className="text-xs font-bold text-red-500">{item.freshnessPercent}%</Text>
-          </View>
-        ))}
-        {prioritized.length === 0 ? (
-          <Text className="text-slate-400">Inventory empty — use Scan to add items.</Text>
-        ) : null}
-      </View>
-
+      {/* Categories */}
       <SectionPill label="Categories" />
-      <View className="flex-row flex-wrap -mx-1.5">
-        {categoryCounts.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            className="w-1/2 px-1.5 mb-3"
-            onPress={() => navigation.navigate('Shelf')}
-          >
-            <View className="rounded-3xl bg-slate-100 aspect-square items-center justify-center">
-              <Text className="text-slate-800 font-semibold">{item.label}</Text>
-              <Text className="text-slate-400 mt-1">{item.count} items</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+
+      <View style={categoriesGridStyle}>
+        {categoryCounts.map((item) => {
+          const categoryIcon = {
+            Produce: "leaf-outline",
+            Dairy: "water-outline",
+            Meat: "restaurant-outline",
+            Pantry: "cube-outline",
+          };
+
+          return (
+            <TouchableOpacity
+              key={item.label}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate("Shelf")}
+              style={categoryItemStyle}
+            >
+              <View style={categoryCardStyle}>
+                {/* Icon */}
+                <View style={categoryIconContainerStyle}>
+                  <Ionicons
+                    name={categoryIcon[item.label]}
+                    size={22}
+                    color={BRAND}
+                  />
+                </View>
+
+                {/* Category Info */}
+                <View style={categoryInfoStyle}>
+                  <Text style={categoryLabelStyle}>{item.label}</Text>
+
+                  <Text style={categoryCountStyle}>
+                    {item.count} {item.count === 1 ? "item" : "items"}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );

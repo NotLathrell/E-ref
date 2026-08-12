@@ -177,6 +177,8 @@ export function InventoryProvider({ children }) {
     signOut,
     markAlertRead,
     markAllAlertsRead,
+    // IMPORTANT: convenient export for backups or debugging
+    exportInventory: () => JSON.stringify({ user, items: rawItems }, null, 2),
     getItemById: (id) => items.find((i) => i.id === id) || null
   };
 

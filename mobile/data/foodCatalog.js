@@ -152,7 +152,7 @@ export const FOOD_CATALOG = [
     usageIdeas: ['Reheat thoroughly', 'Repurpose into new meal', 'Freeze single portions'],
     storageTips: ['Cool quickly before refrigerating', 'Reheat to steaming hot']
   },
-  {
+  {   
     id: 'unknown',
     name: 'Food Item',
     category: 'Pantry',

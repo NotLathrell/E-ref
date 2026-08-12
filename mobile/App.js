@@ -1,16 +1,20 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StatusBar } from 'expo-status-bar';
-import { View, Pressable, Text } from 'react-native';
-import { HomeScreen } from './screens/HomeScreen';
-import { ShelfScreen } from './screens/ShelfScreen';
-import { ProfileScreen } from './screens/ProfileScreen';
-import { AuthScreen } from './screens/AuthScreen';
-import { CameraScreen } from './screens/CameraScreen';
-import { AlertsScreen } from './screens/AlertsScreen';
-import { Ionicons } from '@expo/vector-icons';
-import { InventoryProvider, useInventory } from './context/InventoryContext';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { StatusBar } from "expo-status-bar";
+import { View, Pressable, Text } from "react-native";
+import { HomeScreen } from "./screens/HomeScreen.js";
+import { ShelfScreen } from "./screens/ShelfScreen.js";
+import { ProfileScreen } from "./screens/ProfileScreen.js";
+import { AuthScreen } from "./screens/AuthScreen.js";
+import { CameraScreen } from "./screens/CameraScreen.js";
+import { AlertsScreen } from "./screens/AlertsScreen.js";
+import { Ionicons } from "@expo/vector-icons";
+import { InventoryProvider, useInventory } from "./context/InventoryContext";
+import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen.js";
+import { VerifyCodeScreen } from "./screens/VerifyCodeScreen.js";
+import { CreateNewPasswordScreen } from "./screens/CreateNewPasswordScreen.js";
+import { PasswordSuccessScreen } from "./screens/PasswordSuccessScreen.js";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,48 +26,50 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.7)',
+        tabBarActiveTintColor: "#ffffff",
+        tabBarInactiveTintColor: "rgba(255,255,255,0.7)",
         tabBarStyle: {
-          backgroundColor: '#16567b',
+          backgroundColor: "#16567b",
           borderTopWidth: 0,
           height: 68,
           paddingBottom: 8,
-          paddingTop: 8
+          paddingTop: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
         tabBarIcon: ({ color, size }) => {
-          let iconName = 'home';
-          if (route.name === 'Shelf') iconName = 'file-tray-stacked';
-          if (route.name === 'Scan') iconName = 'camera';
-          if (route.name === 'Alerts') iconName = 'notifications';
-          if (route.name === 'Profile') iconName = 'person-circle';
+          let iconName = "home";
+          if (route.name === "Shelf") iconName = "file-tray-stacked";
+          if (route.name === "Scan") iconName = "camera";
+          if (route.name === "Alerts") iconName = "notifications";
+          if (route.name === "Profile") iconName = "person-circle";
           return (
             <View>
               <Ionicons name={iconName} size={size} color={color} />
-              {route.name === 'Alerts' && unreadAlertCount > 0 ? (
+              {route.name === "Alerts" && unreadAlertCount > 0 ? (
                 <View
                   style={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: -4,
                     right: -10,
-                    backgroundColor: '#ef4444',
+                    backgroundColor: "#ef4444",
                     borderRadius: 8,
                     minWidth: 16,
                     height: 16,
                     paddingHorizontal: 3,
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>
-                    {unreadAlertCount > 9 ? '9+' : unreadAlertCount}
+                  <Text
+                    style={{ color: "#fff", fontSize: 9, fontWeight: "700" }}
+                  >
+                    {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
                   </Text>
                 </View>
               ) : null}
             </View>
           );
-        }
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -73,27 +79,34 @@ function MainTabs() {
         component={CameraScreen}
         options={{
           tabBarButton: (props) => (
-            <Pressable {...props} style={{ alignItems: 'center', justifyContent: 'center', top: -16 }}>
+            <Pressable
+              {...props}
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                top: -16,
+              }}
+            >
               <View
                 style={{
                   width: 64,
                   height: 64,
                   borderRadius: 32,
-                  backgroundColor: '#44ae5f',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  shadowColor: '#000',
+                  backgroundColor: "#44ae5f",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  shadowColor: "#000",
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.15,
                   shadowRadius: 8,
-                  elevation: 5
+                  elevation: 5,
                 }}
               >
                 <Ionicons name="camera" size={28} color="white" />
               </View>
             </Pressable>
           ),
-          tabBarLabel: () => null
+          tabBarLabel: () => null,
         }}
       />
       <Tab.Screen name="Alerts" component={AlertsScreen} />
@@ -107,8 +120,12 @@ export default function App() {
     <InventoryProvider>
       <NavigationContainer>
         <StatusBar style="dark" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
+          <Stack.Screen name="CreateNewPassword" component={CreateNewPasswordScreen} />
+          <Stack.Screen name="PasswordSuccess" component={PasswordSuccessScreen} />
           <Stack.Screen name="Main" component={MainTabs} />
         </Stack.Navigator>
       </NavigationContainer>

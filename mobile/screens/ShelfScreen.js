@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,260 +7,708 @@ import {
   ScrollView,
   Modal,
   Pressable,
-  Alert
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { CATEGORIES } from '../data/foodCatalog';
-import { useInventory } from '../context/InventoryContext';
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { CATEGORIES } from "../data/foodCatalog";
+import { useInventory } from "../context/InventoryContext";
 
-const BRAND = '#16567b';
-const ACCENT_BLUE = '#2563eb';
+const BRAND = "#16567b";
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+// New: extracted card component with updated design
+function ShelfItemCard({ item, onPress }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.88}
+      style={{
+        backgroundColor: "#ffffff",
+        borderWidth: 1,
+        borderColor: "#e5e7eb",
+        borderRadius: 20,
+        marginBottom: 16,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          padding: 16,
+        }}
+      >
+        {/* Food Image */}
+        {item.imageUri ? (
+          <Image
+            source={{ uri: item.imageUri }}
+            style={{
+              width: 95,
+              height: 95,
+              borderRadius: 16,
+            }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={{
+              width: 95,
+              height: 95,
+              borderRadius: 16,
+              backgroundColor: "#f1f5f9",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="image-outline" size={32} color="#94a3b8" />
+          </View>
+        )}
+
+        {/* Information */}
+        <View
+          style={{
+            flex: 1,
+            marginLeft: 14,
+            justifyContent: "space-between",
+          }}
+        >
+          {/* Top: title + location + freshness badge + days left */}
+          <View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  paddingRight: 8,
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "800",
+                    color: "#0f172a",
+                  }}
+                >
+                  {item.title}
+                </Text>
+
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 13,
+                    color: "#64748b",
+                    marginTop: 2,
+                  }}
+                >
+                  {item.subtitle}
+                </Text>
+              </View>
+
+              {/* Freshness badge */}
+              <View
+                style={{
+                  backgroundColor: "#ffe0e0",
+                  borderRadius: 999,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    color: "#dc2626",
+                  }}
+                >
+                  Freshness {item.freshnessPercent ?? item.freshnessLabel}
+                </Text>
+              </View>
+            </View>
+
+            {/* Days left */}
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "600",
+                color: "#ef4444",
+                marginTop: 8,
+              }}
+            >
+              {item.daysLabel}
+            </Text>
+          </View>
+
+          {/* Bottom: Edit + scanned */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 10,
+            }}
+          >
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "700",
+                  color: "#0f172a",
+                  marginRight: 6,
+                }}
+              >
+                Edit
+              </Text>
+              <Ionicons name="open-outline" size={18} color="#0f172a" />
+            </TouchableOpacity>
+
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#94a3b8",
+              }}
+            >
+              Scanned {item.scannedLabel}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export function ShelfScreen() {
-  const { prioritized, freezeItem, discardItem, removeItem } = useInventory();
-  const [activeTab, setActiveTab] = useState('All');
+  const { items, freezeItem, discardItem } = useInventory(); // ensure items is pulled from context
+  const [activeTab, setActiveTab] = useState("All");
   const [selected, setSelected] = useState(null);
 
-  const items = prioritized.filter((item) => activeTab === 'All' || item.category === activeTab);
-
-  const openItem = (item) => setSelected(item);
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (item) => activeTab === "All" || item.category === activeTab,
+      ),
+    [items, activeTab],
+  );
 
   const onFreeze = async () => {
     if (!selected) return;
     await freezeItem(selected.id);
-    Alert.alert('Frozen', `${selected.title} countdown paused (TTI reduced).`);
+    Alert.alert("Frozen", `${selected.title} countdown paused (TTI reduced).`);
     setSelected(null);
   };
 
   const onDiscard = async () => {
     if (!selected) return;
-    Alert.alert('Discard item?', `Remove ${selected.title} from inventory?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert("Discard item?", `Remove ${selected.title} from inventory?`, [
+      { text: "Cancel", style: "cancel" },
       {
-        text: 'Discard',
-        style: 'destructive',
+        text: "Discard",
+        style: "destructive",
         onPress: async () => {
           await discardItem(selected.id);
           setSelected(null);
-        }
-      }
+        },
+      },
     ]);
   };
 
-  return (
-    <View className="flex-1 bg-white">
-      <View className="px-5 pt-12 pb-2">
-        <View className="flex-row items-center justify-between mb-5">
-          <Text className="text-2xl font-bold text-slate-900">Shelf</Text>
-          <Text className="text-slate-500 text-sm">{items.length} items</Text>
-        </View>
+  const openItem = (item) => {
+    setSelected(item);
+  };
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          <View className="flex-row">
-            {CATEGORIES.map((category) => {
-              const active = activeTab === category;
-              return (
-                <TouchableOpacity key={category} onPress={() => setActiveTab(category)} className="mr-2">
-                  <View
-                    className="rounded-xl px-5 py-2.5 border"
-                    style={{
-                      backgroundColor: active ? BRAND : '#ffffff',
-                      borderColor: active ? BRAND : '#cbd5e1'
-                    }}
-                  >
-                    <Text className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-800'}`}>
-                      {category}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
+  return (
+    <View
+      style={{
+        paddingHorizontal: 24,
+        paddingTop: 40,
+        paddingBottom: 18,
+        flex: 1,
+      }}
+    >
+      {/* Header */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 22,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 26,
+            fontWeight: "800",
+            color: "#111111",
+          }}
+        >
+          Shelf
+        </Text>
+
+        <TouchableOpacity activeOpacity={0.7} hitSlop={10}>
+          <Ionicons name="search-outline" size={27} color="#111111" />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-        {items.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => openItem(item)}
-            activeOpacity={0.85}
-            className="rounded-2xl border border-slate-200 bg-white mb-4 overflow-hidden"
-          >
-            <View className="flex-row p-3">
-              {item.imageUri ? (
-                <Image source={{ uri: item.imageUri }} className="h-28 w-28 rounded-xl" />
-              ) : (
-                <View className="h-28 w-28 rounded-xl bg-slate-100 items-center justify-center">
-                  <Ionicons name="image-outline" size={28} color="#94a3b8" />
-                </View>
-              )}
-              <View className="flex-1 ml-3 justify-between py-0.5">
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1 pr-2">
-                    <Text className="text-lg font-bold text-slate-900">
-                      {item.title}
-                      {item.frozen ? ' ❄️' : ''}
-                    </Text>
-                    <Text className="text-sm text-slate-500 mt-0.5">{item.subtitle}</Text>
-                    <Text className="text-xs text-slate-400 mt-1">Priority #{item.priorityRank}</Text>
-                  </View>
-                  <View className="items-end">
-                    <View className="rounded-full bg-red-100 px-2.5 py-1 mb-1">
-                      <Text className="text-xs font-semibold text-red-600">{item.freshnessLabel}</Text>
-                    </View>
-                    <Text className="text-sm font-semibold text-red-600">{item.daysLabel}</Text>
-                  </View>
-                </View>
+      {/* Category Tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingRight: 10,
+        }}
+        style={{ marginBottom: 16 }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          {CATEGORIES.map((category) => {
+            const active = activeTab === category;
 
-                <View className="flex-row items-center justify-between mt-2">
-                  <Text className="text-xs text-slate-400">{item.scannedLabel}</Text>
-                  <View className="flex-row items-center">
-                    <Text className="text-sm font-semibold text-slate-900 mr-1">Edit</Text>
-                    <Ionicons name="create-outline" size={16} color="#0f172a" />
-                  </View>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+            return (
+              <TouchableOpacity
+                key={category}
+                onPress={() => setActiveTab(category)}
+                activeOpacity={0.8}
+                style={{
+                  marginRight: 10,
+                  height: 36,
+                  minWidth: category === "All" ? 66 : 72,
+                  paddingHorizontal: 16,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: active ? BRAND : "#cbd5e1",
+                  backgroundColor: active ? BRAND : "#ffffff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: active ? "#ffffff" : "#111111",
+                  }}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      {/* Food Item Cards */}
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {filteredItems.map((item) => (
+          <ShelfItemCard key={item.id} item={item} onPress={() => openItem(item)} />
         ))}
 
-        {items.length === 0 ? (
-          <View className="items-center mt-16 px-6">
-            <Ionicons name="file-tray-outline" size={48} color="#cbd5e1" />
-            <Text className="text-slate-500 mt-3 text-center">No items in this category. Scan packaging to add food.</Text>
+        {filteredItems.length === 0 ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: 32,
+              paddingHorizontal: 24,
+            }}
+          >
+            <Ionicons name="file-tray-outline" size={52} color="#cbd5e1" />
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#64748b",
+                marginTop: 12,
+                textAlign: "center",
+              }}
+            >
+              No items in this category. Scan packaging to add food.
+            </Text>
           </View>
         ) : null}
       </ScrollView>
 
-      <Modal visible={!!selected} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
-        <View className="flex-1 bg-black/45 justify-center px-4">
-          <Pressable className="absolute inset-0" onPress={() => setSelected(null)} />
-          <View className="bg-white rounded-3xl p-5 max-h-[90%]">
+      {/* Food Detail Modal (unchanged logic, minor spacing tweaks optional) */}
+      <Modal
+        visible={!!selected}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelected(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.48)",
+            justifyContent: "flex-end",
+          }}
+        >
+          {/* Tap outside to close */}
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            onPress={() => setSelected(null)}
+          />
+
+          {/* Bottom Sheet */}
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingHorizontal: 28,
+              paddingTop: 18,
+              paddingBottom: 30,
+              maxHeight: "82%",
+            }}
+          >
             {selected && (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <View className="items-end mb-2">
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 10 }}
+              >
+                {/* Close Button */}
+                <View style={{ alignItems: "flex-end", marginBottom: 10 }}>
                   <TouchableOpacity
                     onPress={() => setSelected(null)}
-                    className="h-9 w-9 rounded-full items-center justify-center"
-                    style={{ backgroundColor: BRAND }}
+                    activeOpacity={0.8}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: BRAND,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    <Ionicons name="close" size={20} color="#ffffff" />
+                    <Ionicons name="close" size={21} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
 
-                <View className="rounded-2xl overflow-hidden mb-4 h-44 bg-slate-100">
+                {/* Large Food Image */}
+                <View
+                  style={{
+                    height: 152,
+                    borderRadius: 18,
+                    overflow: "hidden",
+                    backgroundColor: "#E5E7EB",
+                    marginBottom: 12,
+                  }}
+                >
                   {selected.imageUri ? (
-                    <Image source={{ uri: selected.imageUri }} className="h-full w-full" />
+                    <Image
+                      source={{ uri: selected.imageUri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons
+                        name="image-outline"
+                        size={42}
+                        color="#94A3B8"
+                      />
+                    </View>
+                  )}
+
+                  {/* Image refresh icon */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      transform: [{ translateX: -16 }, { translateY: -16 }],
+                      width: 32,
+                      height: 32,
+                      borderRadius: 6,
+                      backgroundColor: "rgba(255,255,255,0.75)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={20}
+                      color="#666666"
+                    />
+                  </View>
+                </View>
+
+                {/* Food Name + Delete */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <View style={{ flex: 1, paddingRight: 15 }}>
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: "800",
+                        color: "#111111",
+                      }}
+                    >
+                      {selected.title}
+                    </Text>
+
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: "#777777",
+                        marginTop: 2,
+                      }}
+                    >
+                      {selected.subtitle}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={onDiscard}
+                    activeOpacity={0.7}
+                    hitSlop={10}
+                  >
+                    <Ionicons name="trash-outline" size={25} color="#111111" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Freshness Badge */}
+                <View
+                  style={{
+                    alignSelf: "flex-start",
+                    backgroundColor: "#FFB3B3",
+                    borderRadius: 6,
+                    paddingHorizontal: 9,
+                    paddingVertical: 4,
+                    marginTop: 10,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#B91C1C",
+                      fontSize: 11,
+                      fontWeight: "700",
+                    }}
+                  >
+                    {selected.freshnessLabel}
+                  </Text>
+                </View>
+
+                {/* Freeze Now */}
+                {!selected.frozen && (
+                  <TouchableOpacity
+                    onPress={onFreeze}
+                    activeOpacity={0.85}
+                    style={{
+                      height: 48,
+                      borderRadius: 8,
+                      backgroundColor: "#2478E8",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Ionicons name="snow" size={21} color="#FFFFFF" />
+                      <View style={{ marginLeft: 8 }}>
+                        <Text
+                          style={{
+                            color: "#FFFFFF",
+                            fontSize: 15,
+                            fontWeight: "800",
+                          }}
+                        >
+                          FREEZE NOW
+                        </Text>
+                        <Text
+                          style={{
+                            color: "#DCEBFF",
+                            fontSize: 9,
+                            marginTop: -1,
+                          }}
+                        >
+                          Pause countdown (Freeze)
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                {/* Best Practice */}
+                <View
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#D5DCE3",
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: "#111111",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Best Practice
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#333333",
+                      lineHeight: 18,
+                    }}
+                  >
+                    Best storage: {selected.storageLabel}
+                  </Text>
+
+                  {!selected.frozen && selected.freezeByDate ? (
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#333333",
+                        marginTop: 3,
+                      }}
+                    >
+                      Freeze by: {formatDate(selected.freezeByDate)}
+                    </Text>
                   ) : null}
                 </View>
 
-                <View className="flex-row items-start justify-between mb-2">
-                  <View className="flex-1 pr-3">
-                    <Text className="text-3xl font-bold text-slate-900">{selected.title}</Text>
-                    <Text className="text-base text-slate-500 mt-1">{selected.subtitle}</Text>
-                  </View>
-                  <TouchableOpacity hitSlop={10} onPress={onDiscard}>
-                    <Ionicons name="trash-outline" size={24} color="#0f172a" />
-                  </TouchableOpacity>
-                </View>
-
-                <View className="rounded-full bg-red-500 self-start px-3 py-1.5 mb-2">
-                  <Text className="text-xs font-bold text-white">{selected.freshnessLabel}</Text>
-                </View>
-                <Text className="text-sm text-slate-500 mb-4">
-                  Risk {(selected.riskScore * 100).toFixed(0)}% · {selected.urgency} · {selected.daysLabel}
-                </Text>
-
-                {!selected.frozen ? (
-                  <TouchableOpacity
-                    className="rounded-2xl py-4 px-4 mb-4 flex-row items-center"
-                    style={{ backgroundColor: ACCENT_BLUE }}
-                    onPress={onFreeze}
-                  >
-                    <View className="h-10 w-10 rounded-full bg-white/20 items-center justify-center mr-3">
-                      <Ionicons name="snow" size={22} color="#ffffff" />
-                    </View>
-                    <View>
-                      <Text className="text-white text-lg font-bold">FREEZE NOW</Text>
-                      <Text className="text-white/90 text-sm">Pause countdown (Freeze)</Text>
-                    </View>
-                  </TouchableOpacity>
-                ) : (
-                  <View className="rounded-2xl py-4 px-4 mb-4 bg-sky-100">
-                    <Text className="text-sky-900 font-bold">Frozen — TTI countdown paused</Text>
-                  </View>
-                )}
-
-                <View className="rounded-2xl bg-slate-100 border border-slate-200 p-4 mb-4">
-                  <Text className="text-base font-bold text-slate-900 mb-2">
-                    {selected.recommendations.bestPractice.title}
-                  </Text>
-                  <Text className="text-sm text-slate-600 leading-5">
-                    {selected.recommendations.bestPractice.storage}
-                  </Text>
-                  <Text className="text-sm text-slate-600 mt-1">
-                    {selected.recommendations.bestPractice.freezeBy}
-                  </Text>
-                </View>
-
-                <View className="rounded-2xl border border-slate-200 p-4 mb-4">
-                  <Text className="font-bold text-slate-900 mb-2">Recommended actions</Text>
-                  {selected.recommendations.ruleBased.map((a) => (
-                    <Text key={a.id} className="text-sm text-slate-700 mb-1">
-                      • {a.label} — {a.description}
-                    </Text>
-                  ))}
-                  <Text className="font-semibold text-slate-800 mt-3 mb-1">Usage suggestions</Text>
-                  {selected.recommendations.contentBased.usageSuggestions.map((tip) => (
-                    <Text key={tip} className="text-sm text-slate-600 mb-1">
-                      • {tip}
-                    </Text>
-                  ))}
-                </View>
-
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-base font-bold text-slate-900">
-                    Expected Expiry:{' '}
-                    {selected.expiryDate
-                      ? new Date(selected.expiryDate).toLocaleDateString(undefined, {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })
-                      : 'Estimated only'}
-                  </Text>
-                  {(selected.urgency === 'critical' || selected.urgency === 'high') && (
-                    <View className="h-7 w-7 rounded-full bg-red-500 items-center justify-center">
-                      <Text className="text-white font-bold">!</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View className="rounded-2xl bg-slate-100 border border-slate-200 p-4 mb-2">
-                  <View className="flex-row items-center justify-between mb-3">
-                    <Text className="text-base font-bold text-slate-900">Tracking History</Text>
-                    <Text className="text-sm text-slate-500">{selected.scannedLabel}</Text>
-                  </View>
-                  {(selected.history || []).map((h, idx) => (
-                    <Text key={`${h.at}-${idx}`} className="text-sm text-slate-600 mb-1">
-                      • {h.event} — {new Date(h.at).toLocaleString()}
-                    </Text>
-                  ))}
-                  <Text className="text-sm text-slate-600 mt-2">
-                    TTI remaining: {selected.tti.remainingLifeDays} days → Risk {(selected.riskScore * 100).toFixed(0)}%
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  className="mt-2 py-3 items-center"
-                  onPress={() => {
-                    removeItem(selected.id);
-                    setSelected(null);
+                {/* Expected Expiry */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 12,
                   }}
                 >
-                  <Text className="text-red-500 font-semibold">Remove permanently</Text>
-                </TouchableOpacity>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: "#111111",
+                    }}
+                  >
+                    Expected Expiry:{" "}
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: "#111111",
+                    }}
+                  >
+                    {selected.daysLabel}
+                  </Text>
+
+                  <Ionicons
+                    name="alert-circle"
+                    size={14}
+                    color="#E53935"
+                    style={{ marginLeft: 5 }}
+                  />
+                </View>
+
+                {/* Tracking History */}
+                <View
+                  style={{
+                    backgroundColor: "#D9D9D9",
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: "#111111",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Tracking History
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#222222",
+                      }}
+                    >
+                      Scanned (Shelf): {selected.scannedLabel}
+                    </Text>
+
+                    <Text style={{ fontSize: 15, color: "#111111" }}>→</Text>
+
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#222222",
+                      }}
+                    >
+                      Expected Expiry: {selected.daysLabel}
+                    </Text>
+                  </View>
+                </View>
               </ScrollView>
             )}
           </View>
