@@ -13,10 +13,6 @@ import {
 const BRAND = "#16567b";
 
 const keyboardAvoidingViewStyle = {
-// Inline styles moved to the top
-// ─────────────────────────────────────────────────────────────
-
-const keyboardAvoidingViewStyle = {
   flex: 1,
   backgroundColor: "#FFFFFF",
 };
@@ -107,10 +103,6 @@ const saveButtonTextStyle = {
   fontWeight: "700",
 };
 
-// ─────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────
-
 export function CreateNewPasswordScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -138,7 +130,6 @@ export function CreateNewPasswordScreen({ navigation }) {
 
     setError("");
 
-    // Frontend only
     navigation.navigate("PasswordSuccess");
   };
 
@@ -151,7 +142,6 @@ export function CreateNewPasswordScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
       >
-        {/* Logo */}
         <View style={logoContainerStyle}>
           <Image
             source={require("../assets/ERef-Logo.png")}
@@ -160,7 +150,6 @@ export function CreateNewPasswordScreen({ navigation }) {
           />
         </View>
 
-        {/* Title */}
         <View style={titleContainerStyle}>
           <Text style={titleStyle}>
             Create New Password
@@ -173,7 +162,6 @@ export function CreateNewPasswordScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* New Password */}
         <View style={sectionContainerStyle}>
           <Text style={sectionLabelStyle}>
             New Password
@@ -202,7 +190,6 @@ export function CreateNewPasswordScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Confirm Password */}
         <View style={sectionContainerStyle}>
           <Text style={sectionLabelStyle}>
             Confirm Password
@@ -233,14 +220,12 @@ export function CreateNewPasswordScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Error */}
         {error ? (
           <Text style={errorTextStyle}>
             {error}
           </Text>
         ) : null}
 
-        {/* Save Button */}
         <TouchableOpacity
           onPress={handleSavePassword}
           style={saveButtonStyle}

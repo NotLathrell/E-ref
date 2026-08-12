@@ -191,18 +191,6 @@ export function VerifyCodeScreen() {
         contentContainerStyle={scrollContentStyle}
       >
         <View style={logoContainerStyle}>
-
-  return (
-    <KeyboardAvoidingView
-      style={keyboardAvoidingViewStyle}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={scrollContentStyle}
-      >
-        {/* Logo */}
-        <View style={logoContainerStyle}>
           <Image
             source={require("../assets/ERef-Logo.png")}
             resizeMode="contain"
@@ -214,7 +202,6 @@ export function VerifyCodeScreen() {
           </Text>
         </View>
 
-        {/* Title */}
         <View style={titleContainerStyle}>
           <Text style={titleStyle}>
             Forgot your password?
@@ -225,7 +212,6 @@ export function VerifyCodeScreen() {
           </Text>
         </View>
 
-        {/* Email */}
         <View style={emailContainerStyle}>
           <Text style={emailLabelStyle}>
             Verify Your Email:
@@ -238,7 +224,6 @@ export function VerifyCodeScreen() {
           />
         </View>
 
-        {/* Change Email */}
         <View style={changeEmailRowStyle}>
           <Text style={changeEmailTextStyle}>
             Not your email?
@@ -253,7 +238,6 @@ export function VerifyCodeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Verification Code */}
         <View style={codeContainerStyle}>
           <Text style={codeLabelStyle}>
             Enter Code:
@@ -272,7 +256,6 @@ export function VerifyCodeScreen() {
           />
         </View>
 
-        {/* Refresh Code */}
         <View style={refreshRowStyle}>
           <Text style={refreshTextStyle}>
             Did not receive the code yet?
@@ -285,14 +268,12 @@ export function VerifyCodeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Error */}
         {error ? (
           <Text style={errorTextStyle}>
             {error}
           </Text>
         ) : null}
 
-        {/* Change Password */}
         <TouchableOpacity
           onPress={handleChangePassword}
           activeOpacity={0.8}
