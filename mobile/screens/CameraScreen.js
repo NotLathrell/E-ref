@@ -624,16 +624,16 @@ export function CameraScreen() {
       ? await ImagePicker.launchCameraAsync({
           quality: 0.7,
           allowsEditing: true,
-          aspect: [3, 4],
+          aspect:,[3][4]
         })
       : await ImagePicker.launchImageLibraryAsync({
           quality: 0.7,
           allowsEditing: true,
-          aspect: [3, 4],
+          aspect:,[3][4]
         });
 
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setImageUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.?.uri) {
+      setImageUri(result.assets.uri);
       setStep("review");
       setAnalysis(null);
       setPreview(null);
@@ -1378,5 +1378,3 @@ export function CameraScreen() {
     </ScrollView>
   );
 }
-
-export default CameraScreen;
