@@ -608,37 +608,38 @@ export function CameraScreen() {
   };
 
   const pickImage = async (fromCamera) => {
-    const permission = fromCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const permission = fromCamera
+    ? await ImagePicker.requestCameraPermissionsAsync()
+    : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permission.granted) {
-      Alert.alert(
-        "Permission needed",
-        "Allow camera/photo access to scan food packaging.",
-      );
-      return;
-    }
+  if (!permission.granted) {
+    Alert.alert(
+      "Permission needed",
+      "Allow camera/photo access to scan food packaging.",
+    );
+    return;
+  }
 
-    const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({
-          quality: 0.7,
-          allowsEditing: true,
-          aspect: [3, 4]
-        })
-      : await ImagePicker.launchImageLibraryAsync({
-          quality: 0.7,
-          allowsEditing: true,
-          aspect: [3, 4]
-        });
+  const result = fromCamera
+    ? await ImagePicker.launchCameraAsync({
+        quality: 0.7,
+        allowsEditing: true,
+        aspect: [3, 4],
+      })
+    : await ImagePicker.launchImageLibraryAsync({
+        quality: 0.7,
+        allowsEditing: true,
+        aspect: [3, 4],
+      });
 
-    if (!result.canceled && result.assets?.uri) {
-      setImageUri(result.assets.uri);
-      setStep("review");
-      setAnalysis(null);
-      setPreview(null);
-    }
-  };
+  // FIX: use result.assets[0].uri
+  if (!result.canceled && result.assets?.[0]?.uri) {
+    setImageUri(result.assets[0].uri);
+    setStep("review");
+    setAnalysis(null);
+    setPreview(null);
+  }
+};
 
   const runAnalysis = async () => {
     if (!imageUri) {
