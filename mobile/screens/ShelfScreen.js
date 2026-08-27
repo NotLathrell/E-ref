@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   ScrollView,
+  FlatList,
   Modal,
   Pressable,
   Alert,
@@ -13,7 +14,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { CATEGORIES } from "../data/foodCatalog";
 import { useInventory } from "../context/InventoryContext";
 
-const BRAND = "#16567b";
+const COLORS = {
+  background: "#FFF9F0",
+  card: "#F8F0E3",
+  primary: "#5C4033",
+  accent: "#B86B4B",
+  gold: "#D6A85F",
+  text: "#2F241F",
+  muted: "#7A6A60",
+  border: "#E6D8C8",
+  white: "#FFFFFF",
+
+  success: "#6F9B72",
+  warning: "#D89B3D",
+  danger: "#C95C54",
+};
+
+const BRAND = COLORS.primary;
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -69,12 +86,12 @@ function ShelfItemCard({ item, onPress }) {
               width: 95,
               height: 95,
               borderRadius: 16,
-              backgroundColor: "#f1f5f9",
+              backgroundColor: COLORS.card,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Ionicons name="image-outline" size={32} color="#94a3b8" />
+            <Ionicons name="image-outline" size={32} color={COLORS.muted} />
           </View>
         )}
 
@@ -106,7 +123,7 @@ function ShelfItemCard({ item, onPress }) {
                   style={{
                     fontSize: 18,
                     fontWeight: "800",
-                    color: "#0f172a",
+                    color: COLORS.text,
                   }}
                 >
                   {item.title}
@@ -116,7 +133,7 @@ function ShelfItemCard({ item, onPress }) {
                   numberOfLines={1}
                   style={{
                     fontSize: 13,
-                    color: "#64748b",
+                    color: COLORS.muted,
                     marginTop: 2,
                   }}
                 >
@@ -205,13 +222,15 @@ function ShelfItemCard({ item, onPress }) {
 export function ShelfScreen() {
   const { items, freezeItem, discardItem } = useInventory(); // ensure items is pulled from context
   const [activeTab, setActiveTab] = useState("All");
-  const [selected, setSelected] = useState(null);
+const [selected, setSelected] = useState(null);
 
+const listRef = useRef(null);
   const filteredItems = useMemo(
-    () =>
-      items.filter(
+    () => {
+      return items.filter(
         (item) => activeTab === "All" || item.category === activeTab,
-      ),
+      );
+    },
     [items, activeTab],
   );
 
@@ -248,6 +267,7 @@ export function ShelfScreen() {
         paddingTop: 40,
         paddingBottom: 18,
         flex: 1,
+        backgroundColor: COLORS.background,
       }}
     >
       {/* Header */}
@@ -270,93 +290,104 @@ export function ShelfScreen() {
         </Text>
 
         <TouchableOpacity activeOpacity={0.7} hitSlop={10}>
-          <Ionicons name="search-outline" size={27} color="#111111" />
+          <Ionicons name="search-outline" size={27} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Category Tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          alignItems: "center",
-          paddingRight: 10,
-        }}
-        style={{ marginBottom: 16 }}
-      >
-        <View
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  directionalLockEnabled
+  contentContainerStyle={{
+    alignItems: "center",
+    paddingRight: 10,
+  }}
+  style={{
+    height: 36,
+    flexGrow: 0,
+    flexShrink: 0,
+    marginBottom: 16,
+  }}
+>
+  <View
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+    }}
+  >
+    {CATEGORIES.map((category) => {
+      const active = activeTab === category;
+
+      return (
+        <TouchableOpacity
+          key={category}
+          onPress={() => setActiveTab(category)}
+          activeOpacity={0.8}
           style={{
-            flexDirection: "row",
+            marginRight: 10,
+            height: 36,
+            minWidth: category === "All" ? 66 : 72,
+            paddingHorizontal: 16,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: active ? COLORS.primary : COLORS.border,
+            backgroundColor: active ? COLORS.primary : COLORS.card,
             alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {CATEGORIES.map((category) => {
-            const active = activeTab === category;
-
-            return (
-              <TouchableOpacity
-                key={category}
-                onPress={() => setActiveTab(category)}
-                activeOpacity={0.8}
-                style={{
-                  marginRight: 10,
-                  height: 36,
-                  minWidth: category === "All" ? 66 : 72,
-                  paddingHorizontal: 16,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: active ? BRAND : "#cbd5e1",
-                  backgroundColor: active ? BRAND : "#ffffff",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: active ? "#ffffff" : "#111111",
-                  }}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
-
-      {/* Food Item Cards */}
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredItems.map((item) => (
-          <ShelfItemCard key={item.id} item={item} onPress={() => openItem(item)} />
-        ))}
-
-        {filteredItems.length === 0 ? (
-          <View
+          <Text
             style={{
-              alignItems: "center",
-              marginTop: 32,
-              paddingHorizontal: 24,
+              fontSize: 14,
+              fontWeight: "600",
+              color: active ? COLORS.white : COLORS.text,
             }}
           >
-            <Ionicons name="file-tray-outline" size={52} color="#cbd5e1" />
-            <Text
-              style={{
-                fontSize: 16,
-                color: "#64748b",
-                marginTop: 12,
-                textAlign: "center",
-              }}
-            >
-              No items in this category. Scan packaging to add food.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
+            {category}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+</ScrollView>
+
+      {/* Food Item Cards */}
+      <FlatList
+  ref={listRef}
+  data={filteredItems}
+  keyExtractor={(item) => item.id}
+  showsVerticalScrollIndicator={false}
+  contentContainerStyle={{
+    paddingBottom: 120,
+    paddingTop: 4,
+  }}
+  renderItem={({ item }) => (
+    <ShelfItemCard item={item} onPress={() => openItem(item)} />
+  )}
+  ListEmptyComponent={
+    <View
+      style={{
+        alignItems: "center",
+        marginTop: 32,
+        paddingHorizontal: 24,
+      }}
+    >
+      <Ionicons name="file-tray-outline" size={52} color="#cbd5e1" />
+
+      <Text
+        style={{
+          fontSize: 16,
+          color: "#64748b",
+          marginTop: 12,
+          textAlign: "center",
+        }}
+      >
+        No items in this category. Scan packaging to add food.
+      </Text>
+    </View>
+  }
+/>
 
       {/* Food Detail Modal (unchanged logic, minor spacing tweaks optional) */}
       <Modal
@@ -446,7 +477,7 @@ export function ShelfScreen() {
                       <Ionicons
                         name="image-outline"
                         size={42}
-                        color="#94A3B8"
+                        color={COLORS.muted}
                       />
                     </View>
                   )}

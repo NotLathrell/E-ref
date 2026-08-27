@@ -3,7 +3,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
 
-const BRAND = "#16567b";
+const BRAND = "#5C4033";
+
+const COLORS = {
+  background: "#FFF9F0",
+  card: "#F8F0E3",
+  primary: "#5C4033",
+  accent: "#B86B4B",
+  gold: "#D6A85F",
+  text: "#2F241F",
+  muted: "#7A6A60",
+  border: "#E6D8C8",
+  white: "#FFFFFF",
+  success: "#6F9B72",
+  warning: "#D89B3D",
+  danger: "#C95C54",
+};
 
 const scrollContentStyle = {
   paddingHorizontal: 20,
@@ -20,7 +35,7 @@ const sectionPillDotStyle = {
 };
 
 const sectionPillTextStyle = {
-  color: "#0f172a", // slate-900
+  color: COLORS.text, // slate-900
   fontWeight: "bold",
   fontSize: 16,
   textTransform: "uppercase",
@@ -34,7 +49,7 @@ const greetingContainerStyle = {
 const greetingTextStyle = {
   fontSize: 30,
   fontWeight: "800",
-  color: "#000000",
+  color: COLORS.text,
   lineHeight: 40,
 };
 
@@ -43,7 +58,7 @@ const heroBannerStyle = {
   borderRadius: 18,
   overflow: "hidden",
   marginBottom: 14,
-  backgroundColor: BRAND,
+  backgroundColor: COLORS.primary,
 };
 
 const heroImageStyle = {
@@ -69,7 +84,7 @@ const heroQuoteStyle = {
 };
 
 const overviewCardStyle = {
-  backgroundColor: "#F1F5F9",
+  backgroundColor: COLORS.card,
   borderRadius: 22,
   padding: 18,
   marginBottom: 28,
@@ -88,13 +103,13 @@ const overviewTitleContainerStyle = {
 };
 
 const overviewTitleStyle = {
-  color: "#111827",
+  color: COLORS.text,
   fontSize: 20,
   fontWeight: "800",
 };
 
 const overviewSubtitleStyle = {
-  color: "#64748B",
+  color: COLORS.muted,
   fontSize: 14,
   marginTop: 5,
 };
@@ -103,7 +118,7 @@ const overviewImageContainerStyle = {
   width: 58,
   height: 58,
   borderRadius: 29,
-  backgroundColor: "#FFFFFF",
+  backgroundColor: COLORS.white,
   overflow: "hidden",
   alignItems: "center",
   justifyContent: "center",
@@ -117,7 +132,7 @@ const overviewImageStyle = {
 const riskBarContainerStyle = {
   height: 9,
   borderRadius: 10,
-  backgroundColor: "#CBD5E1",
+  backgroundColor: COLORS.border,
   overflow: "hidden",
 };
 
@@ -125,7 +140,7 @@ const riskBarFillStyle = (riskPct) => ({
   height: "100%",
   width: `${Math.min(100, riskPct)}%`,
   borderRadius: 10,
-  backgroundColor: riskPct >= 55 ? "#EF4444" : BRAND,
+  backgroundColor: riskPct >= 55 ? COLORS.danger : BRAND,
 });
 
 const riskInfoRowStyle = {
@@ -136,12 +151,12 @@ const riskInfoRowStyle = {
 };
 
 const riskLabelStyle = {
-  color: "#64748B",
+  color: COLORS.muted,
   fontSize: 12,
 };
 
 const riskValueStyle = {
-  color: "#111827",
+  color: COLORS.text,
   fontSize: 13,
   fontWeight: "800",
 };
@@ -166,7 +181,7 @@ const categoryItemStyle = {
 };
 
 const categoryCardStyle = {
-  backgroundColor: "#F1F5F9",
+  backgroundColor: COLORS.card,
   borderRadius: 22,
   padding: 18,
   minHeight: 125,
@@ -177,7 +192,7 @@ const categoryIconContainerStyle = {
   width: 42,
   height: 42,
   borderRadius: 21,
-  backgroundColor: "#FFFFFF",
+  backgroundColor: COLORS.primary,
   alignItems: "center",
   justifyContent: "center",
 };
@@ -187,13 +202,13 @@ const categoryInfoStyle = {
 };
 
 const categoryLabelStyle = {
-  color: "#111827",
+  color: COLORS.text,
   fontSize: 16,
   fontWeight: "800",
 };
 
 const categoryCountStyle = {
-  color: "#94A3B8",
+  color: COLORS.muted,
   fontSize: 13,
   marginTop: 3,
 };
@@ -219,7 +234,7 @@ function SectionPill({ label }) {
 
       <Text
         style={{
-          color: "#0f172a",
+          color: COLORS.text,
           fontWeight: "700",
           fontSize: 16,
           textTransform: "uppercase",
@@ -248,7 +263,8 @@ export function HomeScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className="flex-1"
+      style={{ backgroundColor: "#FFF9F0" }}
       contentContainerStyle={scrollContentStyle}
     >
       {/* Greeting */}

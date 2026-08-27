@@ -16,64 +16,86 @@ import { getLocalIpAddress } from "../utils/network";
 import { API_HOST, API_URL } from "../config";
 import { useInventory } from "../context/InventoryContext";
 
-const BRAND = "#16567b";
-
-// ─────────────────────────────────────────────────────────────
-// Inline styles moved to the top
-// ─────────────────────────────────────────────────────────────
+const BRAND = "#6B4F3A";
+const CREAM_BG = "#F8F3E8";
+const CARD = "#FFFDF7";
+const BORDER = "#E3D8C8";
+const TEXT = "#2F2924";
+const MUTED = "#806F60";
+const GREEN = "#6F8B5E";
 
 const profileTitleStyle = {
-  fontSize: 22,
+  fontSize: 28,
   fontWeight: "800",
-  color: "#111111",
-  marginBottom: 16,
+  color: TEXT,
+  marginBottom: 18,
 };
 
 const profileCardStyle = {
+  borderRadius: 24,
+  backgroundColor: CARD,
   borderWidth: 1,
-  borderColor: "#d9d9d9",
-  borderRadius: 12,
-  backgroundColor: "#ffffff",
-  minHeight: 120,
+  borderColor: BORDER,
+  paddingVertical: 24,
+  paddingHorizontal: 20,
+  marginBottom: 18,
   alignItems: "center",
-  justifyContent: "center",
-  paddingVertical: 10,
-  marginBottom: 8,
 };
 
 const profileIconStyle = {
-  width: 76,
-  height: 76,
-  borderRadius: 38,
-  backgroundColor: "#bdbdbd",
+  width: 82,
+  height: 82,
+  borderRadius: 41,
+  backgroundColor: "#E8D8BD",
   alignItems: "center",
   justifyContent: "center",
-  marginBottom: 3,
+  marginBottom: 10,
 };
 
 const profileNameStyle = {
-  fontSize: 17,
+  fontSize: 20,
   fontWeight: "800",
-  color: "#111111",
+  color: TEXT,
 };
 
 const profileEmailStyle = {
-  fontSize: 12,
-  color: "#8a8a8a",
-  marginTop: 1,
+  fontSize: 13,
+  color: MUTED,
+  marginTop: 4,
+};
+
+const settingsSectionTitleStyle = {
+  fontSize: 15,
+  fontWeight: "800",
+  color: MUTED,
+  marginBottom: 10,
+  marginTop: 4,
+  textTransform: "uppercase",
+  letterSpacing: 1,
 };
 
 const settingRowStyle = {
-  height: 53,
+  minHeight: 64,
   borderWidth: 1,
-  borderColor: "#d9d9d9",
-  borderRadius: 11,
-  backgroundColor: "#ffffff",
-  paddingHorizontal: 12,
-  marginBottom: 8,
+  borderColor: BORDER,
+  borderRadius: 18,
+  backgroundColor: CARD,
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  marginBottom: 9,
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "space-between",
+};
+
+const settingIconContainerStyle = {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: "#F1E8D8",
+  alignItems: "center",
+  justifyContent: "center",
+  marginRight: 12,
 };
 
 const settingLabelContainerStyle = {
@@ -84,40 +106,118 @@ const settingLabelContainerStyle = {
 const settingTitleStyle = {
   fontSize: 15,
   fontWeight: "800",
-  color: "#111111",
+  color: TEXT,
 };
 
 const settingDescStyle = {
-  fontSize: 10,
-  color: "#666666",
-  marginTop: 2,
+  fontSize: 11,
+  color: MUTED,
+  marginTop: 3,
+  lineHeight: 15,
 };
 
 const settingButtonStyle = {
-  height: 53,
+  minHeight: 58,
   borderWidth: 1,
-  borderColor: "#d9d9d9",
-  borderRadius: 11,
-  backgroundColor: "#ffffff",
-  paddingHorizontal: 12,
-  justifyContent: "center",
-  marginBottom: 8,
-};
-
-const logoutButtonStyle = {
-  height: 48,
-  borderRadius: 10,
-  backgroundColor: BRAND,
+  borderColor: BORDER,
+  borderRadius: 18,
+  backgroundColor: CARD,
+  paddingHorizontal: 16,
+  marginBottom: 9,
+  flexDirection: "row",
   alignItems: "center",
-  justifyContent: "center",
-  marginTop: 8,
-  marginBottom: 10,
 };
 
-const logoutButtonTextStyle = {
-  color: "#FFFFFF",
+const settingButtonTextContainerStyle = {
+  flex: 1,
+  marginLeft: 12,
+};
+
+const accountSectionTitleStyle = {
   fontSize: 15,
   fontWeight: "800",
+  color: MUTED,
+  marginTop: 18,
+  marginBottom: 10,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+};
+
+const styles = {
+  logoutButton: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderColor: "#D8B7A8",
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    marginBottom: 9,
+
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+
+    backgroundColor: "#FFFDFC",
+  },
+
+  logoutLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  logoutIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+
+    backgroundColor: "#FCE7E3",
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    marginRight: 12,
+  },
+
+  logoutText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#B94A48",
+
+    includeFontPadding: false,
+  },
+};
+
+const logoutIconStyle = {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: "#FCE7E3",
+  alignItems: "center",
+  justifyContent: "center",
+  marginRight: 12,
+};
+
+const logoutModalIconStyle = {
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+  backgroundColor: "#F1E8D8",
+  alignItems: "center",
+  justifyContent: "center",
+  alignSelf: "center",
+  marginBottom: 14,
+};
+
+const logoutTextStyle = {
+  fontSize: 15,
+  fontWeight: "800",
+  color: "#B94A48",
+};
+
+const logoutDescriptionStyle = {
+  fontSize: 11,
+  color: "#A66B66",
+  marginTop: 3,
 };
 
 const modalBackdropStyle = {
@@ -198,25 +298,58 @@ const modalCloseTextStyle = {
 
 const logoutModalContainerStyle = {
   width: "100%",
-  backgroundColor: "#ffffff",
+  backgroundColor: CARD,
   borderRadius: 20,
-  borderWidth: 2,
-  borderColor: BRAND,
-  paddingVertical: 22,
+  borderWidth: 1,
+  borderColor: BORDER,
+  paddingVertical: 24,
   paddingHorizontal: 20,
 };
 
 const logoutModalTitleStyle = {
   fontSize: 22,
   fontWeight: "800",
-  color: BRAND,
+  color: TEXT,
   marginBottom: 10,
 };
 
 const logoutModalMessageStyle = {
-  fontSize: 16,
-  color: "#1e293b",
+  fontSize: 15,
+  color: MUTED,
   marginBottom: 24,
+};
+
+const logoutConfirmButtonStyle = {
+  flex: 1,
+  height: 48,
+  borderRadius: 16,
+  backgroundColor: "#D98B82",
+  alignItems: "center",
+  justifyContent: "center",
+  marginRight: 10,
+};
+
+const logoutConfirmTextStyle = {
+  fontSize: 16,
+  fontWeight: "800",
+  color: "#FFFFFF",
+};
+
+const logoutCancelButtonStyle = {
+  flex: 1,
+  height: 48,
+  borderRadius: 16,
+  backgroundColor: CREAM_BG,
+  borderWidth: 1,
+  borderColor: BORDER,
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const logoutCancelTextStyle = {
+  fontSize: 16,
+  fontWeight: "800",
+  color: TEXT,
 };
 
 const logoutModalButtonsRowStyle = {
@@ -224,45 +357,6 @@ const logoutModalButtonsRowStyle = {
   alignItems: "center",
   justifyContent: "space-between",
 };
-
-const logoutConfirmButtonStyle = {
-  flex: 1,
-  height: 48,
-  borderRadius: 16,
-  backgroundColor: "#e01111",
-  borderWidth: 1.5,
-  borderColor: BRAND,
-  alignItems: "center",
-  justifyContent: "center",
-  marginRight: 10,
-};
-
-const logoutConfirmTextStyle = {
-  fontSize: 18,
-  fontWeight: "800",
-  color: "#ffffff",
-};
-
-const logoutCancelButtonStyle = {
-  flex: 1,
-  height: 48,
-  borderRadius: 16,
-  backgroundColor: "#ffffff",
-  borderWidth: 1.5,
-  borderColor: BRAND,
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const logoutCancelTextStyle = {
-  fontSize: 18,
-  fontWeight: "800",
-  color: "#000000",
-};
-
-// ─────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────
 
 export function ProfileScreen() {
   const navigation = useNavigation();
@@ -292,6 +386,10 @@ export function ProfileScreen() {
     return API_URL;
   }, [override]);
 
+  const handleLogout = () => {
+    setLogoutVisible(true);
+  };
+
   const handleConfirmLogout = async () => {
     setLogoutVisible(false);
     await signOut();
@@ -309,7 +407,8 @@ export function ProfileScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className="flex-1"
+      style={{ backgroundColor: CREAM_BG }}
       contentContainerStyle={{
         paddingHorizontal: 20,
         paddingTop: 52,
@@ -326,9 +425,7 @@ export function ProfileScreen() {
         </View>
 
         {/* Name */}
-        <Text style={profileNameStyle}>
-          {user?.name || "Lathrell Pogi"}
-        </Text>
+        <Text style={profileNameStyle}>{user?.name || "Lathrell Pogi"}</Text>
 
         {/* Email */}
         <Text style={profileEmailStyle}>
@@ -338,10 +435,15 @@ export function ProfileScreen() {
 
       {/* Push Notifications */}
       <View style={settingRowStyle}>
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="notifications-outline" size={21} color={BRAND} />
+        </View>
+
         <View style={settingLabelContainerStyle}>
           <Text style={settingTitleStyle}>Push Notifications</Text>
+
           <Text style={settingDescStyle}>
-            Allow notification for requests and more from the app system
+            Receive alerts about food freshness and inventory.
           </Text>
         </View>
 
@@ -349,20 +451,25 @@ export function ProfileScreen() {
           value={pushEnabled}
           onValueChange={setPushEnabled}
           trackColor={{
-            false: "#d9d9d9",
-            true: BRAND,
+            false: "#D6CEC1",
+            true: GREEN,
           }}
-          thumbColor="#ffffff"
-          ios_backgroundColor="#d9d9d9"
+          thumbColor="#FFFFFF"
+          ios_backgroundColor="#D6CEC1"
         />
       </View>
 
       {/* Dark Mode */}
       <View style={settingRowStyle}>
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="moon-outline" size={21} color={BRAND} />
+        </View>
+
         <View style={settingLabelContainerStyle}>
           <Text style={settingTitleStyle}>Dark Mode</Text>
+
           <Text style={settingDescStyle}>
-            Allow theme preference dark mode
+            Change the appearance of the application.
           </Text>
         </View>
 
@@ -370,48 +477,90 @@ export function ProfileScreen() {
           value={darkMode}
           onValueChange={setDarkMode}
           trackColor={{
-            false: "#d9d9d9",
-            true: BRAND,
+            false: "#D6CEC1",
+            true: GREEN,
           }}
-          thumbColor="#ffffff"
-          ios_backgroundColor="#d9d9d9"
+          thumbColor="#FFFFFF"
+          ios_backgroundColor="#D6CEC1"
         />
       </View>
 
       {/* Change Password */}
       <TouchableOpacity
-        activeOpacity={0.7}
+        activeOpacity={0.75}
         onPress={() => navigation.navigate("CreateNewPassword")}
         style={settingButtonStyle}
       >
-        <Text style={settingTitleStyle}>Change Password</Text>
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="lock-closed-outline" size={20} color={BRAND} />
+        </View>
+
+        <View style={settingButtonTextContainerStyle}>
+          <Text style={settingTitleStyle}>Change Password</Text>
+
+          <Text style={settingDescStyle}>Update your account password.</Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
       {/* Privacy & Terms */}
       <TouchableOpacity
-        activeOpacity={0.7}
+        activeOpacity={0.75}
         onPress={() => setPrivacyVisible(true)}
         style={settingButtonStyle}
       >
-        <Text style={settingTitleStyle}>Privacy & Terms</Text>
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="shield-checkmark-outline" size={20} color={BRAND} />
+        </View>
+
+        <View style={settingButtonTextContainerStyle}>
+          <Text style={settingTitleStyle}>Privacy & Terms</Text>
+
+          <Text style={settingDescStyle}>
+            Review privacy information and terms of use.
+          </Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
       {/* About */}
       <TouchableOpacity
-        activeOpacity={0.7}
+        activeOpacity={0.75}
         onPress={() => setAboutVisible(true)}
         style={settingButtonStyle}
       >
-        <Text style={settingTitleStyle}>About</Text>
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="information-circle-outline" size={20} color={BRAND} />
+        </View>
+
+        <View style={settingButtonTextContainerStyle}>
+          <Text style={settingTitleStyle}>About E-REF</Text>
+
+          <Text style={settingDescStyle}>
+            Learn more about the system and its technology.
+          </Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
       {/* Log Out Main Button */}
       <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => setLogoutVisible(true)}
-        style={logoutButtonStyle}
+        style={styles.logoutButton}
+        onPress={handleLogout}
+        activeOpacity={0.75}
       >
-        <Text style={logoutButtonTextStyle}>Log Out</Text>
+        <View style={styles.logoutLeft}>
+          <View style={styles.logoutIconContainer}>
+            <Ionicons name="log-out-outline" size={20} color="#B94A48" />
+          </View>
+
+          <Text style={styles.logoutText}>Log Out</Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
       {/* IP & Debug Box */}
@@ -538,8 +687,8 @@ export function ProfileScreen() {
 
               <Text style={modalSectionTitleStyle}>3. App Version</Text>
               <Text style={{ ...modalTextStyle, marginBottom: 0 }}>
-                Version 1.2.0 (Build 2026){"\n"}© 2026 E-REF Technologies. All
-                rights reserved.
+                Version 1.2.0 (Build 2026){"\n"}© 2026 E-REF. All rights
+                reserved.
               </Text>
             </ScrollView>
 
@@ -561,34 +710,38 @@ export function ProfileScreen() {
         animationType="fade"
         onRequestClose={() => setLogoutVisible(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.35)",
-            justifyContent: "center",
-            alignItems: "center",
-            paddingHorizontal: 24,
-          }}
-        >
-          {/* Backdrop Tap to close */}
+        <View style={modalBackdropStyle}>
           <Pressable
             style={modalOverlayPressableStyle}
             onPress={() => setLogoutVisible(false)}
           />
 
-          {/* Modal Container */}
+          {/* Actual modal box */}
           <View style={logoutModalContainerStyle}>
-            {/* Title */}
-            <Text style={logoutModalTitleStyle}>Log out</Text>
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  ...logoutIconStyle,
+                  marginRight: 0,
+                  marginBottom: 14,
+                }}
+              >
+                <Ionicons name="log-out-outline" size={28} color="#B94A48" />
+              </View>
 
-            {/* Message */}
-            <Text style={logoutModalMessageStyle}>
-              Are you sure you want to log out?
-            </Text>
+              <Text style={logoutModalTitleStyle}>Log Out</Text>
 
-            {/* Buttons Row */}
+              <Text
+                style={{
+                  ...logoutModalMessageStyle,
+                  textAlign: "center",
+                }}
+              >
+                Are you sure you want to log out?
+              </Text>
+            </View>
+
             <View style={logoutModalButtonsRowStyle}>
-              {/* Confirm Button */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleConfirmLogout}
@@ -597,7 +750,6 @@ export function ProfileScreen() {
                 <Text style={logoutConfirmTextStyle}>Confirm</Text>
               </TouchableOpacity>
 
-              {/* Cancel Button */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setLogoutVisible(false)}
