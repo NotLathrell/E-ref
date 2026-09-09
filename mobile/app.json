@@ -28,7 +28,14 @@
     },
     "plugins": [
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow E-Ref to select food photos for scanning.",
+          "cameraPermission": "Allow E-Ref to use the camera to identify food."
+        }
+      ]
     ]
   }
 }
