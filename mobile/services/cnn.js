@@ -5,6 +5,8 @@
  */
 
 import { FOOD_CATALOG, findFoodByName } from '../data/foodCatalog';
+import { API_URL } from '../config';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const SPOILAGE_INDICATORS = [
   'discoloration',
@@ -97,14 +99,43 @@ export async function runCnnAnalysis({
   userFlags,
   packagingDamaged
 } = {}) {
-  await delay(700);
-  const identity = identifyFood({ productHint, category, imageUri });
-  const spoilage = detectSpoilage({
-    foodId: identity.foodId,
-    daysToExpiry,
-    userFlags,
-    packagingDamaged
+  if (!imageUri) throw new Error('An image is required for food detection.');
+
+  const upload = await FileSystem.uploadAsync(`${API_URL}/predict`, imageUri, {
+    fieldName: 'image',
+    httpMethod: 'POST',
+    mimeType: 'image/jpeg',
+    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    headers: { Accept: 'application/json' }
   });
+
+  const payload = JSON.parse(upload.body);
+  if (upload.status < 200 || upload.status >= 300) {
+    throw new Error(payload.detail || 'Food model request failed.');
+  }
+
+  const food = findFoodByName(payload.foodName);
+  const identity = {
+    foodId: food.id,
+    foodName: payload.foodName || food.name,
+    category: food.id === 'unknown' ? category || food.category : food.category,
+    confidence: payload.confidence || 0,
+    imageUri: imageUri || null,
+    model: 'foodfresh-model'
+  };
+  const detectedIndicators = [
+    ...(payload.detectedIndicators || []),
+    ...userFlags.filter((flag) => !payload.detectedIndicators?.includes(flag))
+  ];
+  const score = payload.spoilageScore ?? (payload.freshness === 'spoiled' ? 0.85 : 0.12);
+  const spoilage = {
+    spoilageScore: score,
+    indicators: {},
+    detectedIndicators,
+    status: score >= 0.7 ? 'spoiled_likely' : score >= 0.4 ? 'warning' : 'ok',
+    model: 'foodfresh-model',
+    foodId: identity.foodId
+  };
 
   return {
     identity,

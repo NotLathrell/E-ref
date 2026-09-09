@@ -1,5 +1,4 @@
-export const API_HOST = '192.168.254.109';
-export const API_URL = `http://${API_HOST}`;
+export const API_HOST = process.env.EXPO_PUBLIC_API_HOST || '192.168.1.5';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${API_HOST}:8000`;
 
-// Change API_HOST here when your network IP changes.
-// Example: export const API_HOST = '192.168.254.109:3000';
+// The Expo startup script sets EXPO_PUBLIC_API_HOST from the active LAN adapter.
