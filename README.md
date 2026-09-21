@@ -84,12 +84,20 @@ fresh/rotten outcome breakdown.
 
 | Task | Accuracy | Precision | Recall | F1 |
 | --- | --- | --- | --- | --- |
-| Food identification | 98.95% | 98.54% | 98.39% | 98.45% |
-| Freshness detection | 99.51% | 99.53% | 99.50% | 99.51% |
-| Combined identity + freshness | 96.45% | 94.83% | 94.89% | 94.46% |
+| Food identification | 99.33% | 99.41% | 99.24% | 99.32% |
+| Freshness detection | 99.74% | 99.77% | 99.70% | 99.74% |
+| Combined identity + freshness | 99.18% | 99.38% | 99.08% | 99.22% |
 
-Measured over all 6,738 images of the held-out validation split; precision,
-recall and F1 are macro-averaged. Regenerate with `python backend/evaluate.py`.
+Measured over 2,698 images the models have not trained on; precision, recall and
+F1 are macro-averaged. Regenerate with `python backend/evaluate.py`.
+
+**These scores cover only apple, banana and orange.** The dataset's validation
+folder shares most of its images with the training folder (and `Test/` is a copy of
+`val/`), so 4,040 of its 6,738 images were excluded as duplicates of training
+images. Every validation image of bitter gourd, capsicum, cucumber, okra, potato and
+tomato was among them, so for those six foods there is currently **no independent
+measurement**. Testing on photos taken outside the dataset is needed before
+trusting the app on them.
 
 ### Shelf-Life and TTI Estimation
 The system estimates the remaining usable life of a food item based on factors such as:

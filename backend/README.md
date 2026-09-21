@@ -57,12 +57,19 @@ Model metrics are measured, not hard-coded. Generate the report before the app
 can show it:
 
 ```powershell
-python backend\evaluate.py                     # 80 images per class, ~1 min
-python backend\evaluate.py --limit-per-class 0 # the whole split, ~5 min
+python backend\evaluate.py --limit-per-class 0 # every held-out image, ~2 min
+python backend\evaluate.py                     # 80 images per class, faster
 ```
 
 This runs the models over `Datasets/dataset/.training/food_multiclass/val` and
 writes `backend/metrics/model_metrics.json`, which `GET /metrics` serves.
+
+**Training duplicates are excluded.** Most of the `val` folder is byte-identical to
+images in `train`, and `Test/` is a copy of `val/`, so scoring on them would
+measure memory rather than accuracy. The evaluator hashes every training image and
+skips any validation image that matches. Pass `--keep-train-duplicates` to turn
+that off. The report records how many images were excluded and which foods are
+left with no independent images.
 
 Three tasks are scored:
 
@@ -75,21 +82,32 @@ per-class scores with support, and a confusion matrix. Definitions match
 scikit-learn's `classification_report`; `metrics.py` computes them with numpy so
 the backend stays light.
 
-Results over the full 6,738-image validation split:
+Results over the 2,698 validation images the models have not trained on:
 
 | Task | Accuracy | Precision | Recall | F1 |
 | --- | --- | --- | --- | --- |
-| Food identification | 98.95% | 98.54% | 98.39% | 98.45% |
-| Freshness detection | 99.51% | 99.53% | 99.50% | 99.51% |
-| Combined (18-class) | 96.45% | 94.83% | 94.89% | 94.46% |
+| Food identification | 99.33% | 99.41% | 99.24% | 99.32% |
+| Freshness detection | 99.74% | 99.77% | 99.70% | 99.74% |
+| Combined (18-class) | 99.18% | 99.38% | 99.08% | 99.22% |
 
-Precision, recall and F1 are macro-averaged. Recall on the rotten class is
-99.89% — 4 rotten items missed out of 3,493, which is the number that matters
-for food safety.
+Precision, recall and F1 are macro-averaged. No rotten item was missed (100%
+recall on the rotten class), which is the number that matters for food safety.
 
-Bitter gourd and capsicum have no images in the validation split, so they show
-zero support and are excluded from the macro averages rather than counted as
-zeros. The app renders them as `—`.
+### What these numbers do not cover
+
+Only **apple, banana and orange** have images the models have not trained on.
+4,040 of the 6,738 validation images are duplicates of training images, and they
+include every validation image of bitter gourd, capsicum, cucumber, okra, potato and
+tomato. Those six foods are reported as not measured (zero support, shown as `—`
+in the app) rather than scored on images the model has already seen.
+
+Testing outside the dataset points to weaker performance than the table suggests.
+On simulated phone photos (random zoom, brightness, colour shift and blur applied
+to dataset images) food identification dropped for potato (70-92%), okra and
+orange, and the freshness verdict became unreliable for potato and tomato. That
+test used dataset images, not real photos, so treat it as a warning rather than a
+measurement. Photos of the six unmeasured foods taken outside the dataset are the
+way to find out.
 
 ## Endpoints
 

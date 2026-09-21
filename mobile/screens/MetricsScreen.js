@@ -389,8 +389,8 @@ export function MetricsScreen() {
       </View>
 
       <Text style={{ fontSize: 13, color: COLORS.muted, lineHeight: 19, marginBottom: 18 }}>
-        Accuracy, precision, recall and F1 measured on the held-out validation
-        split. Pull down to refresh.
+        Accuracy, precision, recall and F1 measured on validation images the
+        models have not trained on. Pull down to refresh.
       </Text>
 
       {loading ? (
@@ -491,6 +491,54 @@ export function MetricsScreen() {
               </Text>
             ) : null}
           </View>
+
+          {report.dataset.foodsWithoutIndependentImages?.length > 0 ? (
+            <View
+              style={{
+                backgroundColor: "#FBEFD8",
+                borderWidth: 1,
+                borderColor: "#EBD3A2",
+                borderRadius: 18,
+                padding: 16,
+                marginBottom: 16,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                <Ionicons name="alert-circle-outline" size={18} color="#8A5D14" />
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "800",
+                    color: "#8A5D14",
+                    marginLeft: 7,
+                  }}
+                >
+                  Some foods are not measured
+                </Text>
+              </View>
+
+              <Text style={{ fontSize: 12, color: "#6B4A10", lineHeight: 18 }}>
+                These scores cover only{" "}
+                <Text style={{ fontWeight: "800" }}>
+                  {(report.dataset.foodsEvaluated || []).join(", ")}
+                </Text>
+                . The validation images for{" "}
+                <Text style={{ fontWeight: "800" }}>
+                  {report.dataset.foodsWithoutIndependentImages.join(", ")}
+                </Text>{" "}
+                also appear in the training data, so there is no independent way to
+                measure how well the app handles them.
+              </Text>
+
+              {report.dataset.excludedTrainDuplicates > 0 ? (
+                <Text style={{ fontSize: 11, color: "#8A6A30", lineHeight: 16, marginTop: 8 }}>
+                  {report.dataset.excludedTrainDuplicates} of{" "}
+                  {report.dataset.imagesFound} validation images were excluded because
+                  they are identical to training images.
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
           {report.tasks.map((task) => (
             <TaskCard key={task.key} task={task} />

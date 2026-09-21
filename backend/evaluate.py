@@ -7,6 +7,13 @@ precision, recall and F1 for three tasks:
   freshness      fresh vs rotten (binary), from the dedicated freshness CNN
   combined       the raw 18-class head, identity and freshness together
 
+Images that also appear in the training set (byte-identical) are excluded, so
+the scores describe images the model has never seen. The dataset's ``val`` folder
+was found to share most of its images with ``train``, and ``Test`` is a copy of
+``val``; scoring on those would overstate accuracy. Foods left with no independent
+images are reported as such rather than scored. Pass --keep-train-duplicates to
+disable the filter.
+
 Usage (from the project root, with the venv active):
 
     python backend/evaluate.py                    # 80 images per class
@@ -20,9 +27,11 @@ the API at ``GET /metrics``.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,23 +51,49 @@ from pipeline import (  # noqa: E402
 )
 
 DEFAULT_SPLIT = PROJECT_ROOT / "Datasets" / "dataset" / ".training" / "food_multiclass" / "val"
+DEFAULT_TRAIN = PROJECT_ROOT / "Datasets" / "dataset" / ".training" / "food_multiclass" / "train"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "metrics" / "model_metrics.json"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
 BATCH_SIZE = 32
 
 
-def collect_samples(split_dir: Path, limit_per_class: int) -> list[tuple[Path, str]]:
-    """Gather ``(image_path, folder_label)`` pairs from an ImageFolder split."""
+def _file_hash(path: Path) -> str:
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+def train_hashes(train_dir: Path) -> set[str]:
+    """Content hashes of every training image, used to detect leakage."""
+    return {_file_hash(f) for f in train_dir.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_SUFFIXES}
+
+
+def collect_samples(
+    split_dir: Path,
+    limit_per_class: int,
+    exclude_hashes: set[str] | None = None,
+) -> tuple[list[tuple[Path, str]], Counter, Counter]:
+    """Gather ``(image_path, folder_label)`` pairs from an ImageFolder split.
+
+    Images whose content hash is in ``exclude_hashes`` are dropped before any
+    per-class limit is applied. Returns the samples plus per-class counts of the
+    images found and of those excluded as training duplicates.
+    """
     samples: list[tuple[Path, str]] = []
+    found: Counter = Counter()
+    excluded: Counter = Counter()
     for class_dir in sorted(p for p in split_dir.iterdir() if p.is_dir()):
         files = sorted(f for f in class_dir.iterdir() if f.suffix.lower() in IMAGE_SUFFIXES)
+        found[class_dir.name] = len(files)
+        if exclude_hashes:
+            kept = [f for f in files if _file_hash(f) not in exclude_hashes]
+            excluded[class_dir.name] = len(files) - len(kept)
+            files = kept
         if limit_per_class > 0:
             # Even stride rather than the first N, so the sample spans the folder.
             if len(files) > limit_per_class:
                 step = len(files) / limit_per_class
                 files = [files[int(i * step)] for i in range(limit_per_class)]
         samples.extend((f, class_dir.name) for f in files)
-    return samples
+    return samples, found, excluded
 
 
 def evaluate(
@@ -67,6 +102,7 @@ def evaluate(
     identity_path: Path,
     freshness_tflite_path: Path,
     freshness_yolo_path: Path,
+    train_dir: Path | None = None,
 ) -> dict:
     from ultralytics import YOLO
 
@@ -75,11 +111,23 @@ def evaluate(
     if not identity_path.exists():
         raise SystemExit(f"Identity model not found: {identity_path}")
 
-    samples = collect_samples(split_dir, limit_per_class)
-    if not samples:
-        raise SystemExit(f"No images found under {split_dir}")
+    exclude_hashes: set[str] | None = None
+    if train_dir is not None and train_dir.exists():
+        print(f"Hashing training images in {train_dir} to exclude duplicates ...")
+        exclude_hashes = train_hashes(train_dir)
 
-    print(f"Evaluating {len(samples)} images from {split_dir}")
+    samples, found, excluded = collect_samples(split_dir, limit_per_class, exclude_hashes)
+    if not samples:
+        raise SystemExit(
+            f"No images left to evaluate under {split_dir}"
+            + (" after removing training duplicates." if exclude_hashes else ".")
+        )
+
+    removed = sum(excluded.values())
+    print(
+        f"Evaluating {len(samples)} images from {split_dir}"
+        + (f" ({removed} of {sum(found.values())} excluded as duplicates of training images)" if exclude_hashes else "")
+    )
 
     identity_model = YOLO(str(identity_path))
     identity_names = [str(identity_model.names[i]) for i in range(len(identity_model.names))]
@@ -157,6 +205,10 @@ def evaluate(
         unique = sorted(set(skipped))
         print(f"  Skipped {len(skipped)} images from folders not in the model: {unique}")
 
+    evaluated_per_class = Counter(label for _, label in samples)
+    foods_evaluated = sorted({food_name_from_label(name) or "unknown" for name in evaluated_per_class})
+    foods_without = sorted(set(food_names) - set(foods_evaluated))
+
     report = {
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "dataset": {
@@ -166,6 +218,12 @@ def evaluate(
             "images": len(combined_true),
             "limitPerClass": limit_per_class or None,
             "durationSeconds": round(duration, 1),
+            "trainDuplicatesExcluded": bool(exclude_hashes),
+            "excludedTrainDuplicates": removed,
+            "imagesFound": sum(found.values()),
+            "imagesByClass": dict(sorted(evaluated_per_class.items())),
+            "foodsEvaluated": foods_evaluated,
+            "foodsWithoutIndependentImages": foods_without,
         },
         "tasks": {
             "food_identity": {
@@ -249,6 +307,18 @@ def print_summary(report: dict) -> None:
     print("-" * 70)
     print("Precision / recall / F1 are macro-averaged across classes.")
 
+    dataset = report["dataset"]
+    if dataset.get("trainDuplicatesExcluded"):
+        print(
+            f"Excluded {dataset['excludedTrainDuplicates']} of {dataset['imagesFound']} images "
+            "that also appear in the training set."
+        )
+    if dataset.get("foodsWithoutIndependentImages"):
+        print(
+            "NOT MEASURED (no images the model has not trained on): "
+            + ", ".join(dataset["foodsWithoutIndependentImages"])
+        )
+
     binary = report["tasks"]["freshness"].get("binary")
     if binary:
         print(
@@ -266,6 +336,12 @@ def main() -> None:
         default=80,
         help="Images sampled per class (0 evaluates every image; slower)",
     )
+    parser.add_argument("--train-dir", type=Path, default=DEFAULT_TRAIN, help="Training images to exclude duplicates of")
+    parser.add_argument(
+        "--keep-train-duplicates",
+        action="store_true",
+        help="Score images that also appear in training (overstates accuracy)",
+    )
     parser.add_argument("--identity", type=Path, default=IDENTITY_PATH)
     parser.add_argument("--freshness-tflite", type=Path, default=FRESHNESS_TFLITE_PATH)
     parser.add_argument("--freshness-yolo", type=Path, default=FRESHNESS_YOLO_PATH)
@@ -278,6 +354,7 @@ def main() -> None:
         args.identity,
         args.freshness_tflite,
         args.freshness_yolo,
+        None if args.keep_train_duplicates else args.train_dir,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

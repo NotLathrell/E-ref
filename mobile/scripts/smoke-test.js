@@ -261,6 +261,12 @@ async function main() {
     for (const label of ['Accuracy', 'Precision', 'Recall', 'F1 Score']) {
       check(`shows the ${label} tile`, view.text.includes(label));
     }
+    const unmeasured = report.dataset.foodsWithoutIndependentImages || [];
+    check('report excludes training duplicates', report.dataset.trainDuplicatesExcluded === true,
+      `${report.dataset.excludedTrainDuplicates} excluded`);
+    check('screen warns about foods with no independent test images',
+      unmeasured.length === 0 || view.text.includes('Some foods are not measured'),
+      unmeasured.join(', ') || 'none unmeasured');
     check('reports all three evaluated tasks', report.tasks.length === 3,
       report.tasks.map((t) => t.key).join(', '));
     for (const task of report.tasks) {
