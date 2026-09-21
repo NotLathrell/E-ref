@@ -1,0 +1,8 @@
+﻿{
+  "name":"food_spoilage_binary",
+  "labels":{"0":"fresh","1":"rotten"},
+  "input_size":224,
+  "format":["keras","tflite"],
+  "training":{"epochs":20,"batch_size":8,"dataset_roots":["C:/Users/Lathrell/Downloads/Datasets","C:/Users/Lathrell/Downloads/Datasets/Dataset-FV","C:/Users/Lathrell/Downloads/Datasets/dataset2"],"model":"MobileNetV2 transfer learning"},
+  "metrics":{"loss":0.011599167250096798,"accuracy":0.9973285794258118,"auc":0.9999561905860901}
+}
