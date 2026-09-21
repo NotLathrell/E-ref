@@ -53,16 +53,43 @@ The system can process food-label information to identify relevant dates and tex
 
 Extracted information can be used as part of the food item's shelf-life and risk assessment.
 
-### CNN-Based Food Analysis
-E-REF incorporates a Convolutional Neural Network (CNN) component for image-based food analysis.
+### Food Identification and Freshness Detection
 
-The system can analyze food identity and visible spoilage indicators such as:
+A captured image runs through a three-stage pipeline on the backend:
+
+1. **YOLOv8 detection** locates the food in the frame.
+2. **A CNN classifier** identifies the food from the full image, across 9 food types.
+3. **A second CNN** decides whether that food is fresh or rotten.
+
+Identity always comes from the CNN. The detector is COCO-pretrained and only
+knows apple, orange and banana, so it labels a tomato as an apple, orange or
+donut. Both CNNs therefore read the full image rather than the detector's crop
+(cropping cut rotten-tomato accuracy from 100% to 55%), and the result screen
+shows whether the detector and the CNN agree.
+
+After the models run, the system measures the visible spoilage indicators from
+the study design:
 
 - Discoloration
 - Texture abnormalities
 - Packaging damage
 - Mold spots
 - Excess moisture
+
+### Model Performance
+
+The app reports the measured accuracy, precision, recall and F1 of each model
+under **Profile → Model Performance**, including per-class scores and the
+fresh/rotten outcome breakdown.
+
+| Task | Accuracy | Precision | Recall | F1 |
+| --- | --- | --- | --- | --- |
+| Food identification | 98.95% | 98.54% | 98.39% | 98.45% |
+| Freshness detection | 99.51% | 99.53% | 99.50% | 99.51% |
+| Combined identity + freshness | 96.45% | 94.83% | 94.89% | 94.46% |
+
+Measured over all 6,738 images of the held-out validation split; precision,
+recall and F1 are macro-averaged. Regenerate with `python backend/evaluate.py`.
 
 ### Shelf-Life and TTI Estimation
 The system estimates the remaining usable life of a food item based on factors such as:
@@ -108,27 +135,73 @@ Food Item
     ▼
 Scan / Register Food
     │
-    ▼
-Food Information Extraction
+    ├── OCR ─────────────► Expiry & manufacturing dates
     │
-    ├── OCR
-    │
-    └── Food Image Analysis
+    └── Food Image
             │
             ▼
-       CNN Analysis
+    YOLOv8 Detection ────► Food location + cross-check
             │
             ▼
-    Shelf-Life Estimation
+    CNN Identification ──► Food type
+            │
+            ▼
+    CNN Freshness ───────► Fresh or rotten
+            │
+            ▼
+    Shelf-Life Estimation (TTI)
             │
             ▼
        Risk Scoring
             │
             ▼
-    Food Prioritization
+    Food Prioritization (Greedy)
             │
             ▼
  Recommendations
     ├── Storage
     ├── Usage
     └── Recipe Ideas
+```
+
+---
+
+## Running the System
+
+The models run on a backend the phone reaches over the LAN.
+
+**1. Start the inference API**
+
+```powershell
+cd C:\Users\Lathrell\Downloads\EREF
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+python backend\evaluate.py                 # generates the metrics report
+uvicorn backend.server:app --host 0.0.0.0 --port 8000
+```
+
+**2. Start the app**
+
+```powershell
+cd mobile
+npm install
+npm start
+```
+
+`npm start` detects the PC's LAN address and points the app at
+`http://<LAN_IP>:8000`. If the phone is on a different subnet, override the
+address under **Profile → Model Server**.
+
+**3. Verify everything works**
+
+```powershell
+cd mobile
+npm test
+```
+
+This renders every screen, checks the shelf-life, risk, prioritisation and OCR
+logic, and runs real images through the live API end to end.
+
+See [backend/README.md](backend/README.md) for the model, endpoint and
+evaluation details.

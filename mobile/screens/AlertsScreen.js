@@ -102,24 +102,74 @@ const unreadDotStyle = {
 };
 export function AlertsScreen() {
   const navigation = useNavigation();
-  const { alerts, markAlertRead, getItemById } = useInventory();
+  const { alerts, markAlertRead, markAllAlertsRead, getItemById } = useInventory();
+  const unreadCount = alerts.filter((alert) => !alert.read).length;
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      style={{ flex: 1, backgroundColor: COLORS.background }}
       contentContainerStyle={scrollContentStyle}
     >
-      <View style={headerContainerStyle}>
-        <Text style={headerTitleStyle}>Alerts</Text>
+      <View
+        style={{
+          ...headerContainerStyle,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={headerTitleStyle}>Alerts</Text>
+          {alerts.length > 0 ? (
+            <Text style={{ fontSize: 12, color: COLORS.secondaryText, marginTop: 3 }}>
+              {unreadCount} unread of {alerts.length}
+            </Text>
+          ) : null}
+        </View>
+
+        {unreadCount > 0 ? (
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={markAllAlertsRead}
+            style={{
+              borderWidth: 1,
+              borderColor: COLORS.cardBorder,
+              backgroundColor: COLORS.card,
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 7,
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: "700", color: BRAND }}>
+              Mark all read
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {alerts.length === 0 ? (
-        <View className="items-center mt-20 px-6">
-          <Ionicons name="checkmark-circle-outline" size={56} color="#86efac" />
-          <Text className="text-slate-700 font-semibold mt-3 text-center">
+        <View style={{ alignItems: "center", marginTop: 80, paddingHorizontal: 24 }}>
+          <Ionicons name="checkmark-circle-outline" size={56} color={COLORS.low} />
+          <Text
+            style={{
+              color: COLORS.text,
+              fontWeight: "700",
+              marginTop: 12,
+              textAlign: "center",
+              fontSize: 15,
+            }}
+          >
             No active alerts
           </Text>
-          <Text className="text-slate-400 text-center mt-1">
+          <Text
+            style={{
+              color: COLORS.secondaryText,
+              textAlign: "center",
+              marginTop: 4,
+              fontSize: 13,
+              lineHeight: 19,
+            }}
+          >
             You will be notified when items become high risk or near expiry.
           </Text>
         </View>

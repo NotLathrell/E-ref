@@ -1,11 +1,17 @@
 /**
- * CNN-style food identification + visible spoilage detection.
- * Returns structured inference matching the study design.
- * On-device/heuristic classifier for Expo demo; swap `infer` with a real model later.
+ * Food identification and freshness analysis.
+ *
+ * Calls the E-REF inference API, which runs a three-stage pipeline:
+ *   1. YOLOv8 detection locates the food and crops the frame
+ *   2. A CNN classifier identifies the food type
+ *   3. A CNN classifier decides fresh vs rotten
+ *
+ * `identifyFood` and `detectSpoilage` remain available as offline heuristics
+ * for demos or when the server is unreachable.
  */
 
 import { FOOD_CATALOG, findFoodByName } from '../data/foodCatalog';
-import { API_URL } from '../config';
+import { getApiUrl } from './apiConfig';
 import * as FileSystem from 'expo-file-system/legacy';
 
 const SPOILAGE_INDICATORS = [
@@ -18,6 +24,7 @@ const SPOILAGE_INDICATORS = [
 
 /**
  * Identify food item from optional hint + category prior.
+ * Offline fallback — the server pipeline is preferred.
  */
 export function identifyFood({ productHint, category, imageUri } = {}) {
   let food = productHint ? findFoodByName(productHint) : null;
@@ -40,13 +47,13 @@ export function identifyFood({ productHint, category, imageUri } = {}) {
     category: food.category,
     confidence: round2(confidence),
     imageUri: imageUri || null,
-    model: 'eref-cnn-classifier-v1'
+    model: 'eref-heuristic-fallback'
   };
 }
 
 /**
- * Detect visible spoilage indicators (simulated visual analysis).
- * Higher scores when user flags issues or when item is near expiry.
+ * Detect visible spoilage indicators without a server.
+ * Higher scores when the user flags issues or the item is near expiry.
  */
 export function detectSpoilage({
   foodId,
@@ -83,73 +90,158 @@ export function detectSpoilage({
     indicators: indicatorScores,
     detectedIndicators: detected,
     status: score >= 0.7 ? 'spoiled_likely' : score >= 0.4 ? 'warning' : 'ok',
-    model: 'eref-cnn-spoilage-v1',
+    model: 'eref-heuristic-fallback',
     foodId
   };
 }
 
 /**
- * Full CNN inference pass used by the scan pipeline.
+ * Full inference pass used by the scan pipeline.
+ * Uploads the image to the API and normalizes the response for the UI.
  */
 export async function runCnnAnalysis({
   imageUri,
   productHint,
   category,
   daysToExpiry,
-  userFlags,
-  packagingDamaged
+  userFlags = [],
+  packagingDamaged = false
 } = {}) {
   if (!imageUri) throw new Error('An image is required for food detection.');
 
-  const upload = await FileSystem.uploadAsync(`${API_URL}/predict`, imageUri, {
-    fieldName: 'image',
-    httpMethod: 'POST',
-    mimeType: 'image/jpeg',
-    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-    headers: { Accept: 'application/json' }
-  });
+  const payload = await uploadForPrediction(imageUri);
 
-  const payload = JSON.parse(upload.body);
-  if (upload.status < 200 || upload.status >= 300) {
-    throw new Error(payload.detail || 'Food model request failed.');
-  }
+  // Prefer the model's own name; fall back to an OCR hint, then the catalog.
+  const resolvedName = payload.foodIdentityAvailable ? payload.foodName : productHint || payload.foodName;
+  const food = findFoodByName(resolvedName || '');
 
-  const food = findFoodByName(payload.foodName);
   const identity = {
     foodId: food.id,
-    foodName: payload.foodName || food.name,
+    foodName: titleCase(resolvedName) || food.name,
     category: food.id === 'unknown' ? category || food.category : food.category,
-    confidence: payload.confidence || 0,
-    imageUri: imageUri || null,
-    model: 'foodfresh-model'
+    confidence: payload.confidence ?? 0,
+    imageUri,
+    model: payload.identity?.model || 'yolov8n-cls',
+    modelLabel: payload.modelLabel || null,
+    topK: payload.identity?.topK || [],
+    inCatalog: food.id !== 'unknown'
   };
+
+  const detection = normalizeDetection(payload.detection, payload.boxes);
+  const freshness = normalizeFreshness(payload);
+
+  // The model's indicators plus anything the user flagged by hand.
+  const modelIndicators = payload.detectedIndicators || [];
+  const flags = packagingDamaged
+    ? [...new Set([...userFlags, 'packaging_damage'])]
+    : userFlags;
   const detectedIndicators = [
-    ...(payload.detectedIndicators || []),
-    ...userFlags.filter((flag) => !payload.detectedIndicators?.includes(flag))
+    ...modelIndicators,
+    ...flags.filter((flag) => !modelIndicators.includes(flag))
   ];
-  const score = payload.spoilageScore ?? (payload.freshness === 'spoiled' ? 0.85 : 0.12);
+
+  // User-flagged damage raises the score the model reported on its own.
+  const baseScore = payload.spoilageScore ?? (freshness.isSpoiled ? 0.85 : 0.12);
+  const flagBoost = Math.min(0.3, flags.length * 0.1);
+  const spoilageScore = round2(Math.min(1, baseScore + flagBoost));
+
   const spoilage = {
-    spoilageScore: score,
-    indicators: {},
+    spoilageScore,
+    modelSpoilageScore: round2(baseScore),
+    indicators: payload.indicatorScores || {},
     detectedIndicators,
-    status: score >= 0.7 ? 'spoiled_likely' : score >= 0.4 ? 'warning' : 'ok',
-    model: 'foodfresh-model',
+    userFlags: flags,
+    status: spoilageScore >= 0.7 ? 'spoiled_likely' : spoilageScore >= 0.4 ? 'warning' : 'ok',
+    model: freshness.model,
     foodId: identity.foodId
   };
 
   return {
     identity,
+    detection,
+    freshness,
     spoilage,
+    stages: payload.stages || [],
+    inferenceMs: payload.inferenceMs ?? null,
     analyzedAt: new Date().toISOString()
   };
 }
 
-function round2(v) {
-  return Math.round(v * 100) / 100;
+async function uploadForPrediction(imageUri) {
+  let upload;
+  try {
+    upload = await FileSystem.uploadAsync(`${getApiUrl()}/predict`, imageUri, {
+      fieldName: 'image',
+      httpMethod: 'POST',
+      mimeType: 'image/jpeg',
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+      headers: { Accept: 'application/json' }
+    });
+  } catch {
+    throw new Error(
+      `Cannot reach the model server at ${getApiUrl()}. Start it with "uvicorn backend.server:app --host 0.0.0.0 --port 8000".`
+    );
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(upload.body);
+  } catch {
+    throw new Error(`Unexpected response from the model server (HTTP ${upload.status}).`);
+  }
+
+  if (upload.status < 200 || upload.status >= 300) {
+    throw new Error(payload.detail || 'Food model request failed.');
+  }
+  return payload;
 }
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function normalizeDetection(detection, boxes = []) {
+  if (!detection) {
+    return { used: false, model: 'yolov8', label: null, confidence: 0, boxes: boxes || [], reason: null };
+  }
+  return {
+    used: Boolean(detection.used),
+    model: detection.model || 'yolov8',
+    label: detection.label || null,
+    confidence: detection.confidence ?? 0,
+    box: detection.box || null,
+    // 'agrees' | 'differs' | 'outside_vocabulary' | null — see backend _cross_check
+    agreement: detection.agreement || null,
+    count: detection.count ?? (boxes ? boxes.length : 0),
+    reason: detection.reason || null,
+    boxes: boxes || []
+  };
+}
+
+function normalizeFreshness(payload) {
+  const detail = payload.freshnessDetail || {};
+  const isSpoiled = (payload.freshness || detail.freshness) === 'spoiled';
+
+  return {
+    verdict: isSpoiled ? 'spoiled' : 'fresh',
+    label: isSpoiled ? 'Rotten' : 'Fresh',
+    isSpoiled,
+    confidence: payload.freshnessConfidence ?? detail.confidence ?? 0,
+    probRotten: detail.probRotten ?? payload.spoilageScore ?? 0,
+    probFresh: detail.probFresh ?? 1 - (payload.spoilageScore ?? 0),
+    model: detail.model || 'cnn-freshness',
+    sources: detail.sources || null,
+    agreement: detail.agreement ?? null
+  };
+}
+
+function titleCase(value) {
+  if (!value) return null;
+  return String(value)
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function round2(v) {
+  return Math.round(v * 100) / 100;
 }
 
 export { SPOILAGE_INDICATORS };

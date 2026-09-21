@@ -55,6 +55,14 @@ export function enrichItem(raw, now = new Date()) {
     riskComponents: risk.components,
     daysLabel: formatDaysLabel(shelf.estimatedDaysLeft),
     freshnessLabel: `Freshness ${risk.freshnessPercent}%`,
+    // The CNN's own fresh/rotten call, kept separate from the computed score.
+    modelFreshness: raw.modelFreshness || null,
+    modelFreshnessLabel: raw.modelFreshness
+      ? raw.modelFreshness === 'spoiled'
+        ? 'Rotten'
+        : 'Fresh'
+      : null,
+    modelFreshnessConfidence: raw.modelFreshnessConfidence ?? null,
     scannedLabel: formatScannedLabel(raw.scannedAt || raw.createdAt, now)
   };
 

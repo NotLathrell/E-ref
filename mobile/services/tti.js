@@ -6,9 +6,15 @@
  * remainingLifeDays = nominalShelfDays * exp(-accumulatedDeterioration)
  */
 
+/** Elapsed days, floored at zero — used for storage time, which cannot be negative. */
 function daysBetween(from, to) {
   const ms = to.getTime() - from.getTime();
   return Math.max(0, ms / (1000 * 60 * 60 * 24));
+}
+
+/** Signed day difference — negative once `to` is in the past. */
+function signedDaysBetween(from, to) {
+  return (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
 }
 
 /**
@@ -66,14 +72,16 @@ export function computeTTI({
  * Estimate days until spoilage combining printed expiry and TTI remaining life.
  */
 export function estimateShelfLife({ expiryDate, ttiRemainingDays, now = new Date() }) {
-  const expiry = expiryDate ? new Date(expiryDate) : null;
-  const daysToExpiry = expiry ? daysBetween(now, expiry) * (expiry >= now ? 1 : -1) : null;
+  const expiry = expiryDate && !Number.isNaN(new Date(expiryDate).getTime()) ? new Date(expiryDate) : null;
+  // Signed: a printed date in the past must stay negative so the item reads as expired.
+  const daysToExpiry = expiry ? signedDaysBetween(now, expiry) : null;
 
   let estimatedDaysLeft;
   if (daysToExpiry == null) {
     estimatedDaysLeft = ttiRemainingDays;
   } else if (daysToExpiry < 0) {
-    estimatedDaysLeft = Math.min(0, ttiRemainingDays);
+    // Past the printed date: report how far past, so the UI can say "Expired".
+    estimatedDaysLeft = daysToExpiry;
   } else {
     estimatedDaysLeft = Math.min(daysToExpiry, ttiRemainingDays);
   }

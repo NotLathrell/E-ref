@@ -1,0 +1,792 @@
+{
+  "generatedAt": "2026-09-21T17:18:56.328594+00:00",
+  "dataset": {
+    "split": "Datasets\\dataset\\.training\\food_multiclass\\val",
+    "images": 6738,
+    "limitPerClass": null,
+    "durationSeconds": 271.3
+  },
+  "tasks": {
+    "food_identity": {
+      "title": "Food Identification",
+      "description": "Which food the CNN sees, across 9 food types.",
+      "model": "yolov8n-cls (food_multiclass)",
+      "accuracy": 0.9895,
+      "macro": {
+        "precision": 0.9854,
+        "recall": 0.9839,
+        "f1": 0.9845
+      },
+      "weighted": {
+        "precision": 0.9897,
+        "recall": 0.9895,
+        "f1": 0.9895
+      },
+      "perClass": [
+        {
+          "label": "apple",
+          "precision": 0.99,
+          "recall": 1.0,
+          "f1": 0.995,
+          "support": 1779
+        },
+        {
+          "label": "banana",
+          "precision": 0.9994,
+          "recall": 1.0,
+          "f1": 0.9997,
+          "support": 1792
+        },
+        {
+          "label": "bitter gourd",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "capsicum",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "cucumber",
+          "precision": 0.9353,
+          "recall": 0.9738,
+          "f1": 0.9541,
+          "support": 534
+        },
+        {
+          "label": "okra",
+          "precision": 0.9778,
+          "recall": 0.963,
+          "f1": 0.9703,
+          "support": 594
+        },
+        {
+          "label": "orange",
+          "precision": 1.0,
+          "recall": 0.9772,
+          "f1": 0.9885,
+          "support": 791
+        },
+        {
+          "label": "potato",
+          "precision": 0.9984,
+          "recall": 0.975,
+          "f1": 0.9866,
+          "support": 640
+        },
+        {
+          "label": "tomato",
+          "precision": 0.9967,
+          "recall": 0.9984,
+          "f1": 0.9975,
+          "support": 608
+        }
+      ],
+      "confusionMatrix": [
+        [
+          1779,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1792,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          520,
+          13,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          22,
+          572,
+          0,
+          0,
+          0
+        ],
+        [
+          18,
+          0,
+          0,
+          0,
+          0,
+          0,
+          773,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          14,
+          0,
+          0,
+          624,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          607
+        ]
+      ],
+      "classNames": [
+        "apple",
+        "banana",
+        "bitter gourd",
+        "capsicum",
+        "cucumber",
+        "okra",
+        "orange",
+        "potato",
+        "tomato"
+      ],
+      "samples": 6738,
+      "correct": 6667
+    },
+    "freshness": {
+      "title": "Freshness Detection",
+      "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
+      "model": "mobilenetv2-tflite",
+      "accuracy": 0.9951,
+      "macro": {
+        "precision": 0.9953,
+        "recall": 0.995,
+        "f1": 0.9951
+      },
+      "weighted": {
+        "precision": 0.9951,
+        "recall": 0.9951,
+        "f1": 0.9951
+      },
+      "perClass": [
+        {
+          "label": "fresh",
+          "precision": 0.9988,
+          "recall": 0.9911,
+          "f1": 0.9949,
+          "support": 3245
+        },
+        {
+          "label": "rotten",
+          "precision": 0.9918,
+          "recall": 0.9989,
+          "f1": 0.9953,
+          "support": 3493
+        }
+      ],
+      "confusionMatrix": [
+        [
+          3216,
+          29
+        ],
+        [
+          4,
+          3489
+        ]
+      ],
+      "classNames": [
+        "fresh",
+        "rotten"
+      ],
+      "samples": 6738,
+      "correct": 6705,
+      "binary": {
+        "positiveClass": "rotten",
+        "precision": 0.9918,
+        "recall": 0.9989,
+        "f1": 0.9953,
+        "truePositive": 3489,
+        "falsePositive": 29,
+        "falseNegative": 4,
+        "trueNegative": 3216
+      }
+    },
+    "combined": {
+      "title": "Combined Identity + Freshness",
+      "description": "The raw 18-class head, food and freshness in one label.",
+      "model": "yolov8n-cls (food_multiclass)",
+      "accuracy": 0.9645,
+      "macro": {
+        "precision": 0.9483,
+        "recall": 0.9489,
+        "f1": 0.9446
+      },
+      "weighted": {
+        "precision": 0.9697,
+        "recall": 0.9645,
+        "f1": 0.9644
+      },
+      "perClass": [
+        {
+          "label": "fresh_apples",
+          "precision": 1.0,
+          "recall": 0.9962,
+          "f1": 0.9981,
+          "support": 791
+        },
+        {
+          "label": "fresh_banana",
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 892
+        },
+        {
+          "label": "fresh_bittergourd",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "fresh_capsicum",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "fresh_cucumber",
+          "precision": 0.9539,
+          "recall": 0.9642,
+          "f1": 0.959,
+          "support": 279
+        },
+        {
+          "label": "fresh_okra",
+          "precision": 0.9761,
+          "recall": 0.8838,
+          "f1": 0.9277,
+          "support": 370
+        },
+        {
+          "label": "fresh_oranges",
+          "precision": 1.0,
+          "recall": 0.9871,
+          "f1": 0.9935,
+          "support": 388
+        },
+        {
+          "label": "fresh_potato",
+          "precision": 0.7189,
+          "recall": 0.9852,
+          "f1": 0.8313,
+          "support": 270
+        },
+        {
+          "label": "fresh_tomato",
+          "precision": 0.9961,
+          "recall": 0.9961,
+          "f1": 0.9961,
+          "support": 255
+        },
+        {
+          "label": "rotten_apples",
+          "precision": 0.9792,
+          "recall": 1.0,
+          "f1": 0.9895,
+          "support": 988
+        },
+        {
+          "label": "rotten_banana",
+          "precision": 0.9989,
+          "recall": 1.0,
+          "f1": 0.9994,
+          "support": 900
+        },
+        {
+          "label": "rotten_bittergourd",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "rotten_capsicum",
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        {
+          "label": "rotten_cucumber",
+          "precision": 0.865,
+          "recall": 0.9294,
+          "f1": 0.896,
+          "support": 255
+        },
+        {
+          "label": "rotten_okra",
+          "precision": 0.8,
+          "recall": 0.8929,
+          "f1": 0.8439,
+          "support": 224
+        },
+        {
+          "label": "rotten_oranges",
+          "precision": 0.9949,
+          "recall": 0.9628,
+          "f1": 0.9786,
+          "support": 403
+        },
+        {
+          "label": "rotten_potato",
+          "precision": 0.9961,
+          "recall": 0.6865,
+          "f1": 0.8128,
+          "support": 370
+        },
+        {
+          "label": "rotten_tomato",
+          "precision": 0.9972,
+          "recall": 1.0,
+          "f1": 0.9986,
+          "support": 353
+        }
+      ],
+      "confusionMatrix": [
+        [
+          788,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          892,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          269,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          5,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          327,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          40,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          383,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          266,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          254,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          988,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          900,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          237,
+          8,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          17,
+          200,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          15,
+          0,
+          0,
+          0,
+          0,
+          0,
+          388,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          103,
+          0,
+          0,
+          0,
+          0,
+          0,
+          12,
+          0,
+          0,
+          254,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          353
+        ]
+      ],
+      "classNames": [
+        "fresh_apples",
+        "fresh_banana",
+        "fresh_bittergourd",
+        "fresh_capsicum",
+        "fresh_cucumber",
+        "fresh_okra",
+        "fresh_oranges",
+        "fresh_potato",
+        "fresh_tomato",
+        "rotten_apples",
+        "rotten_banana",
+        "rotten_bittergourd",
+        "rotten_capsicum",
+        "rotten_cucumber",
+        "rotten_okra",
+        "rotten_oranges",
+        "rotten_potato",
+        "rotten_tomato"
+      ],
+      "samples": 6738,
+      "correct": 6499
+    }
+  }
+}

@@ -4,7 +4,12 @@ import { getFoodById } from '../data/foodCatalog';
 const KEYS = {
   inventory: '@eref/inventory',
   user: '@eref/user',
-  alertsRead: '@eref/alertsRead'
+  alertsRead: '@eref/alertsRead',
+  settings: '@eref/settings'
+};
+
+export const DEFAULT_SETTINGS = {
+  alertsEnabled: true
 };
 
 export async function loadInventory() {
@@ -41,6 +46,20 @@ export async function loadAlertsRead() {
 
 export async function saveAlertsRead(map) {
   await AsyncStorage.setItem(KEYS.alertsRead, JSON.stringify(map));
+}
+
+export async function loadSettings() {
+  const raw = await AsyncStorage.getItem(KEYS.settings);
+  if (!raw) return { ...DEFAULT_SETTINGS };
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+export async function saveSettings(settings) {
+  await AsyncStorage.setItem(KEYS.settings, JSON.stringify(settings));
 }
 
 function buildSeedInventory() {

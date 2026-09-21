@@ -1,5 +1,11 @@
 fastapi
+numpy
+opencv-python
 pillow
 python-multipart
 ultralytics
 uvicorn[standard]
+
+# Freshness CNN (MobileNetV2, TFLite). If this wheel is unavailable for your
+# Python version the API falls back to the YOLOv8n-cls freshness classifier.
+ai-edge-litert

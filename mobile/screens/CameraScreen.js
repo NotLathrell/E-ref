@@ -780,19 +780,21 @@ export function CameraScreen() {
           </View>
 
           <View style={badgeRowStyle}>
+            {/* Freshness verdict straight from the CNN */}
             <View
               style={[
                 badgeStyle,
                 {
-                  backgroundColor: preview.freshnessLabel
-                    ?.toLowerCase()
-                    .includes("fresh")
-                    ? "#22c55e"
-                    : "#ef4444",
+                  backgroundColor: analysis.cnn.freshness.isSpoiled
+                    ? "#ef4444"
+                    : "#22c55e",
                 },
               ]}
             >
-              <Text style={badgeTextStyle}>{preview.freshnessLabel}</Text>
+              <Text style={badgeTextStyle}>
+                {analysis.cnn.freshness.label}{" "}
+                {(analysis.cnn.freshness.confidence * 100).toFixed(0)}%
+              </Text>
             </View>
 
             <View style={[badgeStyle, { backgroundColor: BRAND }]}>
@@ -811,6 +813,211 @@ export function CameraScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Freshness verdict */}
+        <View
+          style={[
+            cardStyle,
+            {
+              borderWidth: 2,
+              borderColor: analysis.cnn.freshness.isSpoiled
+                ? "#fecaca"
+                : "#bbf7d0",
+              backgroundColor: analysis.cnn.freshness.isSpoiled
+                ? "#fef2f2"
+                : "#f0fdf4",
+            },
+          ]}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: analysis.cnn.freshness.isSpoiled
+                  ? "#ef4444"
+                  : "#22c55e",
+              }}
+            >
+              <Ionicons
+                name={
+                  analysis.cnn.freshness.isSpoiled
+                    ? "close-circle-outline"
+                    : "checkmark-circle-outline"
+                }
+                size={28}
+                color="#ffffff"
+              />
+            </View>
+
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "800",
+                  color: analysis.cnn.freshness.isSpoiled
+                    ? "#b91c1c"
+                    : "#15803d",
+                }}
+              >
+                {analysis.cnn.freshness.isSpoiled ? "Rotten" : "Fresh"}
+              </Text>
+              <Text style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
+                {(analysis.cnn.freshness.confidence * 100).toFixed(1)}% confidence
+                · {analysis.cnn.freshness.model}
+              </Text>
+            </View>
+          </View>
+
+          {/* Fresh / rotten probability split */}
+          <View style={{ marginTop: 14 }}>
+            <View style={rowBetweenStyle}>
+              <Text style={rowLabelStyle}>Fresh</Text>
+              <Text style={rowValueStyle}>
+                {(analysis.cnn.freshness.probFresh * 100).toFixed(1)}%
+              </Text>
+            </View>
+            <View style={spoilageBarBgStyle}>
+              <View
+                style={{
+                  height: "100%",
+                  width: `${Math.min(100, analysis.cnn.freshness.probFresh * 100)}%`,
+                  backgroundColor: "#22c55e",
+                }}
+              />
+            </View>
+
+            <View style={[rowBetweenStyle, { marginTop: 6 }]}>
+              <Text style={rowLabelStyle}>Rotten</Text>
+              <Text style={rowValueStyle}>
+                {(analysis.cnn.freshness.probRotten * 100).toFixed(1)}%
+              </Text>
+            </View>
+            <View style={spoilageBarBgStyle}>
+              <View
+                style={{
+                  height: "100%",
+                  width: `${Math.min(100, analysis.cnn.freshness.probRotten * 100)}%`,
+                  backgroundColor: "#ef4444",
+                }}
+              />
+            </View>
+          </View>
+
+          {analysis.cnn.freshness.agreement === false ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 12,
+                backgroundColor: "#fffbeb",
+                borderWidth: 1,
+                borderColor: "#fde68a",
+                borderRadius: 10,
+                padding: 9,
+              }}
+            >
+              <Ionicons name="alert-circle-outline" size={14} color="#b45309" />
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#92400e",
+                  marginLeft: 6,
+                  flex: 1,
+                  lineHeight: 15,
+                }}
+              >
+                The two freshness models disagreed — inspect this item manually
+                before deciding.
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* YOLOv8 detection */}
+        <View style={cardStyle}>
+          <View style={sectionTitleRowStyle}>
+            <View style={[sectionIconBoxStyle, { backgroundColor: "#eef2ff" }]}>
+              <Ionicons name="locate-outline" size={18} color={BRAND} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={sectionTitleStyle}>YOLOv8 Detection</Text>
+              <Text style={sectionSubtitleStyle}>
+                Locates the food before classification
+              </Text>
+            </View>
+          </View>
+
+          <View style={rowBetweenStyle}>
+            <Text style={rowLabelStyle}>Region found</Text>
+            <Text
+              style={[
+                rowValueStyle,
+                { color: analysis.cnn.detection.used ? "#16a34a" : "#64748b" },
+              ]}
+            >
+              {analysis.cnn.detection.used ? "Yes" : "No"}
+            </Text>
+          </View>
+
+          {analysis.cnn.detection.used ? (
+            <>
+              <View style={rowBetweenStyle}>
+                <Text style={rowLabelStyle}>YOLOv8 label</Text>
+                <Text style={rowValueStyle}>
+                  {analysis.cnn.detection.label}
+                </Text>
+              </View>
+              <View style={rowBetweenStyle}>
+                <Text style={rowLabelStyle}>CNN cross-check</Text>
+                <Text
+                  style={[
+                    rowValueStyle,
+                    {
+                      color:
+                        analysis.cnn.detection.agreement === "agrees"
+                          ? "#16a34a"
+                          : "#64748b",
+                    },
+                  ]}
+                >
+                  {analysis.cnn.detection.agreement === "agrees"
+                    ? "Agrees"
+                    : analysis.cnn.detection.agreement === "differs"
+                      ? `CNN says ${analysis.cnn.identity.foodName}`
+                      : `CNN identifies ${analysis.cnn.identity.foodName}`}
+                </Text>
+              </View>
+              <View style={rowBetweenStyle}>
+                <Text style={rowLabelStyle}>Detection confidence</Text>
+                <Text style={rowValueStyle}>
+                  {(analysis.cnn.detection.confidence * 100).toFixed(0)}%
+                </Text>
+              </View>
+            </>
+          ) : null}
+
+          <View style={rowBetweenStyle}>
+            <Text style={rowLabelStyle}>Objects in frame</Text>
+            <Text style={rowValueStyle}>{analysis.cnn.detection.count ?? 0}</Text>
+          </View>
+
+          {analysis.cnn.detection.reason ? (
+            <Text
+              style={{
+                fontSize: 11,
+                color: "#64748b",
+                marginTop: 6,
+                lineHeight: 16,
+              }}
+            >
+              {analysis.cnn.detection.reason}
+            </Text>
+          ) : null}
         </View>
 
         {/* OCR Extraction */}
@@ -886,10 +1093,10 @@ export function CameraScreen() {
                 color={BRAND_GREEN}
               />
             </View>
-            <View>
-              <Text style={sectionTitleStyle}>CNN Analysis</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={sectionTitleStyle}>CNN Identification</Text>
               <Text style={sectionSubtitleStyle}>
-                Food identity and visible spoilage detection
+                {analysis.cnn.identity.model}
               </Text>
             </View>
           </View>
@@ -900,7 +1107,7 @@ export function CameraScreen() {
               <Text
                 style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}
               >
-                Detected by CNN
+                {analysis.cnn.identity.modelLabel || "Detected by CNN"}
               </Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
@@ -910,10 +1117,43 @@ export function CameraScreen() {
               <Text
                 style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}
               >
-                {(analysis.cnn.identity.confidence * 100).toFixed(0)}% confidence
+                {(analysis.cnn.identity.confidence * 100).toFixed(1)}% confidence
               </Text>
             </View>
           </View>
+
+          {/* Runner-up predictions */}
+          {analysis.cnn.identity.topK?.length > 1 ? (
+            <View style={{ paddingTop: 4 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  color: "#64748b",
+                  marginBottom: 6,
+                }}
+              >
+                Other candidates
+              </Text>
+              {analysis.cnn.identity.topK.slice(1).map((candidate) => (
+                <View
+                  key={candidate.label}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    paddingVertical: 3,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: "#475569" }}>
+                    {candidate.label.replace(/_/g, " ")}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: "#94a3b8" }}>
+                    {(candidate.confidence * 100).toFixed(1)}%
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           <View style={{ paddingTop: 6 }}>
             <View style={rowBetweenStyle}>
@@ -955,7 +1195,7 @@ export function CameraScreen() {
               <Text
                 style={{ fontSize: 12, fontWeight: "600", color: "#334155" }}
               >
-                Status: {analysis.cnn.spoilage.status}
+                Status: {analysis.cnn.spoilage.status.replace(/_/g, " ")}
               </Text>
             </View>
           </View>
@@ -964,7 +1204,7 @@ export function CameraScreen() {
             <Text
               style={{ fontSize: 13, fontWeight: "600", color: "#334155", marginBottom: 8 }}
             >
-              Detected Indicators
+              Visible Indicators
             </Text>
 
             {analysis.cnn.spoilage.detectedIndicators.length > 0 ? (
@@ -997,8 +1237,155 @@ export function CameraScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Every indicator's measured strength, not just the ones that fired */}
+            {Object.keys(analysis.cnn.spoilage.indicators || {}).length > 0 ? (
+              <View style={{ marginTop: 12 }}>
+                {FLAG_LIST.map((key) => {
+                  const score = analysis.cnn.spoilage.indicators[key] ?? 0;
+                  return (
+                    <View key={key} style={{ marginBottom: 8 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          marginBottom: 3,
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, color: "#475569" }}>
+                          {FLAG_LABELS[key]}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: "#94a3b8" }}>
+                          {(score * 100).toFixed(0)}%
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          height: 5,
+                          borderRadius: 3,
+                          backgroundColor: "#e2e8f0",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View
+                          style={{
+                            height: "100%",
+                            width: `${Math.min(100, score * 100)}%`,
+                            backgroundColor:
+                              score >= 0.5 ? "#ef4444" : "#94a3b8",
+                          }}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
         </View>
+
+        {/* Pipeline trace */}
+        {analysis.cnn.stages?.length > 0 ? (
+          <View style={cardStyle}>
+            <View style={sectionTitleRowStyle}>
+              <View style={[sectionIconBoxStyle, { backgroundColor: "#f1f5f9" }]}>
+                <Ionicons name="git-branch-outline" size={18} color="#475569" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={sectionTitleStyle}>Pipeline</Text>
+                <Text style={sectionSubtitleStyle}>
+                  {analysis.cnn.inferenceMs != null
+                    ? `Completed in ${analysis.cnn.inferenceMs} ms`
+                    : "Stages that ran on this image"}
+                </Text>
+              </View>
+            </View>
+
+            {analysis.cnn.stages.map((stage, index) => (
+              <View
+                key={stage.name}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  paddingVertical: 7,
+                }}
+              >
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    backgroundColor: stage.ran ? BRAND_GREEN : "#cbd5e1",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 10,
+                  }}
+                >
+                  <Text
+                    style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}
+                  >
+                    {index + 1}
+                  </Text>
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "700",
+                      color: "#0f172a",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {stage.name}
+                  </Text>
+                  <Text
+                    style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}
+                  >
+                    {stage.model}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: "#94a3b8",
+                      marginTop: 2,
+                      lineHeight: 15,
+                    }}
+                  >
+                    {stage.detail}
+                  </Text>
+                </View>
+              </View>
+            ))}
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate("Metrics")}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 10,
+                paddingVertical: 10,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#e2e8f0",
+              }}
+            >
+              <Ionicons name="stats-chart-outline" size={15} color={BRAND} />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "700",
+                  color: BRAND,
+                  marginLeft: 7,
+                }}
+              >
+                View model accuracy, precision, recall & F1
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {/* TTI & Risk */}
         <View style={ttiCardStyle}>

@@ -1,5 +1,5 @@
 /**
- * End-to-end scan pipeline: image → OCR → CNN → TTI/risk enrichment payload.
+ * End-to-end scan pipeline: image → OCR → YOLOv8 + CNN → TTI/risk enrichment payload.
  */
 
 import { extractPackagingInfo } from './ocr';
@@ -15,6 +15,8 @@ export async function analyzeScan({
   packagingDamaged = false,
   foodNameOverride
 } = {}) {
+  if (!imageUri) throw new Error('Capture or choose a food photo first.');
+
   const ocr = await extractPackagingInfo({
     imageUri,
     labelText,
@@ -36,16 +38,16 @@ export async function analyzeScan({
     packagingDamaged
   });
 
-  const food =
-    (foodNameOverride && findFoodByName(foodNameOverride)) ||
-    getFoodById(cnn.identity.foodId);
+  // A manual name wins over the model only when it maps to a known food.
+  const override = foodNameOverride ? findFoodByName(foodNameOverride) : null;
+  const food = override && override.id !== 'unknown' ? override : getFoodById(cnn.identity.foodId);
 
   return {
     ocr,
     cnn,
     draftItem: {
       foodId: food.id,
-      title: food.name,
+      title: food.id === 'unknown' ? cnn.identity.foodName || food.name : food.name,
       category: food.category,
       storageId: storageId || food.bestStorageId,
       imageUri: imageUri || null,
@@ -54,6 +56,11 @@ export async function analyzeScan({
       cnnSpoilageScore: cnn.spoilage.spoilageScore,
       cnnIdentityConfidence: cnn.identity.confidence,
       cnnIndicators: cnn.spoilage.detectedIndicators,
+      // Freshness verdict from the CNN, carried into risk scoring and the shelf.
+      modelFreshness: cnn.freshness.verdict,
+      modelFreshnessConfidence: cnn.freshness.confidence,
+      modelLabel: cnn.identity.modelLabel,
+      detectedBy: cnn.detection.used ? cnn.detection.model : null,
       frozen: false,
       discarded: false
     }

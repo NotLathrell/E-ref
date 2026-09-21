@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   FlatList,
@@ -11,7 +12,8 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { CATEGORIES } from "../data/foodCatalog";
+import { useRoute } from "@react-navigation/native";
+import { CATEGORIES, STORAGE_LOCATIONS } from "../data/foodCatalog";
 import { useInventory } from "../context/InventoryContext";
 
 const COLORS = {
@@ -43,8 +45,26 @@ function formatDate(iso) {
   });
 }
 
+/** Freshness badge colours track the score instead of always reading as bad. */
+function freshnessPalette(percent) {
+  if (percent >= 70) return { bg: "#E3F1E4", fg: "#2F6B34" };
+  if (percent >= 45) return { bg: "#FBEFD8", fg: "#8A5D14" };
+  return { bg: "#FBE3E1", fg: "#A63B33" };
+}
+
+function daysPalette(days) {
+  if (days == null) return COLORS.muted;
+  if (days < 0) return COLORS.danger;
+  if (days <= 2) return COLORS.danger;
+  if (days <= 5) return COLORS.warning;
+  return COLORS.success;
+}
+
 // New: extracted card component with updated design
 function ShelfItemCard({ item, onPress }) {
+  const percent = item.freshnessPercent ?? 0;
+  const palette = freshnessPalette(percent);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -144,7 +164,7 @@ function ShelfItemCard({ item, onPress }) {
               {/* Freshness badge */}
               <View
                 style={{
-                  backgroundColor: "#ffe0e0",
+                  backgroundColor: palette.bg,
                   borderRadius: 999,
                   paddingHorizontal: 10,
                   paddingVertical: 4,
@@ -154,25 +174,71 @@ function ShelfItemCard({ item, onPress }) {
                   style={{
                     fontSize: 11,
                     fontWeight: "700",
-                    color: "#dc2626",
+                    color: palette.fg,
                   }}
                 >
-                  Freshness {item.freshnessPercent ?? item.freshnessLabel}
+                  Freshness {percent}%
                 </Text>
               </View>
             </View>
 
-            {/* Days left */}
-            <Text
+            {/* Days left + the CNN's own verdict when the item was scanned */}
+            <View
               style={{
-                fontSize: 13,
-                fontWeight: "600",
-                color: "#ef4444",
+                flexDirection: "row",
+                alignItems: "center",
                 marginTop: 8,
+                flexWrap: "wrap",
               }}
             >
-              {item.daysLabel}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: daysPalette(item.estimatedDaysLeft),
+                }}
+              >
+                {item.daysLabel}
+              </Text>
+
+              {item.frozen ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginLeft: 8,
+                  }}
+                >
+                  <Ionicons name="snow" size={12} color="#2478E8" />
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: "700",
+                      color: "#2478E8",
+                      marginLeft: 2,
+                    }}
+                  >
+                    Frozen
+                  </Text>
+                </View>
+              ) : null}
+
+              {item.modelFreshnessLabel ? (
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    marginLeft: 8,
+                    color:
+                      item.modelFreshness === "spoiled"
+                        ? COLORS.danger
+                        : COLORS.success,
+                  }}
+                >
+                  CNN: {item.modelFreshnessLabel}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
           {/* Bottom: Edit + scanned */}
@@ -186,6 +252,8 @@ function ShelfItemCard({ item, onPress }) {
           >
             <TouchableOpacity
               activeOpacity={0.7}
+              onPress={onPress}
+              hitSlop={8}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
@@ -210,7 +278,7 @@ function ShelfItemCard({ item, onPress }) {
                 color: "#94a3b8",
               }}
             >
-              Scanned {item.scannedLabel}
+              {item.scannedLabel}
             </Text>
           </View>
         </View>
@@ -220,28 +288,54 @@ function ShelfItemCard({ item, onPress }) {
 }
 
 export function ShelfScreen() {
-  const { items, freezeItem, discardItem } = useInventory(); // ensure items is pulled from context
+  const route = useRoute();
+  const { items, freezeItem, discardItem, updateItem } = useInventory();
   const [activeTab, setActiveTab] = useState("All");
-const [selected, setSelected] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
-const listRef = useRef(null);
-  const filteredItems = useMemo(
-    () => {
-      return items.filter(
-        (item) => activeTab === "All" || item.category === activeTab,
-      );
-    },
-    [items, activeTab],
+  const listRef = useRef(null);
+
+  // Home taps a category tile and lands here with that filter already applied.
+  useEffect(() => {
+    const incoming = route.params?.category;
+    if (incoming && CATEGORIES.includes(incoming)) setActiveTab(incoming);
+  }, [route.params?.category]);
+
+  const filteredItems = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return items.filter((item) => {
+      if (activeTab !== "All" && item.category !== activeTab) return false;
+      if (!needle) return true;
+      return [item.title, item.category, item.storageLabel, item.modelLabel]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(needle));
+    });
+  }, [items, activeTab, query]);
+
+  // Read the live item each render so freeze/discard updates show immediately.
+  const selected = useMemo(
+    () => (selectedId ? items.find((item) => item.id === selectedId) || null : null),
+    [items, selectedId],
   );
 
   const onFreeze = async () => {
     if (!selected) return;
     await freezeItem(selected.id);
     Alert.alert("Frozen", `${selected.title} countdown paused (TTI reduced).`);
-    setSelected(null);
   };
 
-  const onDiscard = async () => {
+  const onMoveStorage = async (storageId) => {
+    if (!selected || selected.storageId === storageId) return;
+    // Leaving the freezer resumes the countdown.
+    await updateItem(selected.id, {
+      storageId,
+      frozen: storageId === "freezer" ? selected.frozen : false,
+    });
+  };
+
+  const onDiscard = () => {
     if (!selected) return;
     Alert.alert("Discard item?", `Remove ${selected.title} from inventory?`, [
       { text: "Cancel", style: "cancel" },
@@ -250,14 +344,14 @@ const listRef = useRef(null);
         style: "destructive",
         onPress: async () => {
           await discardItem(selected.id);
-          setSelected(null);
+          setSelectedId(null);
         },
       },
     ]);
   };
 
   const openItem = (item) => {
-    setSelected(item);
+    setSelectedId(item.id);
   };
 
   return (
@@ -289,10 +383,60 @@ const listRef = useRef(null);
           Shelf
         </Text>
 
-        <TouchableOpacity activeOpacity={0.7} hitSlop={10}>
-          <Ionicons name="search-outline" size={27} color={COLORS.primary} />
+        <TouchableOpacity
+          activeOpacity={0.7}
+          hitSlop={10}
+          onPress={() => {
+            setSearchOpen((open) => {
+              if (open) setQuery("");
+              return !open;
+            });
+          }}
+        >
+          <Ionicons
+            name={searchOpen ? "close-outline" : "search-outline"}
+            size={27}
+            color={COLORS.primary}
+          />
         </TouchableOpacity>
       </View>
+
+      {/* Search */}
+      {searchOpen ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: COLORS.border,
+            backgroundColor: COLORS.card,
+            borderRadius: 14,
+            paddingHorizontal: 12,
+            height: 44,
+            marginBottom: 14,
+          }}
+        >
+          <Ionicons name="search" size={18} color={COLORS.muted} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            placeholder="Search by name, storage, or category"
+            placeholderTextColor={COLORS.muted}
+            style={{
+              flex: 1,
+              marginLeft: 8,
+              fontSize: 14,
+              color: COLORS.text,
+            }}
+          />
+          {query.length > 0 ? (
+            <TouchableOpacity onPress={() => setQuery("")} hitSlop={10}>
+              <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* Category Tabs */}
 <ScrollView
@@ -383,7 +527,9 @@ const listRef = useRef(null);
           textAlign: "center",
         }}
       >
-        No items in this category. Scan packaging to add food.
+        {query.trim()
+          ? `Nothing matches "${query.trim()}".`
+          : "No items in this category. Scan food to add it."}
       </Text>
     </View>
   }
@@ -394,7 +540,7 @@ const listRef = useRef(null);
         visible={!!selected}
         transparent
         animationType="fade"
-        onRequestClose={() => setSelected(null)}
+        onRequestClose={() => setSelectedId(null)}
       >
         <View
           style={{
@@ -412,7 +558,7 @@ const listRef = useRef(null);
               right: 0,
               bottom: 0,
             }}
-            onPress={() => setSelected(null)}
+            onPress={() => setSelectedId(null)}
           />
 
           {/* Bottom Sheet */}
@@ -435,7 +581,7 @@ const listRef = useRef(null);
                 {/* Close Button */}
                 <View style={{ alignItems: "flex-end", marginBottom: 10 }}>
                   <TouchableOpacity
-                    onPress={() => setSelected(null)}
+                    onPress={() => setSelectedId(null)}
                     activeOpacity={0.8}
                     style={{
                       width: 32,
@@ -482,27 +628,6 @@ const listRef = useRef(null);
                     </View>
                   )}
 
-                  {/* Image refresh icon */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      left: "50%",
-                      top: "50%",
-                      transform: [{ translateX: -16 }, { translateY: -16 }],
-                      width: 32,
-                      height: 32,
-                      borderRadius: 6,
-                      backgroundColor: "rgba(255,255,255,0.75)",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="refresh-outline"
-                      size={20}
-                      color="#666666"
-                    />
-                  </View>
                 </View>
 
                 {/* Food Name + Delete */}
@@ -544,28 +669,162 @@ const listRef = useRef(null);
                   </TouchableOpacity>
                 </View>
 
-                {/* Freshness Badge */}
+                {/* Freshness + CNN verdict */}
                 <View
                   style={{
-                    alignSelf: "flex-start",
-                    backgroundColor: "#FFB3B3",
-                    borderRadius: 6,
-                    paddingHorizontal: 9,
-                    paddingVertical: 4,
+                    flexDirection: "row",
+                    flexWrap: "wrap",
                     marginTop: 10,
                     marginBottom: 12,
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      color: "#B91C1C",
-                      fontSize: 11,
-                      fontWeight: "700",
+                      backgroundColor: freshnessPalette(selected.freshnessPercent).bg,
+                      borderRadius: 6,
+                      paddingHorizontal: 9,
+                      paddingVertical: 4,
+                      marginRight: 8,
                     }}
                   >
-                    {selected.freshnessLabel}
-                  </Text>
+                    <Text
+                      style={{
+                        color: freshnessPalette(selected.freshnessPercent).fg,
+                        fontSize: 11,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {selected.freshnessLabel}
+                    </Text>
+                  </View>
+
+                  {selected.modelFreshnessLabel ? (
+                    <View
+                      style={{
+                        backgroundColor:
+                          selected.modelFreshness === "spoiled"
+                            ? "#FBE3E1"
+                            : "#E3F1E4",
+                        borderRadius: 6,
+                        paddingHorizontal: 9,
+                        paddingVertical: 4,
+                        marginRight: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color:
+                            selected.modelFreshness === "spoiled"
+                              ? "#A63B33"
+                              : "#2F6B34",
+                          fontSize: 11,
+                          fontWeight: "700",
+                        }}
+                      >
+                        CNN: {selected.modelFreshnessLabel}
+                        {selected.modelFreshnessConfidence
+                          ? ` ${(selected.modelFreshnessConfidence * 100).toFixed(0)}%`
+                          : ""}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View
+                    style={{
+                      backgroundColor: "#EFE7DA",
+                      borderRadius: 6,
+                      paddingHorizontal: 9,
+                      paddingVertical: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: COLORS.primary,
+                        fontSize: 11,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {selected.urgency} risk
+                    </Text>
+                  </View>
                 </View>
+
+                {/* Move storage — changing location re-runs the TTI estimate */}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "800",
+                    color: "#111111",
+                    marginBottom: 7,
+                  }}
+                >
+                  Storage Location
+                </Text>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 12 }}
+                >
+                  {STORAGE_LOCATIONS.map((location) => {
+                    const active = selected.storageId === location.id;
+                    return (
+                      <TouchableOpacity
+                        key={location.id}
+                        activeOpacity={0.8}
+                        onPress={() => onMoveStorage(location.id)}
+                        style={{
+                          marginRight: 8,
+                          height: 34,
+                          paddingHorizontal: 12,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: active ? COLORS.primary : COLORS.border,
+                          backgroundColor: active ? COLORS.primary : COLORS.card,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: active ? COLORS.white : COLORS.text,
+                          }}
+                        >
+                          {location.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                {selected.storageMismatch ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: "#FBEFD8",
+                      borderRadius: 8,
+                      padding: 9,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <Ionicons name="warning-outline" size={14} color="#8A5D14" />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#8A5D14",
+                        marginLeft: 6,
+                        flex: 1,
+                        lineHeight: 15,
+                      }}
+                    >
+                      Stored outside its best location — this raises the spoilage
+                      risk score.
+                    </Text>
+                  </View>
+                ) : null}
 
                 {/* Freeze Now */}
                 {!selected.frozen && (
@@ -696,7 +955,9 @@ const listRef = useRef(null);
                 {/* Tracking History */}
                 <View
                   style={{
-                    backgroundColor: "#D9D9D9",
+                    backgroundColor: COLORS.card,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
                     borderRadius: 8,
                     paddingHorizontal: 12,
                     paddingVertical: 10,
@@ -713,30 +974,57 @@ const listRef = useRef(null);
                     Tracking History
                   </Text>
 
+                  {(selected.history || []).map((entry, index) => (
+                    <View
+                      key={`${entry.at}-${index}`}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: 4,
+                          backgroundColor: COLORS.primary,
+                          marginTop: 5,
+                          marginRight: 8,
+                        }}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, color: "#222222", fontWeight: "600" }}>
+                          {entry.event}
+                        </Text>
+                        <Text style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>
+                          {formatDate(entry.at)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+
                   <View
                     style={{
                       flexDirection: "row",
-                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      borderTopWidth: 1,
+                      borderTopColor: COLORS.border,
+                      paddingTop: 8,
                     }}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontSize: 11,
-                        color: "#222222",
+                        width: 7,
+                        height: 7,
+                        borderRadius: 4,
+                        backgroundColor: daysPalette(selected.estimatedDaysLeft),
+                        marginTop: 5,
+                        marginRight: 8,
                       }}
-                    >
-                      Scanned (Shelf): {selected.scannedLabel}
-                    </Text>
-
-                    <Text style={{ fontSize: 15, color: "#111111" }}>→</Text>
-
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: "#222222",
-                      }}
-                    >
-                      Expected Expiry: {selected.daysLabel}
+                    />
+                    <Text style={{ fontSize: 12, color: "#222222", flex: 1 }}>
+                      Expected expiry: {selected.daysLabel}
                     </Text>
                   </View>
                 </View>

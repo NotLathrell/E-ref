@@ -124,8 +124,11 @@ function normalizeDate(token) {
   }
 
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  const d = new Date(year, month - 1, day);
+  // A printed date covers the whole day, so anchor it to the end of that day —
+  // otherwise an item reads as expired from midnight of its own last day.
+  const d = new Date(year, month - 1, day, 23, 59, 59);
   if (Number.isNaN(d.getTime())) return null;
+  if (d.getMonth() !== month - 1 || d.getDate() !== day) return null; // rejects 31 Feb
   return d.toISOString();
 }
 

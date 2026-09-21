@@ -14,7 +14,10 @@ function getLanHost() {
 
 const host = getLanHost();
 const expoBinary = join(__dirname, 'node_modules', '.bin', process.platform === 'win32' ? 'expo.cmd' : 'expo');
-const args = ['start', '--host', 'lan'];
+// Metro spawns one transform worker per CPU core by default. On a machine with
+// many cores but modest RAM that exhausts memory while bundling, so cap it.
+// Override with EXPO_MAX_WORKERS if you have memory to spare.
+const args = ['start', '--host', 'lan', '--max-workers', process.env.EXPO_MAX_WORKERS || '2'];
 
 const command = process.platform === 'win32' ? 'cmd.exe' : expoBinary;
 const commandArgs = process.platform === 'win32' ? ['/c', expoBinary, ...args] : args;

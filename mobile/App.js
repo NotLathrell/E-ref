@@ -15,6 +15,7 @@ import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen.js";
 import { VerifyCodeScreen } from "./screens/VerifyCodeScreen.js";
 import { CreateNewPasswordScreen } from "./screens/CreateNewPasswordScreen.js";
 import { PasswordSuccessScreen } from "./screens/PasswordSuccessScreen.js";
+import { MetricsScreen } from "./screens/MetricsScreen.js";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -127,6 +128,7 @@ export default function App() {
           <Stack.Screen name="CreateNewPassword" component={CreateNewPasswordScreen} />
           <Stack.Screen name="PasswordSuccess" component={PasswordSuccessScreen} />
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="Metrics" component={MetricsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </InventoryProvider>

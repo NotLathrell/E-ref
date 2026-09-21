@@ -6,10 +6,14 @@ import {
   saveUser,
   clearUser,
   loadAlertsRead,
-  saveAlertsRead
+  saveAlertsRead,
+  loadSettings,
+  saveSettings,
+  DEFAULT_SETTINGS
 } from '../services/storage';
 import { enrichAll, enrichItem } from '../services/enrich';
 import { prioritizeByGreedy, getSoonToSpoil } from '../services/prioritize';
+import { loadApiOverride } from '../services/apiConfig';
 
 const InventoryContext = createContext(null);
 
@@ -17,17 +21,25 @@ export function InventoryProvider({ children }) {
   const [rawItems, setRawItems] = useState([]);
   const [user, setUser] = useState(null);
   const [alertsRead, setAlertsRead] = useState({});
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const [inv, usr, readMap] = await Promise.all([loadInventory(), loadUser(), loadAlertsRead()]);
+      const [inv, usr, readMap, prefs] = await Promise.all([
+        loadInventory(),
+        loadUser(),
+        loadAlertsRead(),
+        loadSettings(),
+        loadApiOverride()
+      ]);
       if (!mounted) return;
       setRawItems(inv);
       setUser(usr);
       setAlertsRead(readMap);
+      setSettings(prefs);
       setLoading(false);
     })();
     return () => {
@@ -47,6 +59,7 @@ export function InventoryProvider({ children }) {
   const soonToSpoil = useMemo(() => getSoonToSpoil(items, 3), [items]);
 
   const alerts = useMemo(() => {
+    if (!settings.alertsEnabled) return [];
     return prioritizeByGreedy(items)
       .filter((item) => item.urgency === 'critical' || item.urgency === 'high' || item.estimatedDaysLeft <= 2)
       .map((item) => ({
@@ -64,7 +77,7 @@ export function InventoryProvider({ children }) {
         read: Boolean(alertsRead[item.id]),
         createdAt: item.scannedAt || item.createdAt
       }));
-  }, [items, alertsRead]);
+  }, [items, alertsRead, settings.alertsEnabled]);
 
   const persist = useCallback(async (next) => {
     setRawItems(next);
@@ -160,9 +173,20 @@ export function InventoryProvider({ children }) {
     await saveAlertsRead(next);
   }, [alerts, alertsRead]);
 
+  const updateSettings = useCallback(
+    async (patch) => {
+      const next = { ...settings, ...patch };
+      setSettings(next);
+      await saveSettings(next);
+    },
+    [settings]
+  );
+
   const value = {
     loading,
     user,
+    settings,
+    updateSettings,
     items,
     prioritized,
     soonToSpoil,

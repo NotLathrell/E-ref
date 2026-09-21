@@ -359,7 +359,9 @@ export function HomeScreen() {
             <TouchableOpacity
               key={item.label}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate("Shelf")}
+              onPress={() =>
+                navigation.navigate("Shelf", { category: item.label })
+              }
               style={categoryItemStyle}
             >
               <View style={categoryCardStyle}>

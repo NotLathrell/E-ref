@@ -11,6 +11,9 @@ export const RISK_WEIGHTS = {
   storage: 0.15
 };
 
+/** Above this CNN spoilage score, visible spoilage sets the floor for the risk. */
+export const SPOILAGE_OVERRIDE_THRESHOLD = 0.8;
+
 /**
  * @param {object} input
  * @param {number|null} input.daysToExpiry
@@ -39,6 +42,13 @@ export function computeWeightedRisk({
 
   if (frozen) {
     risk *= 0.45;
+  }
+
+  // Visible spoilage overrides the other signals: a printed date still in the
+  // future cannot make an item the CNN sees as rotten look merely "moderate".
+  // Freezing does not undo spoilage, so this floor applies after the discount.
+  if (cnnRisk >= SPOILAGE_OVERRIDE_THRESHOLD) {
+    risk = Math.max(risk, cnnRisk);
   }
 
   risk = clamp01(risk);

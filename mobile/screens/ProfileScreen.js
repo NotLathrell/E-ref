@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import { getLocalIpAddress } from "../utils/network";
-import { API_HOST, API_URL } from "../config";
+import {
+  getApiUrl,
+  getDefaultApiUrl,
+  setApiOverride,
+  onApiUrlChange,
+} from "../services/apiConfig";
+import { fetchHealth } from "../services/metrics";
 import { useInventory } from "../context/InventoryContext";
 
 const BRAND = "#6B4F3A";
@@ -360,31 +366,54 @@ const logoutModalButtonsRowStyle = {
 
 export function ProfileScreen() {
   const navigation = useNavigation();
-  const { user, signOut } = useInventory();
+  const { user, signOut, settings, updateSettings } = useInventory();
   const [deviceIp, setDeviceIp] = useState("Detecting...");
   const [override, setOverride] = useState("");
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [apiUrl, setApiUrl] = useState(getApiUrl());
+  const [serverStatus, setServerStatus] = useState("checking");
+  const [serverModels, setServerModels] = useState(null);
+  const [serverError, setServerError] = useState(null);
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   useEffect(() => {
-    getLocalIpAddress().then((ip) => {
-      if (ip) {
-        setDeviceIp(ip);
-      } else {
-        setDeviceIp("Unavailable");
-      }
-    });
+    getLocalIpAddress().then((ip) => setDeviceIp(ip || "Unavailable"));
   }, []);
 
-  const apiUrl = useMemo(() => {
-    if (override.trim().length > 0) {
-      return `http://${override.trim()}`;
+  // Keep the displayed URL in step with whatever apiConfig currently holds.
+  useEffect(() => onApiUrlChange(setApiUrl), []);
+
+  const checkServer = useCallback(async () => {
+    setServerStatus("checking");
+    setServerError(null);
+    try {
+      const health = await fetchHealth();
+      setServerModels(health.models || null);
+      setServerStatus(health.ready ? "online" : "offline");
+      if (!health.ready) {
+        setServerError("The server is up but the identification model failed to load.");
+      }
+    } catch (error) {
+      setServerModels(null);
+      setServerStatus("offline");
+      setServerError(error.message);
     }
-    return API_URL;
+  }, []);
+
+  useEffect(() => {
+    checkServer();
+  }, [checkServer, apiUrl]);
+
+  const applyOverride = useCallback(async () => {
+    await setApiOverride(override);
+    setOverride("");
   }, [override]);
+
+  const resetOverride = useCallback(async () => {
+    await setApiOverride("");
+    setOverride("");
+  }, []);
 
   const handleLogout = () => {
     setLogoutVisible(true);
@@ -433,49 +462,23 @@ export function ProfileScreen() {
         </Text>
       </View>
 
-      {/* Push Notifications */}
+      {/* Spoilage Alerts */}
       <View style={settingRowStyle}>
         <View style={settingIconContainerStyle}>
           <Ionicons name="notifications-outline" size={21} color={BRAND} />
         </View>
 
         <View style={settingLabelContainerStyle}>
-          <Text style={settingTitleStyle}>Push Notifications</Text>
+          <Text style={settingTitleStyle}>Spoilage Alerts</Text>
 
           <Text style={settingDescStyle}>
-            Receive alerts about food freshness and inventory.
+            Show alerts and the tab badge for high-risk and near-expiry items.
           </Text>
         </View>
 
         <Switch
-          value={pushEnabled}
-          onValueChange={setPushEnabled}
-          trackColor={{
-            false: "#D6CEC1",
-            true: GREEN,
-          }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor="#D6CEC1"
-        />
-      </View>
-
-      {/* Dark Mode */}
-      <View style={settingRowStyle}>
-        <View style={settingIconContainerStyle}>
-          <Ionicons name="moon-outline" size={21} color={BRAND} />
-        </View>
-
-        <View style={settingLabelContainerStyle}>
-          <Text style={settingTitleStyle}>Dark Mode</Text>
-
-          <Text style={settingDescStyle}>
-            Change the appearance of the application.
-          </Text>
-        </View>
-
-        <Switch
-          value={darkMode}
-          onValueChange={setDarkMode}
+          value={settings.alertsEnabled}
+          onValueChange={(value) => updateSettings({ alertsEnabled: value })}
           trackColor={{
             false: "#D6CEC1",
             true: GREEN,
@@ -525,6 +528,28 @@ export function ProfileScreen() {
         <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
+      {/* Model Performance */}
+      <TouchableOpacity
+        activeOpacity={0.75}
+        onPress={() => navigation.navigate("Metrics")}
+        style={settingButtonStyle}
+      >
+        <View style={settingIconContainerStyle}>
+          <Ionicons name="stats-chart-outline" size={20} color={BRAND} />
+        </View>
+
+        <View style={settingButtonTextContainerStyle}>
+          <Text style={settingTitleStyle}>Model Performance</Text>
+
+          <Text style={settingDescStyle}>
+            Accuracy, precision, recall and F1 for the detection and
+            classification models.
+          </Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color={MUTED} />
+      </TouchableOpacity>
+
       {/* About */}
       <TouchableOpacity
         activeOpacity={0.75}
@@ -563,41 +588,165 @@ export function ProfileScreen() {
         <Ionicons name="chevron-forward" size={20} color={MUTED} />
       </TouchableOpacity>
 
-      {/* IP & Debug Box */}
-      <View className="rounded-2xl border border-slate-200 bg-white p-5 mt-2">
-        <Text className="text-slate-900 font-bold mb-2">Current Wi-Fi IP</Text>
-        <Text className="text-slate-500 mb-4">{deviceIp}</Text>
-        <Text className="text-slate-900 font-bold mb-2">API Host Override</Text>
+      {/* Model server connection */}
+      <Text style={accountSectionTitleStyle}>Model Server</Text>
+
+      <View
+        style={{
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: BORDER,
+          backgroundColor: CARD,
+          padding: 16,
+        }}
+      >
+        {/* Live status */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <View
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: 5,
+              marginRight: 8,
+              backgroundColor:
+                serverStatus === "online"
+                  ? GREEN
+                  : serverStatus === "checking"
+                    ? "#C9A44C"
+                    : "#B94A48",
+            }}
+          />
+          <Text style={{ fontSize: 14, fontWeight: "800", color: TEXT, flex: 1 }}>
+            {serverStatus === "online"
+              ? "Connected"
+              : serverStatus === "checking"
+                ? "Checking…"
+                : "Not reachable"}
+          </Text>
+
+          <TouchableOpacity onPress={checkServer} hitSlop={10} activeOpacity={0.7}>
+            <Ionicons name="refresh-outline" size={18} color={BRAND} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={{ fontSize: 11, color: MUTED, marginBottom: 2 }}>
+          Active API URL
+        </Text>
+        <Text style={{ fontSize: 13, color: TEXT, fontWeight: "600", marginBottom: 10 }}>
+          {apiUrl}
+        </Text>
+
+        {/* Which models loaded */}
+        {serverStatus === "online" && serverModels ? (
+          <View style={{ marginBottom: 12 }}>
+            {[
+              ["detector", "YOLOv8 detection"],
+              ["identity", "CNN identification"],
+              ["freshness", "CNN freshness"],
+            ].map(([key, label]) => (
+              <View
+                key={key}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 3,
+                }}
+              >
+                <Ionicons
+                  name={serverModels[key]?.loaded ? "checkmark-circle" : "close-circle"}
+                  size={14}
+                  color={serverModels[key]?.loaded ? GREEN : "#B94A48"}
+                />
+                <Text style={{ fontSize: 12, color: MUTED, marginLeft: 6 }}>
+                  {label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {serverError ? (
+          <Text
+            style={{
+              fontSize: 11,
+              color: "#B94A48",
+              marginBottom: 10,
+              lineHeight: 16,
+            }}
+          >
+            {serverError}
+          </Text>
+        ) : null}
+
+        <Text style={{ fontSize: 11, color: MUTED, marginBottom: 6 }}>
+          API host override (leave blank to auto-detect)
+        </Text>
         <TextInput
           value={override}
           onChangeText={setOverride}
-          placeholder="e.g. 192.168.254.109:3000"
-          className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 mb-3"
-          placeholderTextColor="#94a3b8"
+          placeholder={`e.g. ${deviceIp === "Detecting..." || deviceIp === "Unavailable" ? "192.168.1.5" : deviceIp}:8000`}
+          placeholderTextColor={MUTED}
           autoCapitalize="none"
-          keyboardType="default"
-        />
-        <TouchableOpacity
-          className="rounded-2xl py-3 items-center mb-3"
-          style={{ backgroundColor: BRAND }}
-          onPress={() => {
-            if (
-              deviceIp &&
-              deviceIp !== "Detecting..." &&
-              deviceIp !== "Unavailable"
-            ) {
-              setOverride(`${deviceIp}:3000`);
-            }
+          autoCorrect={false}
+          style={{
+            borderWidth: 1,
+            borderColor: BORDER,
+            backgroundColor: CREAM_BG,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            height: 44,
+            fontSize: 14,
+            color: TEXT,
+            marginBottom: 10,
           }}
-        >
-          <Text className="text-white font-semibold">Use device IP</Text>
-        </TouchableOpacity>
-        <Text className="text-slate-900 font-bold mb-2">Configured Host</Text>
-        <Text className="text-slate-500 mb-2">{API_HOST}</Text>
-        <Text className="text-slate-400 text-sm">API URL: {apiUrl}</Text>
-        <Text className="text-slate-400 text-xs mt-3">
-          Core OCR/CNN/TTI/risk features currently run on-device. Host is
-          reserved for future model API.
+        />
+
+        <View style={{ flexDirection: "row" }}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={applyOverride}
+            style={{
+              flex: 1,
+              backgroundColor: BRAND,
+              borderRadius: 12,
+              paddingVertical: 11,
+              alignItems: "center",
+              marginRight: 8,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "800", fontSize: 13 }}>
+              Apply & Test
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={resetOverride}
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: BORDER,
+              borderRadius: 12,
+              paddingVertical: 11,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: TEXT, fontWeight: "800", fontSize: 13 }}>
+              Reset
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={{ fontSize: 11, color: MUTED, marginTop: 10, lineHeight: 16 }}>
+          This phone's Wi-Fi IP is {deviceIp}. The detection and classification
+          models run on the backend; OCR, TTI, risk scoring and recommendations
+          run on this device.
         </Text>
       </View>
 

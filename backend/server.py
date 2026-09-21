@@ -1,119 +1,133 @@
+"""E-REF inference API.
+
+    GET  /health          model load status
+    POST /predict         YOLOv8 detection + CNN identity + CNN freshness
+    GET  /metrics         accuracy / precision / recall / F1 for each task
+    GET  /metrics/{task}  one task's report, including its confusion matrix
+"""
+
+from __future__ import annotations
+
 import io
+import json
 import os
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from PIL import Image
-from ultralytics import YOLO
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image, UnidentifiedImageError
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_MODEL_PATH = PROJECT_ROOT / "runs" / "classify" / "runs" / "classify" / "food_multiclass" / "weights" / "best.pt"
-MODEL_PATH = Path(os.getenv("FOOD_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
-app = FastAPI(title="E-REF FoodFresh Inference API")
-model = None
+try:  # `uvicorn backend.server:app` from the project root
+    from .pipeline import (
+        FRESHNESS_TFLITE_PATH,
+        FRESHNESS_YOLO_PATH,
+        IDENTITY_PATH,
+        DETECTOR_PATH,
+        FoodPipeline,
+        ModelUnavailable,
+    )
+except ImportError:  # `uvicorn server:app` from inside backend/
+    from pipeline import (
+        FRESHNESS_TFLITE_PATH,
+        FRESHNESS_YOLO_PATH,
+        IDENTITY_PATH,
+        DETECTOR_PATH,
+        FoodPipeline,
+        ModelUnavailable,
+    )
 
+METRICS_PATH = Path(
+    os.getenv("EREF_METRICS_PATH", str(Path(__file__).resolve().parent / "metrics" / "model_metrics.json"))
+)
 
-def get_model():
-    global model
-    if model is None:
-        if not MODEL_PATH.exists():
-            raise HTTPException(
-                status_code=503,
-                detail=f"Model not found: {MODEL_PATH}. Export the Kaggle model and place it there.",
-            )
-        model = YOLO(str(MODEL_PATH))
-    return model
+app = FastAPI(title="E-REF Food Identification & Freshness API", version="2.0.0")
 
+# The Expo client talks to this server over the LAN from a different origin.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
-def class_name(names, index):
-    if isinstance(names, dict):
-        return str(names.get(index, index))
-    return str(names[index])
-
-
-def freshness_from_label(label):
-    value = label.lower()
-    if any(word in value for word in ("rotten", "spoiled", "stale", "bad")):
-        return "spoiled"
-    if any(word in value for word in ("fresh", "good", "ripe")):
-        return "fresh"
-    return "unknown"
-
-
-def food_name_from_label(label):
-    """Convert food-bearing dataset labels to catalog-friendly names."""
-    value = label.lower().replace("_", " ").replace("-", " ").strip()
-    for prefix in ("fresh", "rotten", "spoiled", "ripe", "good", "bad"):
-        if value.startswith(prefix):
-            value = value[len(prefix):].strip()
-            break
-
-    aliases = {
-        "apples": "apple",
-        "oranges": "orange",
-        "potatoes": "potato",
-        "patato": "potato",
-        "tamto": "tomato",
-        "tomatoes": "tomato",
-        "bittergourd": "bitter gourd",
-        "bittergroud": "bitter gourd",
-        "bittergour d": "bitter gourd",
-    }
-    return aliases.get(value, value or None)
+pipeline = FoodPipeline(
+    detector_path=Path(os.getenv("EREF_DETECTOR_PATH", str(DETECTOR_PATH))),
+    # FOOD_MODEL_PATH is the name the original README documented.
+    identity_path=Path(os.getenv("FOOD_MODEL_PATH", os.getenv("EREF_IDENTITY_PATH", str(IDENTITY_PATH)))),
+    freshness_tflite_path=Path(os.getenv("EREF_FRESHNESS_TFLITE_PATH", str(FRESHNESS_TFLITE_PATH))),
+    freshness_yolo_path=Path(os.getenv("EREF_FRESHNESS_YOLO_PATH", str(FRESHNESS_YOLO_PATH))),
+)
 
 
 @app.get("/health")
-def health():
-    return {"ready": MODEL_PATH.exists(), "modelPath": str(MODEL_PATH)}
+def health() -> dict[str, Any]:
+    status = pipeline.status()
+    status["metricsAvailable"] = METRICS_PATH.exists()
+    # Kept for older clients that only checked these two fields.
+    status["modelPath"] = status["models"]["identity"]["path"]
+    return status
 
 
 @app.post("/predict")
-async def predict(image: UploadFile = File(...)):
-    if not image.content_type or not image.content_type.startswith("image/"):
+async def predict(
+    image: UploadFile = File(...),
+    detect: bool = Query(True, description="Run the YOLOv8 detection stage before classifying"),
+) -> dict[str, Any]:
+    if image.content_type and not image.content_type.startswith("image/"):
         raise HTTPException(status_code=415, detail="Upload an image file.")
 
+    payload = await image.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="The uploaded image was empty.")
+
     try:
-        photo = Image.open(io.BytesIO(await image.read())).convert("RGB")
-        prediction = get_model().predict(photo, verbose=False)[0]
-    except HTTPException:
-        raise
-    except Exception as error:
+        photo = Image.open(io.BytesIO(payload)).convert("RGB")
+    except UnidentifiedImageError as error:
+        raise HTTPException(status_code=415, detail="That file is not a readable image.") from error
+
+    try:
+        return pipeline.analyze(photo, run_detector=detect)
+    except ModelUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except Exception as error:  # noqa: BLE001 - surface the cause to the client
         raise HTTPException(status_code=422, detail=f"Model inference failed: {error}") from error
 
-    boxes = []
-    if prediction.boxes is not None and len(prediction.boxes) > 0:
-        for coordinates, confidence, class_index in zip(
-            prediction.boxes.xyxy.cpu().tolist(),
-            prediction.boxes.conf.cpu().tolist(),
-            prediction.boxes.cls.cpu().tolist(),
-        ):
-            boxes.append({
-                "box": coordinates,
-                "confidence": round(float(confidence), 4),
-                "label": class_name(prediction.names, int(class_index)),
-            })
 
-    if prediction.probs is not None:
-        index = int(prediction.probs.top1)
-        label = class_name(prediction.names, index)
-        confidence = float(prediction.probs.top1conf)
-    elif boxes:
-        best = max(boxes, key=lambda item: item["confidence"])
-        label = best["label"]
-        confidence = best["confidence"]
-    else:
-        raise HTTPException(status_code=422, detail="The model detected no food item.")
+@app.get("/metrics")
+def metrics(include_confusion: bool = Query(False, description="Include the confusion matrices")) -> dict[str, Any]:
+    report = _load_metrics()
+    if include_confusion:
+        return report
 
-    freshness = freshness_from_label(label)
-    food_name = food_name_from_label(label)
-    spoilage_score = 0.85 if freshness == "spoiled" else 0.12 if freshness == "fresh" else 0.0
-    return {
-        "foodName": food_name,
-        "modelLabel": label,
-        "foodIdentityAvailable": food_name is not None,
-        "confidence": round(confidence, 4),
-        "freshness": freshness,
-        "spoilageScore": spoilage_score,
-        "detectedIndicators": [],
-        "boxes": boxes,
-    }
+    trimmed = json.loads(json.dumps(report))
+    for task in trimmed.get("tasks", {}).values():
+        task.pop("confusionMatrix", None)
+    return trimmed
+
+
+@app.get("/metrics/{task}")
+def metrics_task(task: str) -> dict[str, Any]:
+    report = _load_metrics()
+    tasks = report.get("tasks", {})
+    if task not in tasks:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown task '{task}'. Available: {', '.join(sorted(tasks))}",
+        )
+    return {"generatedAt": report.get("generatedAt"), "dataset": report.get("dataset"), **tasks[task]}
+
+
+def _load_metrics() -> dict[str, Any]:
+    if not METRICS_PATH.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "No evaluation report yet. Run `python backend/evaluate.py` from the "
+                "project root to generate one."
+            ),
+        )
+    try:
+        return json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise HTTPException(status_code=500, detail=f"Metrics file is not valid JSON: {error}") from error
