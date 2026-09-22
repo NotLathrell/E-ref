@@ -1,8 +1,8 @@
 /**
  * Model evaluation metrics from the inference API.
  *
- * The report is produced by `python backend/evaluate.py`, which runs the
- * trained models over the held-out validation split and computes accuracy,
+ * The report is produced by `python backend/benchmark.py`, which runs the
+ * trained models over several held-out image sets and computes accuracy,
  * precision, recall and F1 per task.
  */
 
@@ -22,8 +22,21 @@ export async function fetchMetrics({ includeConfusion = false } = {}) {
   return {
     generatedAt: report.generatedAt || null,
     dataset: report.dataset || {},
-    tasks: Object.entries(report.tasks || {}).map(([key, task]) => normalizeTask(key, task))
+    tasks: normalizeTasks(report.tasks),
+    // Independent checks beside the headline split, each on images no model trained on.
+    benchmarks: (report.benchmarks || []).map((benchmark) => ({
+      id: benchmark.id,
+      title: benchmark.title || benchmark.id,
+      description: benchmark.description || '',
+      images: benchmark.dataset?.images ?? 0,
+      tasks: normalizeTasks(benchmark.tasks),
+      baseline: benchmark.baseline ? normalizeTasks(benchmark.baseline.tasks) : null
+    }))
   };
+}
+
+function normalizeTasks(tasks) {
+  return Object.entries(tasks || {}).map(([key, task]) => normalizeTask(key, task));
 }
 
 /** Fetch one task's report, including its confusion matrix. */

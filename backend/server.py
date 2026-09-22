@@ -101,8 +101,13 @@ def metrics(include_confusion: bool = Query(False, description="Include the conf
         return report
 
     trimmed = json.loads(json.dumps(report))
-    for task in trimmed.get("tasks", {}).values():
-        task.pop("confusionMatrix", None)
+    groups = [trimmed.get("tasks", {})]
+    for benchmark in trimmed.get("benchmarks", []):
+        groups.append(benchmark.get("tasks", {}))
+        groups.append(benchmark.get("baseline", {}).get("tasks", {}))
+    for tasks in groups:
+        for task in tasks.values():
+            task.pop("confusionMatrix", None)
     return trimmed
 
 
@@ -123,7 +128,7 @@ def _load_metrics() -> dict[str, Any]:
         raise HTTPException(
             status_code=503,
             detail=(
-                "No evaluation report yet. Run `python backend/evaluate.py` from the "
+                "No evaluation report yet. Run `python backend/benchmark.py` from the "
                 "project root to generate one."
             ),
         )

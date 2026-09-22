@@ -3,11 +3,13 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
 } from "react-native";
+
+import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
 
 const BRAND = "#16567b";
 const SUCCESS = "#44AE5F";
@@ -90,56 +92,50 @@ const backToSignInTextStyle = {
 
 export function PasswordSuccessScreen({ navigation }) {
   return (
-    <KeyboardAvoidingView
-      style={keyboardAvoidingViewStyle}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={scrollContentStyle}
+    <AnimatedScreen>
+      <KeyboardAvoidingView
+        style={keyboardAvoidingViewStyle}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={logoContainerStyle}>
-          <Image
-            source={require("../assets/ERef-Logo.png")}
-            resizeMode="contain"
-            style={logoImageStyle}
-          />
-        </View>
+        <ScrollView contentContainerStyle={scrollContentStyle}>
+          <View style={logoContainerStyle}>
+            <Image
+              source={require("../assets/ERef-Logo.png")}
+              resizeMode="contain"
+              style={logoImageStyle}
+            />
+          </View>
 
-        <View style={successIconContainerStyle}>
-          <View style={successIconCircleStyle}>
-            <Text style={successIconTextStyle}>
-              ✓
+          <View style={successIconContainerStyle}>
+            <View style={successIconCircleStyle}>
+              <Text style={successIconTextStyle}>✓</Text>
+            </View>
+          </View>
+
+          <View style={successMessageContainerStyle}>
+            <Text style={successTitleStyle}>Password Updated!</Text>
+
+            <Text style={successSubtitleStyle}>
+              Your password has been successfully updated.
+              {"\n"}
+              You can now sign in using your new password.
             </Text>
           </View>
-        </View>
 
-        <View style={successMessageContainerStyle}>
-          <Text style={successTitleStyle}>
-            Password Updated!
-          </Text>
-
-          <Text style={successSubtitleStyle}>
-            Your password has been successfully updated.
-            {"\n"}
-            You can now sign in using your new password.
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() =>
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Auth" }],
-            })
-          }
-          style={backToSignInButtonStyle}
-        >
-          <Text style={backToSignInTextStyle}>
-            Back to Sign In
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <AnimatedTouchableOpacity
+            activeOpacity={0.85}
+            onPress={() =>
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Auth" }],
+              })
+            }
+            style={backToSignInButtonStyle}
+          >
+            <Text style={backToSignInTextStyle}>Back to Sign In</Text>
+          </AnimatedTouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AnimatedScreen>
   );
 }

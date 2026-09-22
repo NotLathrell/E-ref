@@ -4,7 +4,6 @@ import {
   Text,
   Image,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +11,9 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
+
+import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
 
 const BRAND = "#16567b";
 
@@ -218,178 +220,159 @@ export function AuthScreen() {
   const isSignIn = mode === "signin";
 
   return (
-    <KeyboardAvoidingView
-      style={keyboardAvoidingViewStyle}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        className="flex-1 bg-white"
-        contentContainerStyle={scrollContentStyle}
-        keyboardShouldPersistTaps="handled"
+    <AnimatedScreen>
+      <KeyboardAvoidingView
+        style={keyboardAvoidingViewStyle}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <BrandLogo />
-        <View style={welcomeContainerStyle}>
-          <Text style={welcomeTitleStyle}>
-            Hi, Welcome back!
-          </Text>
+        <ScrollView
+          className="flex-1 bg-white"
+          contentContainerStyle={scrollContentStyle}
+          keyboardShouldPersistTaps="handled"
+        >
+          <BrandLogo />
+          <View style={welcomeContainerStyle}>
+            <Text style={welcomeTitleStyle}>Hello, Welcome !</Text>
 
-          <Text style={welcomeSubtitleStyle}>
-            Hope you're doing fine.
-          </Text>
-        </View>
-        {mode === "signup" && (
-          <View className="mb-4">
-            <Text className="text-slate-400 mb-2">Name:</Text>
+            <Text style={welcomeSubtitleStyle}>Hope you're doing well.</Text>
+          </View>
+          {mode === "signup" && (
+            <View className="mb-4">
+              <Text className="text-slate-400 mb-2">Name:</Text>
+              <TextInput
+                value={name}
+                onChangeText={(text) => {
+                  setName(text);
+                  setError("");
+                }}
+                placeholder="Enter your name"
+                placeholderTextColor="#999"
+                autoCapitalize="words"
+                style={inputStyle}
+              />
+            </View>
+          )}
+
+          <View style={inputContainerStyle}>
+            <Text style={inputLabelStyle}>Email</Text>
+
             <TextInput
-              value={name}
+              value={email}
               onChangeText={(text) => {
-                setName(text);
+                setEmail(text);
                 setError("");
               }}
-              placeholder="Enter your name"
+              placeholder="Enter your email"
               placeholderTextColor="#999"
-              autoCapitalize="words"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
               style={inputStyle}
             />
           </View>
-        )}
-
-        <View style={inputContainerStyle}>
-          <Text style={inputLabelStyle}>
-            Email
-          </Text>
-
-          <TextInput
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setError("");
-            }}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={inputStyle}
-          />
-        </View>
-        <View style={inputContainerStyle}>
-          <Text style={inputLabelStyle}>
-            Password
-          </Text>
-
-          <View style={passwordWrapperStyle}>
-            <TextInput
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setError("");
-              }}
-              secureTextEntry={!showPassword}
-              placeholder="Enter your password"
-              placeholderTextColor="#999"
-              style={passwordInputStyle}
-            />
-
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Text style={toggleTextStyle}>
-                {showPassword ? "Hide" : "Show"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        {mode === "signup" && (
           <View style={inputContainerStyle}>
-            <Text style={inputLabelStyle}>
-              Confirm Password
-            </Text>
+            <Text style={inputLabelStyle}>Password</Text>
 
             <View style={passwordWrapperStyle}>
               <TextInput
-                value={confirmPassword}
+                value={password}
                 onChangeText={(text) => {
-                  setConfirmPassword(text);
+                  setPassword(text);
                   setError("");
                 }}
-                secureTextEntry={!showConfirmPassword}
-                placeholder="Confirm your password"
+                secureTextEntry={!showPassword}
+                placeholder="Enter your password"
                 placeholderTextColor="#999"
                 style={passwordInputStyle}
               />
 
-              <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              <AnimatedTouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
               >
                 <Text style={toggleTextStyle}>
-                  {showConfirmPassword ? "Hide" : "Show"}
+                  {showPassword ? "Hide" : "Show"}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedTouchableOpacity>
             </View>
           </View>
-        )}
-        {error ? (
-          <Text style={errorTextStyle}>
-            {error}
-          </Text>
-        ) : null}
+          {mode === "signup" && (
+            <View style={inputContainerStyle}>
+              <Text style={inputLabelStyle}>Confirm Password</Text>
 
-        {isSignIn ? (
-          <TouchableOpacity
-            onPress={() => {
-              setMode("signup");
-              setError("");
-            }}
-            style={switchLinkContainerStyle}
-          >
-            <Text style={switchLinkTextStyle}>
-              Don't have an account yet?
-              <Text style={switchLinkHighlightStyle}>
-                {" "}
-                Sign Up
-              </Text>
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              setMode("signin");
-              setError("");
-            }}
-            style={switchLinkContainerStyle}
-          >
-            <Text style={switchLinkTextStyle}>
-              Already have an account?
-              <Text style={switchLinkHighlightStyle}>
-                {" "}
-                Sign In Instead
-              </Text>
-            </Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={isLoading}
-          style={submitButtonStyle(isLoading)}
-        >
-          <Text style={submitButtonTextStyle}>
-            {isLoading ? "Please wait..." : isSignIn ? "Sign In" : "Sign Up"}
-          </Text>
-        </TouchableOpacity>
+              <View style={passwordWrapperStyle}>
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    setError("");
+                  }}
+                  secureTextEntry={!showConfirmPassword}
+                  placeholder="Confirm your password"
+                  placeholderTextColor="#999"
+                  style={passwordInputStyle}
+                />
 
-        {isSignIn && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate("ForgotPassword")}
-          >
-            <Text style={switchLinkTextStyle}>
-              Forgot your password?
-              <Text style={switchLinkHighlightStyle}>
-                {" "}
-                Reset Password
+                <AnimatedTouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Text style={toggleTextStyle}>
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </Text>
+                </AnimatedTouchableOpacity>
+              </View>
+            </View>
+          )}
+          {error ? <Text style={errorTextStyle}>{error}</Text> : null}
+
+          {isSignIn ? (
+            <AnimatedTouchableOpacity
+              onPress={() => {
+                setMode("signup");
+                setError("");
+              }}
+              style={switchLinkContainerStyle}
+            >
+              <Text style={switchLinkTextStyle}>
+                Don't have an account yet?
+                <Text style={switchLinkHighlightStyle}> Sign Up</Text>
               </Text>
+            </AnimatedTouchableOpacity>
+          ) : (
+            <AnimatedTouchableOpacity
+              onPress={() => {
+                setMode("signin");
+                setError("");
+              }}
+              style={switchLinkContainerStyle}
+            >
+              <Text style={switchLinkTextStyle}>
+                Already have an account?
+                <Text style={switchLinkHighlightStyle}> Sign In Instead</Text>
+              </Text>
+            </AnimatedTouchableOpacity>
+          )}
+          <AnimatedTouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            style={submitButtonStyle(isLoading)}
+          >
+            <Text style={submitButtonTextStyle}>
+              {isLoading ? "Please wait..." : isSignIn ? "Sign In" : "Sign Up"}
             </Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </AnimatedTouchableOpacity>
+
+          {isSignIn && (
+            <AnimatedTouchableOpacity
+              onPress={() => navigation.navigate("ForgotPassword")}
+            >
+              <Text style={switchLinkTextStyle}>
+                Forgot your password?
+                <Text style={switchLinkHighlightStyle}> Reset Password</Text>
+              </Text>
+            </AnimatedTouchableOpacity>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AnimatedScreen>
   );
 }

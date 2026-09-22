@@ -1,11 +1,12 @@
 """Food analysis pipeline used by the E-REF inference API.
 
 Stage 1  YOLOv8 detection (``yolov8n.pt``) locates the food in the frame.
-Stage 2  A CNN classifier (YOLOv8n-cls trained on ``food_multiclass``) reads the
-         full frame and returns the food identity.
+Stage 2  A CNN classifier (YOLOv8n-cls, 19 classes) reads the full frame and
+         returns the food identity: nine foods x fresh/rotten, plus ``other`` for
+         anything the app does not know, which the app reports as an unknown food.
 Stage 3  A dedicated freshness CNN reads the full frame and returns fresh/rotten.
-         MobileNetV2 (TFLite) is preferred; the YOLOv8n-cls ``freshness`` model
-         is the fallback when the TFLite runtime is unavailable.
+         The retrained YOLOv8n-cls freshness model is preferred; the older
+         MobileNetV2 (TFLite) model is the fallback when it is not present.
 
 The detector is COCO-pretrained and only knows apple, orange and banana among
 the dataset's foods, so it labels a tomato as an apple, orange or donut. Feeding
@@ -31,17 +32,24 @@ from PIL import Image
 
 try:  # `uvicorn backend.server:app` from the project root
     from .indicators import analyze_visual_indicators
-    from .labels import FOOD_ALIASES, food_name_from_label, freshness_from_label
+    from .labels import FOOD_ALIASES, OTHER_LABEL, food_name_from_label, freshness_from_label
 except ImportError:  # `python evaluate.py` from inside backend/
     from indicators import analyze_visual_indicators
-    from labels import FOOD_ALIASES, food_name_from_label, freshness_from_label
+    from labels import FOOD_ALIASES, OTHER_LABEL, food_name_from_label, freshness_from_label
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 DETECTOR_PATH = PROJECT_ROOT / "yolov8n.pt"
-IDENTITY_PATH = PROJECT_ROOT / "runs" / "classify" / "runs" / "classify" / "food_multiclass" / "weights" / "best.pt"
+RUNS_DIR = PROJECT_ROOT / "runs" / "classify" / "runs" / "classify"
+IDENTITY_V2_PATH = RUNS_DIR / "eref_identity_v2" / "weights" / "best.pt"
+IDENTITY_V1_PATH = RUNS_DIR / "food_multiclass" / "weights" / "best.pt"
+FRESHNESS_V2_PATH = RUNS_DIR / "eref_freshness_v2" / "weights" / "best.pt"
 FRESHNESS_TFLITE_PATH = PROJECT_ROOT / "Datasets" / "dataset" / "dist" / "model_v2" / "final.tflite"
-FRESHNESS_YOLO_PATH = PROJECT_ROOT / "runs" / "classify" / "runs" / "classify" / "freshness" / "weights" / "best.pt"
+
+# The retrained models are used when present; the originals keep the app working
+# from a checkout that predates the retraining.
+IDENTITY_PATH = IDENTITY_V2_PATH if IDENTITY_V2_PATH.exists() else IDENTITY_V1_PATH
+FRESHNESS_YOLO_PATH = FRESHNESS_V2_PATH
 
 # COCO classes treated as a food region. yolov8n is COCO-pretrained, so it only
 # names a few of the dataset's foods; the rest come back as a nearby COCO class.
@@ -62,6 +70,12 @@ DETECTOR_FOOD_CLASSES = {
 # The only COCO classes that name a food this app identifies. Any other COCO
 # label (donut, cake, bowl...) says nothing about the food's type.
 DETECTOR_TO_FOOD = {"apple": "apple", "orange": "orange", "banana": "banana"}
+
+IDENTITY_MODEL_NAME = "yolov8n-cls (identity)"
+
+# Below this top-1 confidence the answer becomes "unknown food" rather than a guess.
+# 0 disables it. Chosen on the validation split by ``benchmark.py --tune``.
+MIN_IDENTITY_CONFIDENCE = 0.0
 
 DETECTION_CONF = 0.35
 TOP_K = 3
@@ -133,19 +147,19 @@ class FoodPipeline:
             else:
                 self._load_errors["identity"] = f"Weights not found: {self.identity_path}"
 
-            if self.freshness_tflite_path.exists():
-                try:
-                    self._freshness_tflite = _TFLiteFreshness(self.freshness_tflite_path)
-                except Exception as error:
-                    self._load_errors["freshness_tflite"] = str(error)
-
-            if self._freshness_tflite is None and self.freshness_yolo_path.exists():
+            if self.freshness_yolo_path.exists():
                 try:
                     from ultralytics import YOLO
 
                     self._freshness_yolo = YOLO(str(self.freshness_yolo_path))
                 except Exception as error:  # pragma: no cover
                     self._load_errors["freshness_yolo"] = str(error)
+
+            if self._freshness_yolo is None and self.freshness_tflite_path.exists():
+                try:
+                    self._freshness_tflite = _TFLiteFreshness(self.freshness_tflite_path)
+                except Exception as error:
+                    self._load_errors["freshness_tflite"] = str(error)
 
             self._loaded = True
 
@@ -161,10 +175,10 @@ class FoodPipeline:
     def status(self) -> dict[str, Any]:
         self.load()
         freshness_model = None
-        if self._freshness_tflite is not None:
-            freshness_model = "mobilenetv2-tflite"
-        elif self._freshness_yolo is not None:
+        if self._freshness_yolo is not None:
             freshness_model = "yolov8n-cls-freshness"
+        elif self._freshness_tflite is not None:
+            freshness_model = "mobilenetv2-tflite"
 
         return {
             "ready": self._identity is not None,
@@ -175,7 +189,7 @@ class FoodPipeline:
                     "path": str(self.detector_path),
                 },
                 "identity": {
-                    "name": "yolov8n-cls (food_multiclass)",
+                    "name": IDENTITY_MODEL_NAME,
                     "loaded": self._identity is not None,
                     "path": str(self.identity_path),
                     "classes": len(self.identity_names),
@@ -184,9 +198,9 @@ class FoodPipeline:
                     "name": freshness_model,
                     "loaded": freshness_model is not None,
                     "path": str(
-                        self.freshness_tflite_path
-                        if self._freshness_tflite is not None
-                        else self.freshness_yolo_path
+                        self.freshness_yolo_path
+                        if self._freshness_yolo is not None
+                        else self.freshness_tflite_path
                     ),
                 },
             },
@@ -309,12 +323,13 @@ class FoodPipeline:
         tomato the detector calls an "orange" is explained instead of contradicting
         the identity shown next to it.
         """
-        food = identity["foodName"] or "food"
+        food = identity["foodName"]
         label = detection["label"]
+        described = f"a {food}" if food else "not one of the supported foods"
 
         if not detection["used"]:
             detection["agreement"] = None
-            detail = f"{detection['reason']}; the CNN identified the {food} from the full frame"
+            detail = f"{detection['reason']}; the CNN read the full frame and found {described}"
         elif label in DETECTOR_TO_FOOD:
             if DETECTOR_TO_FOOD[label] == identity["foodName"]:
                 detection["agreement"] = "agrees"
@@ -322,14 +337,14 @@ class FoodPipeline:
             else:
                 detection["agreement"] = "differs"
                 detail = (
-                    f"YOLOv8 labelled the region '{label}' but the CNN identified a {food}; "
+                    f"YOLOv8 labelled the region '{label}' but the CNN found {described}; "
                     "the CNN takes precedence"
                 )
         else:
             detection["agreement"] = "outside_vocabulary"
             detail = (
                 f"YOLOv8 found a food region but its label ('{label}') is not a food type "
-                f"it can name; the CNN identified a {food}"
+                f"it can name; the CNN found {described}"
             )
         detection["reason"] = detail
         stages.insert(0, StageResult("detection", "yolov8n", detection["used"], detail))
@@ -351,22 +366,30 @@ class FoodPipeline:
             for i in order
         ]
         label = top_k[0]["label"]
-        rotten_mass = float(
-            sum(p for i, p in enumerate(probs) if freshness_from_label(str(names[i])) == "spoiled")
+        low_confidence = (
+            MIN_IDENTITY_CONFIDENCE > 0
+            and top_k[0]["confidence"] < MIN_IDENTITY_CONFIDENCE
+            and OTHER_LABEL in names.values()
         )
+        if low_confidence:
+            label = OTHER_LABEL
+        rotten_mass = identity_rotten_mass(probs, [str(names[i]) for i in range(len(names))])
+        food_name = food_name_from_label(label)
 
-        stages.append(
-            StageResult(
-                "identification",
-                "yolov8n-cls (food_multiclass)",
-                True,
-                f"{label} at {top_k[0]['confidence'] * 100:.1f}% confidence",
+        if low_confidence:
+            detail = (
+                f"too uncertain to name the food (best guess {top_k[0]['label']} at "
+                f"{top_k[0]['confidence'] * 100:.1f}%)"
             )
-        )
+        elif food_name is None:
+            detail = f"not one of the supported foods ({top_k[0]['confidence'] * 100:.1f}% confidence)"
+        else:
+            detail = f"{label} at {top_k[0]['confidence'] * 100:.1f}% confidence"
+        stages.append(StageResult("identification", IDENTITY_MODEL_NAME, True, detail))
         return {
-            "model": "yolov8n-cls (food_multiclass)",
+            "model": IDENTITY_MODEL_NAME,
             "label": label,
-            "foodName": food_name_from_label(label),
+            "foodName": food_name,
             "confidence": top_k[0]["confidence"],
             "topK": top_k,
             "rottenProbabilityMass": round(rotten_mass, 4),
@@ -378,56 +401,41 @@ class FoodPipeline:
     def _assess_freshness(
         self, image: Image.Image, identity: dict[str, Any], stages: list[StageResult]
     ) -> dict[str, Any]:
-        # The identity model already separates fresh_* from rotten_*, so its
-        # rotten probability mass is one opinion on freshness.
-        classifier_prob_rotten = identity["rottenProbabilityMass"]
+        # The identity model separates fresh_* from rotten_*, so its rotten share is
+        # a food-aware second opinion. It says nothing when the item is not a
+        # supported food, so it is left out then.
+        identity_prob_rotten = identity["rottenProbabilityMass"] if identity["foodName"] else None
         classifier_label = freshness_from_label(identity["label"])
 
         cnn_prob_rotten: float | None = None
         cnn_model: str | None = None
 
-        if self._freshness_tflite is not None:
+        if self._freshness_yolo is not None:
+            cnn_prob_rotten = yolo_prob_rotten(self._freshness_yolo.predict(image, verbose=False)[0])
+            cnn_model = "yolov8n-cls-freshness"
+        elif self._freshness_tflite is not None:
             cnn_prob_rotten = self._freshness_tflite.prob_rotten(image)
             cnn_model = "mobilenetv2-tflite"
-        elif self._freshness_yolo is not None:
-            result = self._freshness_yolo.predict(image, verbose=False)[0]
-            probs = result.probs.data.cpu().numpy()
-            rotten_index = next(
-                (i for i, name in result.names.items() if str(name).lower().startswith("rot")),
-                None,
-            )
-            if rotten_index is not None:
-                cnn_prob_rotten = float(probs[int(rotten_index)])
-                cnn_model = "yolov8n-cls-freshness"
 
+        prob_rotten = fuse_freshness(cnn_prob_rotten, identity_prob_rotten)
+        agreement = None
         if cnn_prob_rotten is None:
-            prob_rotten = classifier_prob_rotten
             model_name = identity["model"]
-            agreement = None
-            stages.append(
-                StageResult(
-                    "freshness",
-                    model_name,
-                    True,
-                    "derived from the identity model — no dedicated freshness CNN loaded",
-                )
-            )
+            detail = "derived from the identity model; no dedicated freshness CNN loaded"
         else:
-            # Weighted fusion: the dedicated binary CNN is the stronger signal,
-            # the multiclass head contributes the food-aware second opinion.
-            prob_rotten = 0.65 * cnn_prob_rotten + 0.35 * classifier_prob_rotten
             model_name = cnn_model
-            agreement = (cnn_prob_rotten >= 0.5) == (classifier_prob_rotten >= 0.5)
-            stages.append(
-                StageResult(
-                    "freshness",
-                    f"{cnn_model} + {identity['model']}",
-                    True,
-                    f"{'rotten' if prob_rotten >= 0.5 else 'fresh'} at {max(prob_rotten, 1 - prob_rotten) * 100:.1f}% confidence",
-                )
+            if identity_prob_rotten is not None:
+                agreement = (cnn_prob_rotten >= 0.5) == (identity_prob_rotten >= 0.5)
+                model_used = f"{cnn_model} + {identity['model']}"
+            else:
+                model_used = cnn_model
+            detail = (
+                f"{'rotten' if prob_rotten >= 0.5 else 'fresh'} at "
+                f"{max(prob_rotten, 1 - prob_rotten) * 100:.1f}% confidence"
             )
+            model_name = model_used
+        stages.append(StageResult("freshness", model_name, True, detail))
 
-        prob_rotten = float(min(max(prob_rotten, 0.0), 1.0))
         is_rotten = prob_rotten >= 0.5
         return {
             "model": model_name,
@@ -438,11 +446,54 @@ class FoodPipeline:
             "probFresh": round(1 - prob_rotten, 4),
             "sources": {
                 "freshnessCnn": None if cnn_prob_rotten is None else round(cnn_prob_rotten, 4),
-                "identityClassifier": round(classifier_prob_rotten, 4),
+                "identityClassifier": None if identity_prob_rotten is None else round(identity_prob_rotten, 4),
                 "identityLabel": classifier_label,
             },
             "agreement": agreement,
         }
+
+
+# Weight of the dedicated freshness CNN when it is fused with the identity model's
+# rotten share. Shared with evaluate.py so the reported metrics describe the verdict
+# the app shows.
+CNN_WEIGHT = 0.65
+
+
+def identity_rotten_mass(probs, names: list[str]) -> float:
+    """Share of the identity model's food probability that sits on ``rotten_*`` classes.
+
+    The ``other`` class is left out of the ratio: it carries no freshness opinion.
+    Returns 0.5 when the model puts no weight on any food class.
+    """
+    rotten = fresh = 0.0
+    for prob, name in zip(probs, names):
+        verdict = freshness_from_label(name)
+        if verdict == "spoiled":
+            rotten += float(prob)
+        elif verdict == "fresh":
+            fresh += float(prob)
+    total = rotten + fresh
+    return rotten / total if total > 1e-6 else 0.5
+
+
+def yolo_prob_rotten(result) -> float | None:
+    """Rotten probability from a YOLOv8-cls freshness result, or None if unlabelled."""
+    probs = result.probs.data.cpu().numpy()
+    index = next((i for i, name in result.names.items() if str(name).lower().startswith("rot")), None)
+    return None if index is None else float(probs[int(index)])
+
+
+def fuse_freshness(cnn_prob_rotten: float | None, identity_prob_rotten: float | None) -> float:
+    """Combine the freshness CNN and the identity model into one rotten probability."""
+    if cnn_prob_rotten is None and identity_prob_rotten is None:
+        return 0.5
+    if cnn_prob_rotten is None:
+        value = identity_prob_rotten
+    elif identity_prob_rotten is None:
+        value = cnn_prob_rotten
+    else:
+        value = CNN_WEIGHT * cnn_prob_rotten + (1 - CNN_WEIGHT) * identity_prob_rotten
+    return float(min(max(value, 0.0), 1.0))
 
 
 class _TFLiteFreshness:
@@ -488,6 +539,9 @@ __all__ = [
     "FOOD_ALIASES",
     "FoodPipeline",
     "ModelUnavailable",
+    "fuse_freshness",
+    "identity_rotten_mass",
+    "yolo_prob_rotten",
     "food_name_from_label",
     "freshness_from_label",
 ]

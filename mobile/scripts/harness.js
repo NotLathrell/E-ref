@@ -17,6 +17,9 @@ const MOBILE_ROOT = path.resolve(__dirname, '..');
 const cache = {};
 const asyncStore = {};
 
+/** Every navigation, alert and context call made while pressing controls. */
+const callLog = [];
+
 function named(name) {
   const C = (props) => React.createElement(name, props, props && props.children);
   C.displayName = name;
@@ -30,12 +33,23 @@ function makeReactNative() {
     'SafeAreaView', 'RefreshControl', 'StatusBar',
   ];
   const rn = {
-    Alert: { alert() {} },
+    Alert: { alert: (title) => callLog.push(['Alert', String(title)]) },
     Platform: { OS: 'android', select: (o) => (o.android !== undefined ? o.android : o.default) },
     Dimensions: { get: () => ({ width: 400, height: 800 }) },
     StyleSheet: { create: (s) => s, flatten: (s) => s },
   };
   for (const name of names) rn[name] = named(name);
+
+  // Animated API used by components/animations/AnimatedScreen.
+  const noopAnimation = () => ({ start() {}, stop() {} });
+  rn.Animated = {
+    Value: class { constructor(value) { this.value = value; } setValue(v) { this.value = v; } stopAnimation() {} },
+    View: named('Animated.View'),
+    timing: noopAnimation,
+    parallel: noopAnimation,
+    createAnimatedComponent: (component) => component,
+  };
+  rn.Easing = { out: (fn) => fn, cubic: () => 0 };
 
   rn.FlatList = (props) => {
     const data = props.data || [];
@@ -92,8 +106,25 @@ const mocks = {
       removeItem: async (key) => { delete asyncStore[key]; },
     },
   },
+  'react-native-reanimated': (() => {
+    const chain = { springify() { return chain; }, damping() { return chain; }, stiffness() { return chain; } };
+    return {
+      __esModule: true,
+      default: { View: named('Reanimated.View'), createAnimatedComponent: (component) => component },
+      FadeInUp: chain,
+      useSharedValue: (value) => ({ value }),
+      useAnimatedStyle: (factory) => factory(),
+      withSpring: (value) => value,
+    };
+  })(),
   '@react-navigation/native': {
-    useNavigation: () => ({ navigate() {}, goBack() {}, getParent: () => null, dispatch() {} }),
+    useIsFocused: () => true,
+    useNavigation: () => ({
+      navigate: (...args) => callLog.push(['navigate', ...args]),
+      goBack: () => callLog.push(['goBack']),
+      getParent: () => null,
+      dispatch: (action) => callLog.push(['dispatch', JSON.stringify(action)]),
+    }),
     useRoute: () => ({ params: {} }),
     CommonActions: { reset: (x) => x },
     NavigationContainer: named('NavigationContainer'),
@@ -217,6 +248,29 @@ function walk(element, depth, isRoot) {
   }
 }
 
+function buildNode(element, depth, isRoot) {
+  if (depth > 90 || element == null || element === false || element === true) return null;
+  if (typeof element === 'string' || typeof element === 'number') return { text: String(element) };
+  if (Array.isArray(element)) {
+    return { kids: element.map((e) => buildNode(e, depth + 1, false)).filter(Boolean) };
+  }
+  if (typeof element !== 'object') return null;
+  const { type, props = {} } = element;
+  if (typeof type === 'function') return buildNode(withHooks(() => type(props), isRoot), depth + 1, false);
+  const kids = props.children != null
+    ? [].concat(props.children).map((c) => buildNode(c, depth + 1, false)).filter(Boolean)
+    : [];
+  return typeof type === 'string' ? { type, props, kids } : { kids };
+}
+
+/** Render to a plain node tree so tests can inspect and press controls. */
+function renderTree(Component, overrides = {}) {
+  stateOverrides = overrides;
+  const tree = buildNode(React.createElement(Component, {}), 0, true);
+  stateOverrides = {};
+  return tree;
+}
+
 /**
  * Render a component and return the node count plus all rendered text.
  * `overrides` maps a root `useState` call index to the value it should return,
@@ -231,4 +285,4 @@ function render(Component, overrides = {}) {
   return { nodeCount, text: collectedText.join(' ') };
 }
 
-module.exports = { load, render, setContext, MOBILE_ROOT };
+module.exports = { load, render, renderTree, setContext, callLog, MOBILE_ROOT };

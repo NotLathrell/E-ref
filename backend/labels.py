@@ -13,6 +13,9 @@ FRESH_WORDS = ("fresh", "good", "ripe")
 # Prefixes stripped from a combined label to recover the bare food name.
 FRESHNESS_PREFIXES = ("fresh", "rotten", "spoiled", "ripe", "good", "bad")
 
+# Label the identity model uses for anything that is not one of the app's foods.
+OTHER_LABEL = "other"
+
 # Dataset spellings normalised to the names used in the mobile food catalog.
 FOOD_ALIASES = {
     "apples": "apple",
@@ -47,7 +50,8 @@ def food_name_from_label(label: str) -> str | None:
     """Strip the freshness prefix and normalise the remaining food name.
 
     ``fresh_apples`` and ``freshapples`` both become ``apple``. Returns ``None``
-    when nothing recognisable is left, so callers can fall back to a hint.
+    when nothing recognisable is left, or for the ``other`` class, so callers can
+    fall back to a hint.
     """
     value = str(label).lower().replace("_", " ").replace("-", " ").strip()
     for prefix in FRESHNESS_PREFIXES:
@@ -55,7 +59,7 @@ def food_name_from_label(label: str) -> str | None:
             value = value[len(prefix) :].strip()
             break
     value = " ".join(value.split())
-    if not value:
+    if not value or value in (OTHER_LABEL, "unknown"):
         return None
     return FOOD_ALIASES.get(value, value)
 

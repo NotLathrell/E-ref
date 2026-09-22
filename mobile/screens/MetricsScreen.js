@@ -11,18 +11,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { fetchMetrics, fetchHealth, formatPercent } from "../services/metrics";
 
+import { COLORS as THEME } from "../src/theme/colors";
+import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+
+// Shared palette from src/theme/colors, mapped to the roles this screen uses.
 const COLORS = {
-  background: "#FFF9F0",
-  card: "#FFFDF7",
-  cardAlt: "#F8F0E3",
-  primary: "#5C4033",
-  border: "#E6D8C8",
-  text: "#2F241F",
-  muted: "#7A6A60",
-  white: "#FFFFFF",
-  good: "#6F9B72",
-  warn: "#D89B3D",
-  bad: "#C95C54",
+  background: THEME.background,
+  card: THEME.white,
+  cardAlt: THEME.card,
+  primary: THEME.primary,
+  border: THEME.cardBorder,
+  text: THEME.text,
+  muted: THEME.muted,
+  white: THEME.white,
+  good: THEME.success,
+  warn: THEME.warning,
+  bad: THEME.danger,
 };
 
 const METRIC_TILES = [
@@ -320,6 +324,79 @@ function TaskCard({ task }) {
   );
 }
 
+const TASK_ROW_LABELS = {
+  food_identity: "Food identification",
+  freshness: "Freshness",
+  combined: "Food + freshness",
+};
+
+function BenchmarkCard({ benchmark }) {
+  const previous = benchmark.baseline
+    ? Object.fromEntries(benchmark.baseline.map((task) => [task.key, task]))
+    : {};
+
+  return (
+    <View
+      style={{
+        backgroundColor: COLORS.card,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        padding: 16,
+        marginBottom: 12,
+      }}
+    >
+      <Text style={{ fontSize: 15, fontWeight: "800", color: COLORS.text }}>
+        {benchmark.title}
+      </Text>
+      <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 3, lineHeight: 17 }}>
+        {benchmark.description}
+      </Text>
+      <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: "700", marginTop: 6 }}>
+        {benchmark.images.toLocaleString()} images
+      </Text>
+
+      {benchmark.tasks.map((task) => {
+        const label =
+          benchmark.id === "unknown_foods" && task.key === "food_identity"
+            ? "Correctly called unknown"
+            : TASK_ROW_LABELS[task.key] || task.title;
+        const before = previous[task.key];
+        return (
+          <View
+            key={task.key}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingVertical: 9,
+              borderTopWidth: 1,
+              borderTopColor: "#F2EADE",
+              marginTop: 8,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.text }}>{label}</Text>
+              <Text style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>
+                Precision {formatPercent(task.precision, 1)} · Recall {formatPercent(task.recall, 1)} · F1{" "}
+                {formatPercent(task.f1, 1)}
+                {task.binary ? ` · Rotten recall ${formatPercent(task.binary.recall, 1)}` : ""}
+              </Text>
+              {before ? (
+                <Text style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>
+                  Previous model: {formatPercent(before.accuracy, 1)}
+                </Text>
+              ) : null}
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: "800", color: scoreColor(task.accuracy) }}>
+              {formatPercent(task.accuracy, 1)}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export function MetricsScreen() {
   const navigation = useNavigation();
   const [report, setReport] = useState(null);
@@ -356,6 +433,7 @@ export function MetricsScreen() {
   };
 
   return (
+    <AnimatedScreen direction="right">
     <ScrollView
       style={{ flex: 1, backgroundColor: COLORS.background }}
       contentContainerStyle={{
@@ -432,7 +510,7 @@ export function MetricsScreen() {
             Start the API with{" "}
             <Text style={{ fontWeight: "700" }}>uvicorn backend.server:app --host 0.0.0.0 --port 8000</Text>
             , then generate the report with{" "}
-            <Text style={{ fontWeight: "700" }}>python backend/evaluate.py</Text>.
+            <Text style={{ fontWeight: "700" }}>python backend/benchmark.py</Text>.
           </Text>
 
           <TouchableOpacity
@@ -544,6 +622,24 @@ export function MetricsScreen() {
             <TaskCard key={task.key} task={task} />
           ))}
 
+          {report.benchmarks?.length > 1 ? (
+            <>
+              <Text style={{ fontSize: 17, fontWeight: "800", color: COLORS.text, marginTop: 4 }}>
+                Tougher, independent checks
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.muted, lineHeight: 18, marginTop: 3, marginBottom: 12 }}>
+                The scores above come from photos set aside from the training collection, so they
+                are the friendliest numbers. These use images from other collections, which is a
+                better guide to how the app does on a new photo.
+              </Text>
+              {report.benchmarks
+                .filter((benchmark) => benchmark.id !== "heldout_split")
+                .map((benchmark) => (
+                  <BenchmarkCard key={benchmark.id} benchmark={benchmark} />
+                ))}
+            </>
+          ) : null}
+
           {/* Loaded models */}
           {health?.models ? (
             <View
@@ -597,5 +693,6 @@ export function MetricsScreen() {
         </>
       ) : null}
     </ScrollView>
+    </AnimatedScreen>
   );
 }

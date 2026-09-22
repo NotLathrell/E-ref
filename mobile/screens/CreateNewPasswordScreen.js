@@ -4,11 +4,13 @@ import {
   Text,
   Image,
   TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
 } from "react-native";
+
+import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
 
 const BRAND = "#16567b";
 
@@ -134,107 +136,95 @@ export function CreateNewPasswordScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={keyboardAvoidingViewStyle}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={scrollContentStyle}
+    <AnimatedScreen>
+      <KeyboardAvoidingView
+        style={keyboardAvoidingViewStyle}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={logoContainerStyle}>
-          <Image
-            source={require("../assets/ERef-Logo.png")}
-            resizeMode="contain"
-            style={logoImageStyle}
-          />
-        </View>
-
-        <View style={titleContainerStyle}>
-          <Text style={titleStyle}>
-            Create New Password
-          </Text>
-
-          <Text style={subtitleStyle}>
-            Create a strong password for
-            {"\n"}
-            your E-REF account.
-          </Text>
-        </View>
-
-        <View style={sectionContainerStyle}>
-          <Text style={sectionLabelStyle}>
-            New Password
-          </Text>
-
-          <View style={inputWrapperStyle}>
-            <TextInput
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setError("");
-              }}
-              secureTextEntry={!showPassword}
-              placeholder="Enter new password"
-              placeholderTextColor="#999"
-              style={inputStyle}
-            />
-
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Text style={toggleTextStyle}>
-                {showPassword ? "Hide" : "Show"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={sectionContainerStyle}>
-          <Text style={sectionLabelStyle}>
-            Confirm Password
-          </Text>
-
-          <View style={inputWrapperStyle}>
-            <TextInput
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                setError("");
-              }}
-              secureTextEntry={!showConfirmPassword}
-              placeholder="Confirm your password"
-              placeholderTextColor="#999"
-              style={inputStyle}
-            />
-
-            <TouchableOpacity
-              onPress={() =>
-                setShowConfirmPassword(!showConfirmPassword)
-              }
-            >
-              <Text style={toggleTextStyle}>
-                {showConfirmPassword ? "Hide" : "Show"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {error ? (
-          <Text style={errorTextStyle}>
-            {error}
-          </Text>
-        ) : null}
-
-        <TouchableOpacity
-          onPress={handleSavePassword}
-          style={saveButtonStyle}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={scrollContentStyle}
         >
-          <Text style={saveButtonTextStyle}>
-            Save Password
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={logoContainerStyle}>
+            <Image
+              source={require("../assets/ERef-Logo.png")}
+              resizeMode="contain"
+              style={logoImageStyle}
+            />
+          </View>
+
+          <View style={titleContainerStyle}>
+            <Text style={titleStyle}>Create New Password</Text>
+
+            <Text style={subtitleStyle}>
+              Create a strong password for
+              {"\n"}
+              your E-REF account.
+            </Text>
+          </View>
+
+          <View style={sectionContainerStyle}>
+            <Text style={sectionLabelStyle}>New Password</Text>
+
+            <View style={inputWrapperStyle}>
+              <TextInput
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setError("");
+                }}
+                secureTextEntry={!showPassword}
+                placeholder="Enter new password"
+                placeholderTextColor="#999"
+                style={inputStyle}
+              />
+
+              <AnimatedTouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Text style={toggleTextStyle}>
+                  {showPassword ? "Hide" : "Show"}
+                </Text>
+              </AnimatedTouchableOpacity>
+            </View>
+          </View>
+
+          <View style={sectionContainerStyle}>
+            <Text style={sectionLabelStyle}>Confirm Password</Text>
+
+            <View style={inputWrapperStyle}>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  setError("");
+                }}
+                secureTextEntry={!showConfirmPassword}
+                placeholder="Confirm your password"
+                placeholderTextColor="#999"
+                style={inputStyle}
+              />
+
+              <AnimatedTouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Text style={toggleTextStyle}>
+                  {showConfirmPassword ? "Hide" : "Show"}
+                </Text>
+              </AnimatedTouchableOpacity>
+            </View>
+          </View>
+
+          {error ? <Text style={errorTextStyle}>{error}</Text> : null}
+
+          <AnimatedTouchableOpacity
+            onPress={handleSavePassword}
+            style={saveButtonStyle}
+          >
+            <Text style={saveButtonTextStyle}>Save Password</Text>
+          </AnimatedTouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AnimatedScreen>
   );
 }

@@ -274,7 +274,7 @@ function ShelfItemCard({ item, onPress }) {
 
             <Text
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 color: "#94a3b8",
               }}
             >
@@ -439,101 +439,101 @@ export function ShelfScreen() {
       ) : null}
 
       {/* Category Tabs */}
-<ScrollView
-  horizontal
-  showsHorizontalScrollIndicator={false}
-  directionalLockEnabled
-  contentContainerStyle={{
-    alignItems: "center",
-    paddingRight: 10,
-  }}
-  style={{
-    height: 36,
-    flexGrow: 0,
-    flexShrink: 0,
-    marginBottom: 16,
-  }}
->
-  <View
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-    }}
-  >
-    {CATEGORIES.map((category) => {
-      const active = activeTab === category;
-
-      return (
-        <TouchableOpacity
-          key={category}
-          onPress={() => setActiveTab(category)}
-          activeOpacity={0.8}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        directionalLockEnabled
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingRight: 10,
+        }}
+        style={{
+          height: 36,
+          flexGrow: 0,
+          flexShrink: 0,
+          marginBottom: 16,
+        }}
+      >
+        <View
           style={{
-            marginRight: 10,
-            height: 36,
-            minWidth: category === "All" ? 66 : 72,
-            paddingHorizontal: 16,
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: active ? COLORS.primary : COLORS.border,
-            backgroundColor: active ? COLORS.primary : COLORS.card,
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
           }}
         >
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: "600",
-              color: active ? COLORS.white : COLORS.text,
-            }}
-          >
-            {category}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </View>
-</ScrollView>
+          {CATEGORIES.map((category) => {
+            const active = activeTab === category;
+
+            return (
+              <TouchableOpacity
+                key={category}
+                onPress={() => setActiveTab(category)}
+                activeOpacity={0.8}
+                style={{
+                  marginRight: 10,
+                  height: 36,
+                  minWidth: category === "All" ? 66 : 72,
+                  paddingHorizontal: 16,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: active ? COLORS.primary : COLORS.border,
+                  backgroundColor: active ? COLORS.primary : COLORS.card,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: active ? COLORS.white : COLORS.text,
+                  }}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
 
       {/* Food Item Cards */}
       <FlatList
-  ref={listRef}
-  data={filteredItems}
-  keyExtractor={(item) => item.id}
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{
-    paddingBottom: 120,
-    paddingTop: 4,
-  }}
-  renderItem={({ item }) => (
-    <ShelfItemCard item={item} onPress={() => openItem(item)} />
-  )}
-  ListEmptyComponent={
-    <View
-      style={{
-        alignItems: "center",
-        marginTop: 32,
-        paddingHorizontal: 24,
-      }}
-    >
-      <Ionicons name="file-tray-outline" size={52} color="#cbd5e1" />
-
-      <Text
-        style={{
-          fontSize: 16,
-          color: "#64748b",
-          marginTop: 12,
-          textAlign: "center",
+        ref={listRef}
+        data={filteredItems}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 120,
+          paddingTop: 4,
         }}
-      >
-        {query.trim()
-          ? `Nothing matches "${query.trim()}".`
-          : "No items in this category. Scan food to add it."}
-      </Text>
-    </View>
-  }
-/>
+        renderItem={({ item }) => (
+          <ShelfItemCard item={item} onPress={() => openItem(item)} />
+        )}
+        ListEmptyComponent={
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: 32,
+              paddingHorizontal: 24,
+            }}
+          >
+            <Ionicons name="file-tray-outline" size={52} color="#cbd5e1" />
+
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#64748b",
+                marginTop: 12,
+                textAlign: "center",
+              }}
+            >
+              {query.trim()
+                ? `Nothing matches "${query.trim()}".`
+                : "No items in this category. Scan food to add it."}
+            </Text>
+          </View>
+        }
+      />
 
       {/* Food Detail Modal (unchanged logic, minor spacing tweaks optional) */}
       <Modal

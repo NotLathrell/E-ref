@@ -167,6 +167,14 @@ async function main() {
     check('App (navigation)', false, error.message);
   }
 
+  try {
+    const AppNavigator = load('navigation/AppNavigator.js').default;
+    const { nodeCount } = render(AppNavigator);
+    check('AppNavigator (tab bar with alert badge)', nodeCount > 0, `${nodeCount} nodes`);
+  } catch (error) {
+    check('AppNavigator (tab bar with alert badge)', false, error.message);
+  }
+
   // ------------------------------------------------------- API-backed flow
   if (!(await apiReachable())) {
     section('Inference API');

@@ -3,9 +3,9 @@
 Runs the trained classifiers over a held-out split and reports accuracy,
 precision, recall and F1 for three tasks:
 
-  food_identity  which food it is (9 types), from the multiclass CNN
+  food_identity  which food it is (9 types, or "unknown"), from the identity CNN
   freshness      fresh vs rotten (binary), from the dedicated freshness CNN
-  combined       the raw 18-class head, identity and freshness together
+  combined       the raw identity head, food and freshness together
 
 Images that also appear in the training set (byte-identical) are excluded, so
 the scores describe images the model has never seen. The dataset's ``val`` folder
@@ -45,9 +45,13 @@ from metrics import binary_report, classification_report  # noqa: E402
 from pipeline import (  # noqa: E402
     FRESHNESS_TFLITE_PATH,
     FRESHNESS_YOLO_PATH,
+    IDENTITY_MODEL_NAME,
     IDENTITY_PATH,
     PROJECT_ROOT,
     _TFLiteFreshness,
+    fuse_freshness,
+    identity_rotten_mass,
+    yolo_prob_rotten,
 )
 
 DEFAULT_SPLIT = PROJECT_ROOT / "Datasets" / "dataset" / ".training" / "food_multiclass" / "val"
@@ -132,19 +136,19 @@ def evaluate(
     identity_model = YOLO(str(identity_path))
     identity_names = [str(identity_model.names[i]) for i in range(len(identity_model.names))]
 
+    # Same order as the live pipeline: the retrained YOLO freshness model, else TFLite.
     freshness_cnn = None
+    freshness_yolo = None
     freshness_model_name = None
-    if freshness_tflite_path.exists():
+    if freshness_yolo_path.exists():
+        freshness_yolo = YOLO(str(freshness_yolo_path))
+        freshness_model_name = "yolov8n-cls-freshness"
+    elif freshness_tflite_path.exists():
         try:
             freshness_cnn = _TFLiteFreshness(freshness_tflite_path)
             freshness_model_name = "mobilenetv2-tflite"
         except Exception as error:
-            print(f"  TFLite freshness CNN unavailable ({error}); falling back to YOLO")
-
-    freshness_yolo = None
-    if freshness_cnn is None and freshness_yolo_path.exists():
-        freshness_yolo = YOLO(str(freshness_yolo_path))
-        freshness_model_name = "yolov8n-cls-freshness"
+            print(f"  TFLite freshness CNN unavailable ({error})")
 
     # Label spaces -------------------------------------------------------
     food_names = sorted({food_name_from_label(name) or "unknown" for name in identity_names})
@@ -181,17 +185,18 @@ def evaluate(
             food_true.append(food_index[food_name_from_label(folder_label) or "unknown"])
             food_pred.append(food_index[food_name_from_label(predicted_label) or "unknown"])
 
-            actual_fresh = 1 if freshness_from_label(folder_label) == "spoiled" else 0
-            fresh_true.append(actual_fresh)
-            fresh_pred.append(
-                _predict_freshness(
-                    path,
-                    result,
-                    identity_names,
-                    freshness_cnn,
-                    freshness_yolo,
+            # Freshness is only defined for the nine foods; "other" has no verdict.
+            if freshness_from_label(folder_label) != "unknown":
+                fresh_true.append(1 if freshness_from_label(folder_label) == "spoiled" else 0)
+                fresh_pred.append(
+                    _predict_freshness(
+                        path,
+                        result,
+                        identity_names,
+                        freshness_cnn,
+                        freshness_yolo,
+                    )
                 )
-            )
 
         done += len(batch)
         elapsed = time.perf_counter() - started
@@ -228,20 +233,20 @@ def evaluate(
         "tasks": {
             "food_identity": {
                 "title": "Food Identification",
-                "description": "Which food the CNN sees, across 9 food types.",
-                "model": "yolov8n-cls (food_multiclass)",
+                "description": "Which food the CNN sees: one of 9 food types, or unknown.",
+                "model": IDENTITY_MODEL_NAME,
                 **classification_report(food_true, food_pred, food_names),
             },
             "freshness": {
                 "title": "Freshness Detection",
                 "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
-                "model": freshness_model_name or "yolov8n-cls (food_multiclass)",
+                "model": freshness_model_name or IDENTITY_MODEL_NAME,
                 **binary_report(fresh_true, fresh_pred, freshness_names, positive_index=1),
             },
             "combined": {
                 "title": "Combined Identity + Freshness",
-                "description": "The raw 18-class head, food and freshness in one label.",
-                "model": "yolov8n-cls (food_multiclass)",
+                "description": "The raw identity head, food and freshness in one label.",
+                "model": IDENTITY_MODEL_NAME,
                 **classification_report(combined_true, combined_pred, identity_names),
             },
         },
@@ -262,28 +267,16 @@ def _predict_freshness(
     describe the verdict the app actually shows.
     """
     probs = identity_result.probs.data.cpu().numpy()
-    classifier_rotten = float(
-        sum(p for i, p in enumerate(probs) if freshness_from_label(identity_names[i]) == "spoiled")
-    )
+    is_food = food_name_from_label(identity_names[int(identity_result.probs.top1)]) is not None
+    classifier_rotten = identity_rotten_mass(probs, identity_names) if is_food else None
 
     cnn_rotten = None
     if freshness_cnn is not None:
         cnn_rotten = freshness_cnn.prob_rotten(Image.open(path))
     elif freshness_yolo is not None:
-        result = freshness_yolo.predict(path, verbose=False)[0]
-        fresh_probs = result.probs.data.cpu().numpy()
-        rotten_index = next(
-            (i for i, name in result.names.items() if str(name).lower().startswith("rot")),
-            None,
-        )
-        if rotten_index is not None:
-            cnn_rotten = float(fresh_probs[int(rotten_index)])
+        cnn_rotten = yolo_prob_rotten(freshness_yolo.predict(path, verbose=False)[0])
 
-    if cnn_rotten is None:
-        fused = classifier_rotten
-    else:
-        fused = 0.65 * cnn_rotten + 0.35 * classifier_rotten
-    return 1 if fused >= 0.5 else 0
+    return 1 if fuse_freshness(cnn_rotten, classifier_rotten) >= 0.5 else 0
 
 
 def _batched(items: list, size: int):

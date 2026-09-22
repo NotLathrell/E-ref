@@ -24,3 +24,5 @@ Datasets/dataset/.training/
 Datasets/
 runs/classify/val/
 runs/classify/runs/classify/food_multiclass/
+.venv-train/
+/weights/
