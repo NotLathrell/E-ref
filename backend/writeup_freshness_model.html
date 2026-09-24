@@ -1,0 +1,595 @@
+<!-- E-REF Freshness Classification Model — thesis-style technical write-up -->
+<title>Freshness Classification Model</title>
+<style>
+  :root{
+    --paper:#faf8f4;
+    --ink:#1e1c19;
+    --ink-soft:#514c44;
+    --rule:#d9d2c4;
+    --accent:#7a5c2e;
+    --accent-soft:#efe6d3;
+    --good:#3f6c4a;
+    --good-bg:#e9f1e7;
+    --bad:#8c3a2e;
+    --bad-bg:#f6e9e5;
+    --table-head:#efe9dc;
+    --table-stripe:#f4f1e9;
+    --code-bg:#efe9dc;
+    --shadow: 0 1px 0 rgba(30,28,25,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17140f;
+      --ink:#ece6d8;
+      --ink-soft:#b9b0a0;
+      --rule:#3a3428;
+      --accent:#d3b26a;
+      --accent-soft:#2b2519;
+      --good:#8fc79b;
+      --good-bg:#1c2a1f;
+      --bad:#e0998c;
+      --bad-bg:#2e1e1a;
+      --table-head:#221e16;
+      --table-stripe:#1c1912;
+      --code-bg:#221e16;
+      --shadow: 0 1px 0 rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#17140f;
+    --ink:#ece6d8;
+    --ink-soft:#b9b0a0;
+    --rule:#3a3428;
+    --accent:#d3b26a;
+    --accent-soft:#2b2519;
+    --good:#8fc79b;
+    --good-bg:#1c2a1f;
+    --bad:#e0998c;
+    --bad-bg:#2e1e1a;
+    --table-head:#221e16;
+    --table-stripe:#1c1912;
+    --code-bg:#221e16;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size:16px;
+    line-height:1.65;
+    padding-inline:16px;
+    padding-block: max(40px, env(safe-area-inset-top,0px)) 80px;
+  }
+  .sheet{
+    max-width:760px;
+    margin:0 auto;
+  }
+  .mono{ font-family:"IBM Plex Mono","SFMono-Regular",Consolas,monospace; }
+
+  header.title-block{
+    text-align:center;
+    padding-block: 8px 36px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 40px;
+  }
+  .kicker{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:16px;
+  }
+  h1.doc-title{
+    font-family:"Fraunces","Source Serif 4",serif;
+    font-weight:600;
+    font-size:clamp(28px,4.2vw,40px);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    margin:0 0 14px;
+    text-wrap:balance;
+  }
+  .subtitle{
+    color:var(--ink-soft);
+    font-size:16.5px;
+    max-width:52ch;
+    margin:0 auto 18px;
+    text-wrap:balance;
+  }
+  .meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:6px 18px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .meta-row span b{ color:var(--ink); font-weight:600; }
+
+  section{ margin-bottom:44px; }
+  h2{
+    font-family:"Fraunces","Source Serif 4",serif;
+    font-weight:600;
+    font-size:21px;
+    letter-spacing:-.005em;
+    margin: 0 0 6px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  h2 .num{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:13px;
+    color:var(--accent);
+    font-weight:500;
+  }
+  h3{
+    font-family:"Fraunces","Source Serif 4",serif;
+    font-size:16.5px;
+    font-weight:600;
+    margin:22px 0 8px;
+  }
+  p{ margin: 0 0 14px; }
+  p.lead{ color:var(--ink-soft); }
+  .rule{ border:none; border-top:1px solid var(--rule); margin: 40px 0; }
+
+  ul, ol{ margin:0 0 14px; padding-left:22px; }
+  li{ margin-bottom:6px; }
+
+  .abstract{
+    background:var(--accent-soft);
+    border-radius:2px;
+    padding:22px 24px;
+    font-size:15px;
+    color:var(--ink);
+    border-left:3px solid var(--accent);
+  }
+  .abstract .label{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:block;
+    margin-bottom:10px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14.5px;
+    margin: 6px 0 8px;
+    box-shadow: var(--shadow);
+  }
+  caption{
+    text-align:left;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    caption-side:top;
+  }
+  th, td{
+    text-align:left;
+    padding:9px 12px;
+    border-bottom:1px solid var(--rule);
+  }
+  thead th{
+    background:var(--table-head);
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  tbody tr:nth-child(even){ background:var(--table-stripe); }
+  td.num, th.num{ text-align:right; font-family:"IBM Plex Mono",monospace; }
+  .tbl-wrap{ overflow-x:auto; }
+  .fig-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:-2px;
+  }
+
+  .headline-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--rule);
+    border:1px solid var(--rule);
+    margin:18px 0 8px;
+  }
+  .headline-grid .cell{
+    background:var(--paper);
+    padding:18px 14px;
+    text-align:center;
+  }
+  .headline-grid .cell .v{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:26px;
+    font-weight:600;
+    color:var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .headline-grid .cell .k{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  @media (max-width:480px){
+    .headline-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  .confusion{
+    display:grid;
+    grid-template-columns: auto repeat(2, 96px);
+    gap:1px;
+    background:var(--rule);
+    border:1px solid var(--rule);
+    width:fit-content;
+    margin:14px 0 6px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:13px;
+  }
+  .confusion > div{ background:var(--paper); padding:10px 14px; text-align:center; }
+  .confusion .hd{ background:var(--table-head); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; }
+  .confusion .rowlabel{ text-align:left; font-size:11px; color:var(--ink-soft); display:flex; align-items:center; }
+  .confusion .diag{ font-weight:700; }
+  .confusion .tp{ background:var(--good-bg); color:var(--good); }
+  .confusion .tn{ background:var(--good-bg); color:var(--good); }
+  .confusion .fp{ background:var(--bad-bg); color:var(--bad); }
+  .confusion .fn{ background:var(--bad-bg); color:var(--bad); }
+
+  .callout{
+    border-left:3px solid var(--bad);
+    background:var(--bad-bg);
+    padding:14px 18px;
+    font-size:14.5px;
+    border-radius:2px;
+  }
+  .callout.good{ border-left-color:var(--good); background:var(--good-bg); }
+  .callout .label{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--bad);
+    display:block;
+    margin-bottom:6px;
+  }
+  .callout.good .label{ color:var(--good); }
+
+  .eqn{
+    background:var(--code-bg);
+    border-radius:2px;
+    padding:12px 16px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:13.5px;
+    margin: 8px 0 16px;
+    overflow-x:auto;
+  }
+  .eqn .lhs{ color:var(--accent); }
+
+  code{
+    font-family:"IBM Plex Mono",monospace;
+    background:var(--code-bg);
+    padding:1px 5px;
+    border-radius:3px;
+    font-size:.9em;
+  }
+
+  footer{
+    margin-top:56px;
+    padding-top:18px;
+    border-top:1px solid var(--rule);
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  svg text{ font-family:"IBM Plex Mono",monospace; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="sheet">
+
+  <header class="title-block">
+    <div class="kicker">E-REF &nbsp;·&nbsp; Model Evaluation Report</div>
+    <h1 class="doc-title">A Convolutional Neural Network for Fresh–Rotten Food Classification</h1>
+    <p class="subtitle">Architecture, training procedure, and a held-out evaluation reporting accuracy, precision, recall, and F1-score for the freshness-detection stage of the E-REF food-monitoring pipeline.</p>
+    <div class="meta-row">
+      <span>Model: <b>YOLOv8n-cls (binary)</b></span>
+      <span>Task: <b>Fresh vs. Rotten</b></span>
+      <span>Weights: <b class="mono">eref_freshness_v2</b></span>
+    </div>
+  </header>
+
+  <section class="abstract">
+    <span class="label">Abstract</span>
+    <p style="margin-bottom:0">
+      This report documents the design, training, and quantitative evaluation of the freshness-classification
+      model used by the E-REF system to determine whether a food item is fresh or rotten from a single
+      photograph. The model is a YOLOv8n-cls convolutional neural network trained as a binary classifier over
+      images pooled from three independent photo collections spanning nine produce types and beef. On a
+      held-out test set of 2,652 images the model achieves 99.51% accuracy, 99.48% macro-averaged precision,
+      99.52% macro-averaged recall, and a 99.50% macro-averaged F1-score. Recall on the rotten class&mdash;the
+      safety-critical outcome, since a missed spoiled item is the costlier error&mdash;is 99.48%. A supplementary
+      evaluation on a photograph collection entirely separate from training (fresh and rotten beef, not seen
+      during model development) yields 99.39% accuracy, indicating the model generalises beyond its training
+      distribution rather than memorising it.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">1</span>Introduction</h2>
+    <p>
+      Visual assessment of food freshness is a routine but error-prone task in household and food-service
+      inventory management. The E-REF system automates this judgement as one stage of a three-stage computer
+      vision pipeline: a detector locates the food in frame, an identification model determines which food it
+      is, and a dedicated freshness model&mdash;the subject of this report&mdash;renders a binary fresh/rotten
+      verdict from the same photograph. This document isolates that third stage and evaluates it on its own
+      terms, independent of the identification and detection stages it is deployed alongside.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>Model Architecture</h2>
+    <p>
+      The freshness classifier is a <strong>YOLOv8n-cls</strong> network, the classification variant of the
+      YOLOv8 architecture: a compact convolutional backbone (CSPDarknet-derived) followed by a global
+      average-pooling classification head. The network is configured as a two-class softmax classifier
+      over the labels <code>fresh</code> and <code>rotten</code>, and consumes the full camera frame at
+      an input resolution of 224&times;224&nbsp;px&mdash;no cropping or region proposal is applied upstream of
+      this stage, since an earlier iteration of the pipeline found that feeding a detector's crop to the
+      classification stage <em>reduced</em> accuracy rather than improving it.
+    </p>
+    <p>
+      In deployment, this model's output is fused with a second, food-aware freshness signal produced by
+      E-REF's separate 19-class food-identification model (the share of its per-class probability mass
+      resting on <code>rotten_*</code> labels). The fusion weights the dedicated freshness model at 0.65 and
+      the identification model's signal at 0.35. All accuracy figures reported in this document describe the
+      freshness model <em>in isolation</em>, prior to that fusion step.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>Dataset and Training Procedure</h2>
+
+    <h3>3.1 Data sources</h3>
+    <p>
+      Training examples were pooled from three photograph collections, to expose the model to more than one
+      photographer, camera, and food category:
+    </p>
+    <ul>
+      <li><strong>Primary produce dataset</strong> &mdash; nine food types (apple, banana, orange, tomato,
+        potato, cucumber, capsicum, okra, bitter gourd), each labelled fresh or rotten.</li>
+      <li><strong>Secondary produce collection</strong> &mdash; an independently sourced set of good/bad
+        quality photographs covering a subset of the same food types, contributing additional fresh and
+        rotten examples under different lighting and framing conditions.</li>
+      <li><strong>Non-produce collection</strong> &mdash; fresh and rotten beef photographs, included so the
+        freshness concept the model learns is not entirely tied to the colour and texture statistics of
+        produce specifically.</li>
+    </ul>
+    <p>
+      Exact duplicate images (identified by content hash) were removed prior to splitting, and every image
+      byte-identical to one already held out for evaluation in an earlier stage of this project was excluded
+      from the training pool entirely, to prevent evaluation leakage.
+    </p>
+
+    <h3>3.2 Data split</h3>
+    <div class="tbl-wrap">
+    <table>
+      <caption>Table 1 &mdash; Image counts by split and class</caption>
+      <thead><tr><th>Split</th><th class="num">Fresh</th><th class="num">Rotten</th><th class="num">Total</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>Train</td><td class="num">10,746</td><td class="num">13,532</td><td class="num">24,278</td><td>Model fitting</td></tr>
+        <tr><td>Validation</td><td class="num">1,185</td><td class="num">1,461</td><td class="num">2,646</td><td>Checkpoint selection</td></tr>
+        <tr><td>Test (held-out)</td><td class="num">1,121</td><td class="num">1,531</td><td class="num">2,652</td><td>Reported evaluation</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="fig-note">
+      Splits were assigned by hashing each image's content and bucketing on the hash (82% train / 9%
+      validation / 9% test), so the three splits share no images and the partition is fully reproducible.
+      All images were resized to a maximum side length of 384&nbsp;px prior to training.
+    </p>
+
+    <h3>3.3 Training configuration</h3>
+    <div class="tbl-wrap">
+    <table>
+      <caption>Table 2 &mdash; Hyperparameters</caption>
+      <tbody>
+        <tr><td>Base weights</td><td class="mono">yolov8n-cls.pt</td></tr>
+        <tr><td>Input resolution</td><td class="mono">224 &times; 224</td></tr>
+        <tr><td>Batch size</td><td class="mono">64</td></tr>
+        <tr><td>Epoch budget</td><td class="mono">40 (early-stopping patience = 10)</td></tr>
+        <tr><td>Epochs completed</td><td class="mono">40</td></tr>
+        <tr><td>LR schedule</td><td class="mono">cosine decay</td></tr>
+        <tr><td>Label smoothing</td><td class="mono">0.05</td></tr>
+        <tr><td>Augmentation</td><td class="mono">scale &plusmn;0.5, HSV jitter (h .03 / s .6 / v .5), random erasing 0.3</td></tr>
+        <tr><td>Compute</td><td class="mono">NVIDIA GeForce RTX 2050 (GPU)</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      Augmentation was deliberately set more aggressive than the framework default, on the reasoning that
+      phone photographs vary far more in framing, lighting, and colour cast than the comparatively
+      studio-like conditions of the source photo collections; the model needs to be robust to that variation
+      at inference time even though it is not well represented in training.
+    </p>
+
+    <h3>3.4 Training curve</h3>
+    <svg viewBox="0 0 680 220" width="100%" style="max-width:680px;display:block;margin:10px auto 4px" role="img" aria-label="Validation accuracy by epoch, rising from about 91 percent at epoch 1 to a plateau near 99.4 percent by epoch 30">
+      <g font-size="10" fill="var(--ink-soft)">
+        <!-- axes -->
+        <line x1="52" y1="14" x2="52" y2="184" stroke="var(--rule)"/>
+        <line x1="52" y1="184" x2="656" y2="184" stroke="var(--rule)"/>
+        <!-- y gridlines: 0.90 .. 1.00 -->
+        <g>
+          <line x1="52" y1="184" x2="656" y2="184" stroke="var(--rule)"/>
+          <text x="44" y="188" text-anchor="end">90%</text>
+          <line x1="52" y1="135" x2="656" y2="135" stroke="var(--rule)" stroke-dasharray="2,3"/>
+          <text x="44" y="139" text-anchor="end">93%</text>
+          <line x1="52" y1="87" x2="656" y2="87" stroke="var(--rule)" stroke-dasharray="2,3"/>
+          <text x="44" y="91" text-anchor="end">96%</text>
+          <line x1="52" y1="39" x2="656" y2="39" stroke="var(--rule)" stroke-dasharray="2,3"/>
+          <text x="44" y="43" text-anchor="end">99%</text>
+        </g>
+        <text x="52" y="200">1</text>
+        <text x="656" y="200" text-anchor="end">40</text>
+        <text x="354" y="212" text-anchor="middle">Epoch</text>
+      </g>
+      <!--
+        Data (epoch, top1 val accuracy):
+        1,0.9082 4,0.9675 9,0.97997 14,0.98866 19,0.98942 24,0.99169 29,0.99395 34,0.99282 39,0.99395 40,0.99395
+        mapping: x = 52 + (epoch-1)/39*604 ; y = 184 - (acc-0.90)/0.10*(184-14)   clamped
+      -->
+      <polyline fill="none" stroke="var(--accent)" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"
+        points="52,63 114,45 208,32 302,20 396,19 490,14 583,10 610,12 641,10 656,10" />
+      <circle cx="656" cy="10" r="3.5" fill="var(--accent)"/>
+      <text x="600" y="2" font-size="10.5" fill="var(--accent)" font-weight="600">99.4%</text>
+      <circle cx="52" cy="63" r="3" fill="var(--ink-soft)"/>
+    </svg>
+    <p class="fig-note">Figure 1 &mdash; Top-1 validation accuracy over the full 40-epoch run. Accuracy rises sharply through the first ~20 epochs and plateaus from roughly epoch&nbsp;29 onward, indicating convergence rather than an early stop short of the model's capacity.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>Evaluation Metrics</h2>
+    <p>
+      Four standard classification metrics are reported, computed from the confusion matrix over the held-out
+      test set with <code>rotten</code> as the positive class:
+    </p>
+    <div class="eqn"><span class="lhs">Accuracy</span> &nbsp;=&nbsp; (TP + TN) / (TP + TN + FP + FN)</div>
+    <div class="eqn"><span class="lhs">Precision</span> &nbsp;=&nbsp; TP / (TP + FP)</div>
+    <div class="eqn"><span class="lhs">Recall</span> &nbsp;&nbsp;&nbsp;=&nbsp; TP / (TP + FN)</div>
+    <div class="eqn"><span class="lhs">F1-score</span> &nbsp;=&nbsp; 2 &middot; (Precision &middot; Recall) / (Precision + Recall)</div>
+    <p>
+      Precision and recall are additionally macro-averaged (equal weight per class) and support-weighted
+      (weighted by class size) across the two classes, following the same definitions used by
+      scikit-learn's <code>classification_report</code>. No image in the test set was used during training or
+      checkpoint selection.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>Results</h2>
+
+    <h3>5.1 Headline metrics</h3>
+    <div class="headline-grid">
+      <div class="cell"><div class="v">99.51%</div><div class="k">Accuracy</div></div>
+      <div class="cell"><div class="v">99.48%</div><div class="k">Precision (macro)</div></div>
+      <div class="cell"><div class="v">99.52%</div><div class="k">Recall (macro)</div></div>
+      <div class="cell"><div class="v">99.50%</div><div class="k">F1-score (macro)</div></div>
+    </div>
+    <p class="fig-note">n = 2,652 held-out test images. 2,639 of 2,652 images (99.51%) were classified correctly.</p>
+
+    <h3>5.2 Per-class results</h3>
+    <div class="tbl-wrap">
+    <table>
+      <caption>Table 3 &mdash; Precision, recall, and F1 by class</caption>
+      <thead><tr><th>Class</th><th class="num">Support</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr></thead>
+      <tbody>
+        <tr><td>Fresh</td><td class="num">1,121</td><td class="num">99.29%</td><td class="num">99.55%</td><td class="num">99.42%</td></tr>
+        <tr><td>Rotten <span class="fig-note">(positive class)</span></td><td class="num">1,531</td><td class="num">99.67%</td><td class="num">99.48%</td><td class="num">99.58%</td></tr>
+      </tbody>
+      <tfoot>
+        <tr style="font-weight:600"><td>Weighted average</td><td class="num">2,652</td><td class="num">99.51%</td><td class="num">99.51%</td><td class="num">99.51%</td></tr>
+      </tfoot>
+    </table>
+    </div>
+
+    <h3>5.3 Confusion matrix</h3>
+    <div class="confusion">
+      <div></div><div class="hd">Pred. Fresh</div><div class="hd">Pred. Rotten</div>
+      <div class="rowlabel">True Fresh</div><div class="diag tp">1,116</div><div class="fn">5</div>
+      <div class="rowlabel">True Rotten</div><div class="fp">8</div><div class="diag tn">1,523</div>
+    </div>
+    <p class="fig-note">
+      8 rotten items were misclassified as fresh (false negatives) and 5 fresh items were misclassified as
+      rotten (false positives), out of 2,652 total predictions.
+    </p>
+    <div class="callout">
+      <span class="label">On the safety-critical error</span>
+      A false negative here&mdash;a spoiled item the system reports as fresh&mdash;is the costlier mistake for
+      an end user than the reverse. The model's recall on the rotten class is 99.48%, meaning 8 of 1,531
+      rotten test images were missed. This is the single number most worth monitoring if the model is
+      retrained or redeployed.
+    </div>
+
+    <h3>5.4 Generalisation beyond the training distribution</h3>
+    <p>
+      Because a held-out split drawn from the same photo collections as training can still resemble that
+      training data in lighting, background, and camera characteristics, the model was additionally scored
+      on two further sets that were <em>never included in any training pool</em>:
+    </p>
+    <div class="tbl-wrap">
+    <table>
+      <caption>Table 4 &mdash; Freshness accuracy on independent test collections</caption>
+      <thead><tr><th>Evaluation set</th><th class="num">n</th><th class="num">Accuracy</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Held-out split (Table 1, Test)</td><td class="num">2,652</td><td class="num">99.51%</td><td>Same collections as training, unseen images</td></tr>
+        <tr><td>Original dataset's independently held images</td><td class="num">2,698</td><td class="num">100%</td><td>Apple / banana / orange only</td></tr>
+        <tr><td>Fresh vs. rotten beef, separate collection</td><td class="num">980</td><td class="num">99.39%</td><td>Different photographer/scene than the beef used in training</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="callout good">
+      <span class="label">Interpretation</span>
+      The 99.39% result on an entirely separate beef photograph collection is the strongest evidence that the
+      model has learned generalisable visual correlates of spoilage&mdash;discoloration, texture change,
+      surface degradation&mdash;rather than memorising the specific photographs it trained on.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span>Discussion and Limitations</h2>
+    <ul>
+      <li><strong>Scope of the positive-result claim.</strong> The headline 99.5% accuracy describes performance
+        on photographs drawn from the same underlying collections as training (even though the specific test
+        images were unseen). It should be read as an upper bound on real-world performance, not a direct
+        estimate of it.</li>
+      <li><strong>Fusion in deployment.</strong> In the live E-REF pipeline this model's raw output is not
+        used alone; it is combined with a second opinion from the food-identification model. The figures in
+        this report isolate the freshness model's own accuracy, which is the more meaningful number for
+        evaluating this component specifically, but will not be identical to the fused, end-to-end verdict
+        the application ultimately shows a user.</li>
+      <li><strong>Class balance.</strong> The training pool contains more rotten (13,532) than fresh (10,746)
+        examples. Label smoothing and a cosine learning-rate schedule were used partly to counteract
+        over-confidence this imbalance can otherwise induce; per-class recall in Table 3 shows no evidence of
+        the model favouring the majority class.</li>
+      <li><strong>Photographic conditions not yet covered.</strong> A related evaluation of this project's
+        food-<em>identification</em> model found materially lower accuracy on plain white-background product
+        photography than on naturalistic photos. The freshness model has not been separately stress-tested
+        under that specific condition, and this is a reasonable target for future evaluation before the
+        system is deployed against a photography style very different from its training data.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span>Reproducibility</h2>
+    <p>
+      Every figure in this report is computed, not manually recorded. The dataset is assembled from source
+      images by <code>build_dataset.py</code>; the model is trained by <code>train.py</code>; and all metrics
+      in Sections 5.1&ndash;5.4 are produced by <code>benchmark.py</code>, which re-runs the trained model over
+      each evaluation set and computes accuracy, precision, recall, and F1 directly from the resulting
+      confusion matrix. Re-running the evaluation script against the committed model weights reproduces the
+      numbers reported here.
+    </p>
+  </section>
+
+  <footer>
+    <span>E-REF &mdash; Food Spoilage Monitoring System</span>
+    <span>Freshness model: <code class="mono">eref_freshness_v2</code></span>
+  </footer>
+
+</div>

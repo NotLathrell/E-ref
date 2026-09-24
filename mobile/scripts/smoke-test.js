@@ -252,11 +252,27 @@ async function main() {
   // useState order: step, imageUri, category, storageId, labelText,
   // foodNameOverride, flags, busy, analysis, preview
   const resultView = render(CameraScreen, { 0: 'result', 1: lastImage, 8: lastAnalysis, 9: lastPreview });
-  for (const needle of ['YOLOv8 Detection', 'CNN Identification', 'OCR Extraction', 'TTI & Risk', 'Recommendations', 'Pipeline']) {
-    check(`shows the "${needle}" section`, resultView.text.includes(needle));
-  }
+
+  // Required by the simplified result screen: food name, fresh/rotten, dates (if any),
+  // visible indicators, remaining shelf life, and recommendations — nothing else.
+  check('shows the food name', resultView.text.includes(lastPreview.title));
   check('shows the freshness verdict', /Fresh|Rotten/.test(resultView.text));
-  check('explains how the detector and CNN relate', resultView.text.includes('CNN cross-check') || !lastAnalysis.cnn.detection.used);
+  const hasDates = Boolean(lastAnalysis.ocr?.expiryDate || lastAnalysis.ocr?.manufacturingDate);
+  check('shows expiry/manufactured dates when available', !hasDates || resultView.text.includes('Dates'));
+  for (const needle of ['Discoloration', 'Texture issues', 'Packaging damage', 'Mold spots', 'Excess moisture']) {
+    check(`lists the "${needle}" indicator`, resultView.text.includes(needle));
+  }
+  check('shows remaining food life in days', resultView.text.includes('Remaining Food Life') && resultView.text.includes(lastPreview.daysLabel));
+  check('shows the "Recommendations" section', resultView.text.includes('Recommendations'));
+  check('shows how to store the food (Storage & Preservation)', resultView.text.includes('Storage & Preservation'));
+  check('names the recommended storage location', Boolean(lastPreview.recommendations.bestPractice?.storageLabel) &&
+    resultView.text.includes(lastPreview.recommendations.bestPractice.storageLabel));
+  check('states whether the item can be frozen', resultView.text.includes('Can be frozen') || resultView.text.includes('Do not freeze'));
+
+  // Explicitly removed per request: algorithm/model names and raw technical framing.
+  for (const needle of ['YOLOv8', 'CNN', 'OCR', 'TTI', 'Pipeline', 'yolov8n', 'mobilenetv2']) {
+    check(`no longer shows "${needle}"`, !resultView.text.includes(needle));
+  }
 
   section('Metrics view');
   try {

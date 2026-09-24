@@ -306,6 +306,32 @@ const primaryActionDescStyle = {
   lineHeight: 16,
 };
 
+// Icon and colour per storage location, so the storage recommendation reads
+// at a glance (freezer vs. fridge vs. pantry vs. counter) instead of as plain text.
+const STORAGE_ICONS = {
+  freezer: { icon: "snow-outline", bg: "#E0F2FE", color: "#0284c7" },
+  fridge_top: { icon: "thermometer-outline", bg: "#EFF6FF", color: "#2563eb" },
+  fridge_bottom: {
+    icon: "thermometer-outline",
+    bg: "#EFF6FF",
+    color: "#2563eb",
+  },
+  pantry: {
+    icon: "file-tray-stacked-outline",
+    bg: "#FDF4E3",
+    color: "#b45309",
+  },
+  counter: { icon: "home-outline", bg: "#F0FDF4", color: "#16a34a" },
+};
+const DEFAULT_STORAGE_ICON = {
+  icon: "cube-outline",
+  bg: "#F3E4D5",
+  color: BRAND,
+};
+function storageIconFor(storageId) {
+  return STORAGE_ICONS[storageId] || DEFAULT_STORAGE_ICON;
+}
+
 const recsSectionTitleStyle = {
   fontSize: 14,
   fontWeight: "700",
@@ -840,9 +866,7 @@ export function CameraScreen() {
           {/* Header */}
           <View style={{ marginBottom: 18 }}>
             <Text style={headerTitleStyle}>Scan Result</Text>
-            <Text style={headerSubtitleStyle}>
-              OCR + CNN + TTI + risk scoring complete
-            </Text>
+            <Text style={headerSubtitleStyle}>Here's what we found</Text>
           </View>
 
           {/* Food Image */}
@@ -879,7 +903,7 @@ export function CameraScreen() {
             )}
           </View>
 
-          {/* Food Summary */}
+          {/* Food name + freshness verdict */}
           <View style={cardStyle}>
             <Text
               style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}
@@ -891,77 +915,19 @@ export function CameraScreen() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                marginTop: 4,
+                marginTop: 14,
               }}
             >
-              <Text style={{ fontSize: 12, color: COLORS.muted }}>
-                {preview.category}
-              </Text>
-              <Text style={{ color: COLORS.card, marginHorizontal: 6 }}>
-                -{" "}
-              </Text>
-              <Text style={{ fontSize: 12, color: COLORS.muted }}>
-                {preview.subtitle}
-              </Text>
-            </View>
-
-            <View style={badgeRowStyle}>
-              <View
-                style={[
-                  badgeStyle,
-                  {
-                    backgroundColor: analysis.cnn.freshness.isSpoiled
-                      ? "#ef4444"
-                      : "#22c55e",
-                  },
-                ]}
-              >
-                <Text style={badgeTextStyle}>
-                  {analysis.cnn.freshness.label}{" "}
-                  {(analysis.cnn.freshness.confidence * 100).toFixed(0)}%
-                </Text>
-              </View>
-
-              <View style={[badgeStyle, { backgroundColor: BRAND }]}>
-                <Text style={badgeTextStyle}>
-                  Risk {(preview.riskScore * 100).toFixed(0)}%
-                </Text>
-              </View>
-
-              <View style={[badgeStyle, { backgroundColor: COLORS.border }]}>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "700",
-                    color: COLORS.text,
-                  }}
-                >
-                  {preview.daysLabel}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Freshness verdict */}
-          <View
-            style={[
-              cardStyle,
-              {
-                borderWidth: 2,
-                borderColor: analysis.cnn.freshness.isSpoiled ? "#fecaca" : "#bbf7d0",
-                backgroundColor: analysis.cnn.freshness.isSpoiled ? "#fef2f2" : "#f0fdf4",
-              },
-            ]}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: analysis.cnn.freshness.isSpoiled ? "#ef4444" : "#22c55e",
+                  backgroundColor: analysis.cnn.freshness.isSpoiled
+                    ? "#ef4444"
+                    : "#22c55e",
                 }}
               >
                 <Ionicons
@@ -970,7 +936,7 @@ export function CameraScreen() {
                       ? "close-circle-outline"
                       : "checkmark-circle-outline"
                   }
-                  size={28}
+                  size={26}
                   color="#ffffff"
                 />
               </View>
@@ -980,49 +946,19 @@ export function CameraScreen() {
                   style={{
                     fontSize: 20,
                     fontWeight: "800",
-                    color: analysis.cnn.freshness.isSpoiled ? "#b91c1c" : "#15803d",
+                    color: analysis.cnn.freshness.isSpoiled
+                      ? "#b91c1c"
+                      : "#15803d",
                   }}
                 >
                   {analysis.cnn.freshness.isSpoiled ? "Rotten" : "Fresh"}
                 </Text>
-                <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>
-                  {(analysis.cnn.freshness.confidence * 100).toFixed(1)}% confidence
-                  · {analysis.cnn.freshness.model}
+                <Text
+                  style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}
+                >
+                  {(analysis.cnn.freshness.confidence * 100).toFixed(0)}%
+                  confidence
                 </Text>
-              </View>
-            </View>
-
-            <View style={{ marginTop: 14 }}>
-              <View style={rowBetweenStyle}>
-                <Text style={rowLabelStyle}>Fresh</Text>
-                <Text style={rowValueStyle}>
-                  {(analysis.cnn.freshness.probFresh * 100).toFixed(1)}%
-                </Text>
-              </View>
-              <View style={spoilageBarBgStyle}>
-                <View
-                  style={{
-                    height: "100%",
-                    width: `${Math.min(100, analysis.cnn.freshness.probFresh * 100)}%`,
-                    backgroundColor: "#22c55e",
-                  }}
-                />
-              </View>
-
-              <View style={[rowBetweenStyle, { marginTop: 6 }]}>
-                <Text style={rowLabelStyle}>Rotten</Text>
-                <Text style={rowValueStyle}>
-                  {(analysis.cnn.freshness.probRotten * 100).toFixed(1)}%
-                </Text>
-              </View>
-              <View style={spoilageBarBgStyle}>
-                <View
-                  style={{
-                    height: "100%",
-                    width: `${Math.min(100, analysis.cnn.freshness.probRotten * 100)}%`,
-                    backgroundColor: "#ef4444",
-                  }}
-                />
               </View>
             </View>
 
@@ -1049,522 +985,152 @@ export function CameraScreen() {
                     lineHeight: 15,
                   }}
                 >
-                  The two freshness models disagreed — inspect this item manually
-                  before deciding.
+                  Uncertain result — inspect this item by hand before deciding.
                 </Text>
               </View>
             ) : null}
           </View>
 
-          {/* YOLOv8 detection */}
-          <View style={cardStyle}>
-            <View style={sectionTitleRowStyle}>
-              <View style={[sectionIconBoxStyle, { backgroundColor: "#EEF4EA" }]}>
-                <Ionicons name="locate-outline" size={18} color={BRAND} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={sectionTitleStyle}>YOLOv8 Detection</Text>
-                <Text style={sectionSubtitleStyle}>
-                  Locates the food and cross-checks the CNN
-                </Text>
-              </View>
-            </View>
-
-            <View style={rowBetweenStyle}>
-              <Text style={rowLabelStyle}>Region found</Text>
-              <Text
-                style={[
-                  rowValueStyle,
-                  { color: analysis.cnn.detection.used ? "#16a34a" : COLORS.muted },
-                ]}
-              >
-                {analysis.cnn.detection.used ? "Yes" : "No"}
-              </Text>
-            </View>
-
-            {analysis.cnn.detection.used ? (
-              <>
-                <View style={rowBetweenStyle}>
-                  <Text style={rowLabelStyle}>YOLOv8 label</Text>
-                  <Text style={rowValueStyle}>{analysis.cnn.detection.label}</Text>
+          {/* Expiry & manufactured dates */}
+          {analysis?.ocr?.expiryDate || analysis?.ocr?.manufacturingDate ? (
+            <View style={cardStyle}>
+              <View style={sectionTitleRowStyle}>
+                <View style={sectionIconBoxStyle}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={BRAND}
+                  />
                 </View>
+                <Text style={sectionTitleStyle}>Dates</Text>
+              </View>
+
+              {analysis?.ocr?.expiryDate ? (
                 <View style={rowBetweenStyle}>
-                  <Text style={rowLabelStyle}>CNN cross-check</Text>
-                  <Text
-                    style={[
-                      rowValueStyle,
-                      {
-                        color:
-                          analysis.cnn.detection.agreement === "agrees"
-                            ? "#16a34a"
-                            : COLORS.muted,
-                      },
-                    ]}
-                  >
-                    {analysis.cnn.detection.agreement === "agrees"
-                      ? "Agrees"
-                      : analysis.cnn.detection.agreement === "differs"
-                        ? `CNN says ${analysis.cnn.identity.foodName}`
-                        : `CNN identifies ${analysis.cnn.identity.foodName}`}
-                  </Text>
-                </View>
-                <View style={rowBetweenStyle}>
-                  <Text style={rowLabelStyle}>Detection confidence</Text>
+                  <Text style={rowLabelStyle}>Expiry</Text>
                   <Text style={rowValueStyle}>
-                    {(analysis.cnn.detection.confidence * 100).toFixed(0)}%
+                    {formatDate(analysis.ocr.expiryDate)}
                   </Text>
                 </View>
-              </>
-            ) : null}
+              ) : null}
 
-            <View style={rowBetweenStyle}>
-              <Text style={rowLabelStyle}>Objects in frame</Text>
-              <Text style={rowValueStyle}>{analysis.cnn.detection.count ?? 0}</Text>
+              {analysis?.ocr?.manufacturingDate ? (
+                <View style={rowBetweenStyle}>
+                  <Text style={rowLabelStyle}>Manufactured</Text>
+                  <Text style={rowValueStyle}>
+                    {formatDate(analysis.ocr.manufacturingDate)}
+                  </Text>
+                </View>
+              ) : null}
             </View>
+          ) : null}
 
-            {analysis.cnn.detection.reason ? (
-              <Text
-                style={{ fontSize: 11, color: COLORS.muted, marginTop: 6, lineHeight: 16 }}
-              >
-                {analysis.cnn.detection.reason}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* OCR Extraction */}
-          <View style={cardStyle}>
-            <View style={sectionTitleRowStyle}>
-              <View style={sectionIconBoxStyle}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={18}
-                  color={BRAND}
-                />
-              </View>
-              <View>
-                <Text style={sectionTitleStyle}>OCR Extraction</Text>
-                <Text style={sectionSubtitleStyle}>
-                  Information extracted from the food label
-                </Text>
-              </View>
-            </View>
-
-            <View style={rowBetweenStyle}>
-              <Text style={rowLabelStyle}>Expiry</Text>
-              <Text style={rowValueStyle}>
-                {formatDate(analysis?.ocr?.expiryDate)}
-              </Text>
-            </View>
-
-            <View style={rowBetweenStyle}>
-              <Text style={rowLabelStyle}>Manufactured</Text>
-              <Text style={rowValueStyle}>
-                {formatDate(analysis?.ocr?.manufacturingDate)}
-              </Text>
-            </View>
-
-            <View style={rowBetweenStyle}>
-              <Text style={rowLabelStyle}>Confidence</Text>
-              <Text style={rowValueStyle}>
-                {formatPercentage(analysis?.ocr?.confidence)}
-              </Text>
-            </View>
-
-            <View
-              style={{
-                marginTop: 6,
-                backgroundColor: COLORS.card,
-                borderRadius: 10,
-                padding: 10,
-              }}
-            >
-              <Text style={{ fontSize: 11, color: COLORS.muted }}>
-                Detection source
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "600",
-                  color: COLORS.text,
-                  marginTop: 2,
-                }}
-              >
-                {analysis.ocr.source || "Unknown"}
-              </Text>
-            </View>
-          </View>
-
-          {/* CNN Analysis */}
+          {/* Visible Indicators */}
           <View style={cardStyle}>
             <View style={sectionTitleRowStyle}>
               <View
-                style={[sectionIconBoxStyle, { backgroundColor: "#EEF4EA" }]}
+                style={[sectionIconBoxStyle, { backgroundColor: "#F9E9E5" }]}
               >
-                <Ionicons
-                  name="scan-outline"
-                  size={18}
-                  color={COLORS.success}
-                />
+                <Ionicons name="eye-outline" size={18} color={COLORS.danger} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={sectionTitleStyle}>CNN Identification</Text>
-                <Text style={sectionSubtitleStyle}>
-                  {analysis.cnn.identity.model}
-                </Text>
-              </View>
+              <Text style={sectionTitleStyle}>Visible Indicators</Text>
             </View>
 
-            <View style={rowBetweenStyle}>
-              <View>
-                <Text style={rowLabelStyle}>Food Identity</Text>
-                <Text
-                  style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}
-                >
-                  {analysis.cnn.identity.modelLabel === "other"
-                    ? "Not one of the supported foods"
-                    : analysis.cnn.identity.modelLabel || "Detected by CNN"}
-                </Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={rowValueStyle}>
-                  {analysis.cnn.identity.foodName}
-                </Text>
-                <Text
-                  style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}
-                >
-                  {formatPercentage(analysis?.cnn?.identity?.confidence)}{" "}
-                  confidence
-                </Text>
-              </View>
-            </View>
-
-            {analysis.cnn.identity.topK?.length > 1 ? (
-              <View style={{ paddingTop: 4 }}>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: "700",
-                    color: COLORS.muted,
-                    marginBottom: 6,
-                  }}
-                >
-                  Other candidates
-                </Text>
-                {analysis.cnn.identity.topK.slice(1).map((candidate) => (
-                  <View
-                    key={candidate.label}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      paddingVertical: 3,
-                    }}
-                  >
-                    <Text style={{ fontSize: 12, color: COLORS.text }}>
-                      {candidate.label.replace(/_/g, " ")}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: COLORS.muted }}>
-                      {(candidate.confidence * 100).toFixed(1)}%
+            {analysis?.cnn?.spoilage?.detectedIndicators?.length > 0 ? (
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                {analysis.cnn.spoilage.detectedIndicators.map((key) => (
+                  <View key={key} style={indicatorPillStyle}>
+                    <Ionicons
+                      name={FLAG_ICONS[key]}
+                      size={18}
+                      color={COLORS.danger}
+                    />
+                    <Text style={indicatorTextStyle}>
+                      {FLAG_LABELS[key] || key}
                     </Text>
                   </View>
                 ))}
               </View>
-            ) : null}
-
-            <View style={{ paddingTop: 6 }}>
-              <View style={rowBetweenStyle}>
-                <Text style={rowLabelStyle}>Spoilage Score</Text>
-                <Text style={rowValueStyle}>
-                  {formatPercentage(analysis?.cnn?.spoilage?.spoilageScore)}
-                </Text>
-              </View>
-
-              <View style={spoilageBarBgStyle}>
-                <View
-                  style={spoilageBarFillStyle(
-                    analysis.cnn.spoilage.spoilageScore,
-                  )}
-                />
-              </View>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 8,
-                }}
-              >
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      analysis.cnn.spoilage.spoilageScore >= 0.7
-                        ? "#ef4444"
-                        : analysis.cnn.spoilage.spoilageScore >= 0.4
-                          ? "#f59e0b"
-                          : "#22c55e",
-                    marginRight: 6,
-                  }}
+            ) : (
+              <View style={noIndicatorsBoxStyle}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={16}
+                  color={COLORS.success}
                 />
                 <Text
                   style={{
                     fontSize: 12,
                     fontWeight: "600",
-                    color: COLORS.text,
+                    color: COLORS.success,
+                    marginLeft: 6,
+                    flex: 1,
                   }}
                 >
-                  Status: {analysis.cnn.spoilage.status.replace(/_/g, " ")}
+                  No significant spoilage indicators detected
                 </Text>
               </View>
-            </View>
+            )}
 
-            <View style={{ paddingTop: 10 }}>
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: "600",
-                  color: COLORS.text,
-                  marginBottom: 8,
-                }}
-              >
-                Visible Indicators
-              </Text>
-
-              {analysis?.cnn?.spoilage?.detectedIndicators?.length > 0 ? (
-                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                  {analysis.cnn.spoilage.detectedIndicators.map((key) => (
-                    <View key={key} style={indicatorPillStyle}>
-                      <Ionicons
-                        name={FLAG_ICONS[key]}
-                        size={18}
-                        color={COLORS.danger}
-                      />
-                      <Text style={indicatorTextStyle}>
-                        {FLAG_LABELS[key] || key}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <View style={noIndicatorsBoxStyle}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={16}
-                    color={COLORS.success}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: COLORS.success,
-                      marginLeft: 6,
-                      flex: 1,
-                    }}
-                  >
-                    No significant spoilage indicators detected
-                  </Text>
-                </View>
-              )}
-
-              {/* Every indicator's measured strength, not just the ones that fired */}
-              {Object.keys(analysis?.cnn?.spoilage?.indicators || {}).length > 0 ? (
-                <View style={{ marginTop: 12 }}>
-                  {FLAG_LIST.map((key) => {
-                    const score = analysis.cnn.spoilage.indicators[key] ?? 0;
-                    return (
-                      <View key={key} style={{ marginBottom: 8 }}>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            marginBottom: 3,
-                          }}
-                        >
-                          <Text style={{ fontSize: 11, color: COLORS.text }}>
-                            {FLAG_LABELS[key]}
-                          </Text>
-                          <Text style={{ fontSize: 11, color: COLORS.muted }}>
-                            {(score * 100).toFixed(0)}%
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            height: 5,
-                            borderRadius: 3,
-                            backgroundColor: COLORS.border,
-                            overflow: "hidden",
-                          }}
-                        >
-                          <View
-                            style={{
-                              height: "100%",
-                              width: `${Math.min(100, score * 100)}%`,
-                              backgroundColor: score >= 0.5 ? "#ef4444" : COLORS.muted,
-                            }}
-                          />
-                        </View>
+            {Object.keys(analysis?.cnn?.spoilage?.indicators || {}).length >
+            0 ? (
+              <View style={{ marginTop: 12 }}>
+                {FLAG_LIST.map((key) => {
+                  const score = analysis.cnn.spoilage.indicators[key] ?? 0;
+                  return (
+                    <View key={key} style={{ marginBottom: 8 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          marginBottom: 3,
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, color: COLORS.text }}>
+                          {FLAG_LABELS[key]}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: COLORS.muted }}>
+                          {(score * 100).toFixed(0)}%
+                        </Text>
                       </View>
-                    );
-                  })}
-                </View>
-              ) : null}
-            </View>
+                      <View
+                        style={{
+                          height: 5,
+                          borderRadius: 3,
+                          backgroundColor: COLORS.border,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View
+                          style={{
+                            height: "100%",
+                            width: `${Math.min(100, score * 100)}%`,
+                            backgroundColor:
+                              score >= 0.5 ? "#ef4444" : COLORS.muted,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
 
-          {/* Pipeline trace */}
-          {analysis.cnn.stages?.length > 0 ? (
-            <View style={cardStyle}>
-              <View style={sectionTitleRowStyle}>
-                <View style={[sectionIconBoxStyle, { backgroundColor: COLORS.background }]}>
-                  <Ionicons name="git-branch-outline" size={18} color={COLORS.muted} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={sectionTitleStyle}>Pipeline</Text>
-                  <Text style={sectionSubtitleStyle}>
-                    {analysis.cnn.inferenceMs != null
-                      ? `Completed in ${analysis.cnn.inferenceMs} ms`
-                      : "Stages that ran on this image"}
-                  </Text>
-                </View>
-              </View>
-
-              {analysis.cnn.stages.map((stage, index) => (
-                <View
-                  key={stage.name}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    paddingVertical: 7,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
-                      backgroundColor: stage.ran ? BRAND_GREEN : COLORS.border,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 10,
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>
-                      {index + 1}
-                    </Text>
-                  </View>
-
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "700",
-                        color: COLORS.text,
-                        textTransform: "capitalize",
-                      }}
-                    >
-                      {stage.name}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: COLORS.muted, marginTop: 1 }}>
-                      {stage.model}
-                    </Text>
-                    <Text
-                      style={{ fontSize: 11, color: COLORS.muted, marginTop: 2, lineHeight: 15 }}
-                    >
-                      {stage.detail}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-
-              <AnimatedTouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate("Metrics")}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginTop: 10,
-                  paddingVertical: 10,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                }}
-              >
-                <Ionicons name="stats-chart-outline" size={15} color={BRAND} />
-                <Text
-                  style={{ fontSize: 13, fontWeight: "700", color: BRAND, marginLeft: 7 }}
-                >
-                  View model accuracy, precision, recall & F1
-                </Text>
-              </AnimatedTouchableOpacity>
-            </View>
-          ) : null}
-
-          {/* TTI & Risk */}
+          {/* Remaining food life */}
           <View style={ttiCardStyle}>
             <View style={ttiHeaderStyle}>
               <View style={ttiIconBoxStyle}>
                 <Ionicons name="time-outline" size={16} color="#ffffff" />
               </View>
-              <View>
-                <Text style={ttiTitleStyle}>TTI & Risk</Text>
-                <Text style={ttiSubtitleStyle}>
-                  Remaining shelf life and recommended action
-                </Text>
-              </View>
+              <Text style={ttiTitleStyle}>Remaining Food Life</Text>
             </View>
 
             <View style={ttiSubCardStyle}>
-              <Text style={{ fontSize: 11, color: "#64748b" }}>
-                Remaining Life
-              </Text>
               <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: "700",
-                  color: COLORS.text,
-                  marginTop: 2,
-                }}
+                style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}
               >
-                {preview.tti.remainingLifeDays} days
-              </Text>
-              <Text style={{ fontSize: 10, color: COLORS.muted, marginTop: 2 }}>
-                Temperature-Time Indicator (TTI)
-              </Text>
-            </View>
-
-            <View style={ttiSubCardStyle}>
-              <Text style={{ fontSize: 11, color: "#64748b" }}>Urgency</Text>
-              <Text
-                style={[
-                  { fontSize: 14, fontWeight: "700", marginTop: 2 },
-                  urgencyTextStyle(preview.urgency),
-                ]}
-              >
-                {preview.urgency}
-              </Text>
-            </View>
-
-            <View style={primaryActionBoxStyle}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 4,
-                }}
-              >
-                <Ionicons name="bulb-outline" size={14} color={BRAND} />
-                <Text style={[primaryActionTitleStyle, { marginLeft: 6 }]}>
-                  Recommended Action
-                </Text>
-              </View>
-
-              <Text style={primaryActionLabelStyle}>
-                {preview.recommendations.primaryAction.label}
-              </Text>
-              <Text style={primaryActionDescStyle}>
-                {preview.recommendations.primaryAction.description}
+                {preview.daysLabel}
               </Text>
             </View>
           </View>
@@ -1611,6 +1177,109 @@ export function CameraScreen() {
                   No additional actions available.
                 </Text>
               </View>
+            )}
+
+            <Text style={recsSectionTitleStyle}>Storage & Preservation</Text>
+
+            {preview.recommendations.bestPractice ? (
+              <View style={recCardStyle}>
+                <View style={recRowStyle}>
+                  <View
+                    style={[
+                      recIconBoxStyle,
+                      {
+                        backgroundColor: storageIconFor(
+                          preview.recommendations.bestPractice.storageId,
+                        ).bg,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        storageIconFor(
+                          preview.recommendations.bestPractice.storageId,
+                        ).icon
+                      }
+                      size={14}
+                      color={
+                        storageIconFor(
+                          preview.recommendations.bestPractice.storageId,
+                        ).color
+                      }
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={recLabelStyle}>
+                      {preview.recommendations.bestPractice.storageLabel}
+                    </Text>
+                    <Text style={recDescStyle}>
+                      Best place to keep this item, around{" "}
+                      {preview.recommendations.bestPractice.storageTempC}
+                      °C.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
+            {preview.recommendations.contentBased?.storageSuggestions
+              ?.slice(1)
+              .map((tip, index) => (
+                <View key={`storage-${index}`} style={usageIdeaRowStyle}>
+                  <View
+                    style={[
+                      usageIconBoxStyle,
+                      { backgroundColor: "#E7F0FA" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={13}
+                      color="#2563eb"
+                    />
+                  </View>
+                  <Text style={usageTextStyle}>{tip}</Text>
+                </View>
+              ))}
+
+            <View style={recCardStyle}>
+              <View style={recRowStyle}>
+                <View
+                  style={[recIconBoxStyle, { backgroundColor: "#E0F2FE" }]}
+                >
+                  <Ionicons name="snow-outline" size={14} color="#0284c7" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={recLabelStyle}>
+                    {preview.recommendations.bestPractice?.freezeable
+                      ? "Can be frozen"
+                      : "Do not freeze"}
+                  </Text>
+                  <Text style={recDescStyle}>
+                    {preview.recommendations.bestPractice?.freezeBy}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {preview.recommendations.contentBased?.preservationSuggestions?.map(
+              (tip, index) => (
+                <View key={`preserve-${index}`} style={usageIdeaRowStyle}>
+                  <View
+                    style={[
+                      usageIconBoxStyle,
+                      { backgroundColor: "#E0F2FE" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="snow-outline"
+                      size={13}
+                      color="#0284c7"
+                    />
+                  </View>
+                  <Text style={usageTextStyle}>{tip}</Text>
+                </View>
+              ),
             )}
 
             <Text style={recsSectionTitleStyle}>Usage Ideas</Text>

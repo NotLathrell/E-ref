@@ -33,6 +33,15 @@ FOOD_ALIASES = {
     "okra": "okra",
     "banana": "banana",
     "bananas": "banana",
+    "mango": "mango",
+    "mangoes": "mango",
+    "mangos": "mango",
+    "papaya": "papaya",
+    "papayas": "papaya",
+    "eggplant": "eggplant",
+    "eggplants": "eggplant",
+    "brinjal": "eggplant",
+    "talong": "eggplant",
 }
 
 

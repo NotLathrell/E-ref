@@ -169,7 +169,7 @@ export const FOOD_CATALOG = [
     id: 'bitter_gourd',
     name: 'Bitter Gourd',
     category: 'Produce',
-    keywords: ['bitter gourd', 'bittergourd', 'bittergroud'],
+    keywords: ['bitter gourd', 'bittergourd', 'bittergroud', 'ampalaya'],
     refTempC: 7,
     nominalShelfDays: 5,
     q10: 2.1,
@@ -177,6 +177,57 @@ export const FOOD_CATALOG = [
     bestStorageId: 'fridge_top',
     usageIdeas: ['Stir-fry', 'Add to curry', 'Stuff and bake'],
     storageTips: ['Keep refrigerated', 'Use before the skin softens']
+  },
+  {
+    id: 'mango',
+    name: 'Mango',
+    category: 'Produce',
+    keywords: ['mango', 'mangoes', 'mangga', 'carabao mango'],
+    refTempC: 13,
+    nominalShelfDays: 6,
+    q10: 2.0,
+    freezeable: true,
+    bestStorageId: 'counter',
+    usageIdeas: ['Eat fresh', 'Shake or smoothie', 'Freeze cubed for desserts'],
+    storageTips: [
+      'Ripen at room temperature, out of direct sun',
+      'Refrigerate only once ripe, and use within a few days',
+      'Chilling an unripe mango stops it from ripening properly'
+    ]
+  },
+  {
+    id: 'papaya',
+    name: 'Papaya',
+    category: 'Produce',
+    keywords: ['papaya', 'papayas'],
+    refTempC: 10,
+    nominalShelfDays: 4,
+    q10: 2.2,
+    freezeable: true,
+    bestStorageId: 'counter',
+    usageIdeas: ['Eat fresh', 'Green papaya salad (atchara/ensaladang papaya)', 'Freeze ripe cubes for smoothies'],
+    storageTips: [
+      'Ripen at room temperature until it yields to gentle pressure',
+      'Refrigerate once ripe and use within 2-3 days',
+      'Spoils quickly once cut — cover tightly and refrigerate'
+    ]
+  },
+  {
+    id: 'eggplant',
+    name: 'Eggplant',
+    category: 'Produce',
+    keywords: ['eggplant', 'eggplants', 'talong', 'brinjal', 'aubergine'],
+    refTempC: 10,
+    nominalShelfDays: 6,
+    q10: 2.0,
+    freezeable: true,
+    bestStorageId: 'fridge_top',
+    usageIdeas: ['Grill for tortang talong', 'Add to pinakbet', 'Roast and freeze slices'],
+    storageTips: [
+      'Store loose in the crisper, not in a sealed bag',
+      'Keep away from foods that release ethylene, like ripe bananas',
+      'Use within the week — the skin dulls and softens as it ages'
+    ]
   },
   {
     id: 'lettuce',

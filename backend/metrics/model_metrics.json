@@ -1,16 +1,19 @@
 {
-  "generatedAt": "2026-09-22T13:58:49.510274+00:00",
+  "generatedAt": "2026-09-24T11:33:58.997837+00:00",
   "dataset": {
     "split": "eref_v2 held-out split",
-    "images": 2652,
+    "images": 2996,
     "imagesByClass": {
       "apple": 339,
       "banana": 403,
       "bitter gourd": 58,
       "capsicum": 240,
       "cucumber": 91,
+      "eggplant": 147,
+      "mango": 114,
       "okra": 83,
       "orange": 280,
+      "papaya": 83,
       "potato": 134,
       "tomato": 676,
       "unknown": 172
@@ -22,23 +25,23 @@
       "title": "Food Identification",
       "description": "Which food the CNN sees: one of 9 food types, or unknown.",
       "model": "yolov8n-cls (identity)",
-      "accuracy": 0.9984,
+      "accuracy": 0.9989,
       "macro": {
-        "precision": 0.9974,
-        "recall": 0.9975,
-        "f1": 0.9974
+        "precision": 0.9981,
+        "recall": 0.9977,
+        "f1": 0.9979
       },
       "weighted": {
-        "precision": 0.9984,
-        "recall": 0.9984,
-        "f1": 0.9984
+        "precision": 0.9989,
+        "recall": 0.9989,
+        "f1": 0.9989
       },
       "perClass": [
         {
           "label": "apple",
-          "precision": 0.9971,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.9985,
+          "f1": 1.0,
           "support": 339
         },
         {
@@ -57,23 +60,37 @@
         },
         {
           "label": "capsicum",
-          "precision": 0.9959,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.9979,
+          "f1": 1.0,
           "support": 240
         },
         {
           "label": "cucumber",
-          "precision": 1.0,
-          "recall": 0.978,
-          "f1": 0.9889,
+          "precision": 0.989,
+          "recall": 0.989,
+          "f1": 0.989,
           "support": 91
         },
         {
-          "label": "okra",
-          "precision": 0.9881,
+          "label": "eggplant",
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.994,
+          "f1": 1.0,
+          "support": 147
+        },
+        {
+          "label": "mango",
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 114
+        },
+        {
+          "label": "okra",
+          "precision": 0.988,
+          "recall": 0.988,
+          "f1": 0.988,
           "support": 83
         },
         {
@@ -84,17 +101,24 @@
           "support": 280
         },
         {
-          "label": "potato",
-          "precision": 0.9926,
+          "label": "papaya",
+          "precision": 1.0,
           "recall": 1.0,
+          "f1": 1.0,
+          "support": 83
+        },
+        {
+          "label": "potato",
+          "precision": 1.0,
+          "recall": 0.9925,
           "f1": 0.9963,
           "support": 134
         },
         {
           "label": "tomato",
-          "precision": 1.0,
-          "recall": 0.997,
-          "f1": 0.9985,
+          "precision": 0.9985,
+          "recall": 1.0,
+          "f1": 0.9993,
           "support": 676
         },
         {
@@ -116,11 +140,17 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
           0,
           403,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -140,6 +170,9 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -152,15 +185,66 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          90,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          147,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          114,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
           0,
           0,
           0,
           1,
-          89,
-          1,
+          0,
+          0,
+          82,
+          0,
           0,
           0,
           0,
@@ -169,16 +253,6 @@
         [
           0,
           0,
-          0,
-          0,
-          0,
-          83,
-          0,
-          0,
-          0,
-          0
-        ],
-        [
           0,
           0,
           0,
@@ -188,6 +262,22 @@
           280,
           0,
           0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          83,
+          0,
+          0,
           0
         ],
         [
@@ -198,23 +288,32 @@
           0,
           0,
           0,
-          134,
           0,
-          0
-        ],
-        [
+          0,
+          0,
+          133,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          674,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          676,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -233,94 +332,97 @@
         "bitter gourd",
         "capsicum",
         "cucumber",
+        "eggplant",
+        "mango",
         "okra",
         "orange",
+        "papaya",
         "potato",
         "tomato",
         "unknown"
       ],
-      "samples": 2476,
-      "correct": 2472
+      "samples": 2820,
+      "correct": 2817
     },
     "freshness": {
       "title": "Freshness Detection",
       "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
       "model": "yolov8n-cls-freshness",
-      "accuracy": 0.9951,
+      "accuracy": 0.992,
       "macro": {
-        "precision": 0.9948,
-        "recall": 0.9952,
-        "f1": 0.995
+        "precision": 0.9914,
+        "recall": 0.9922,
+        "f1": 0.9918
       },
       "weighted": {
-        "precision": 0.9951,
-        "recall": 0.9951,
-        "f1": 0.9951
+        "precision": 0.992,
+        "recall": 0.992,
+        "f1": 0.992
       },
       "perClass": [
         {
           "label": "fresh",
-          "precision": 0.9929,
-          "recall": 0.9955,
-          "f1": 0.9942,
-          "support": 1121
+          "precision": 0.9874,
+          "recall": 0.9937,
+          "f1": 0.9905,
+          "support": 1263
         },
         {
           "label": "rotten",
-          "precision": 0.9967,
-          "recall": 0.9948,
-          "f1": 0.9958,
-          "support": 1531
+          "precision": 0.9954,
+          "recall": 0.9908,
+          "f1": 0.9931,
+          "support": 1733
         }
       ],
       "confusionMatrix": [
         [
-          1116,
-          5
+          1255,
+          8
         ],
         [
-          8,
-          1523
+          16,
+          1717
         ]
       ],
       "classNames": [
         "fresh",
         "rotten"
       ],
-      "samples": 2652,
-      "correct": 2639,
+      "samples": 2996,
+      "correct": 2972,
       "binary": {
         "positiveClass": "rotten",
-        "precision": 0.9967,
-        "recall": 0.9948,
-        "f1": 0.9958,
-        "truePositive": 1523,
-        "falsePositive": 5,
-        "falseNegative": 8,
-        "trueNegative": 1116
+        "precision": 0.9954,
+        "recall": 0.9908,
+        "f1": 0.9931,
+        "truePositive": 1717,
+        "falsePositive": 8,
+        "falseNegative": 16,
+        "trueNegative": 1255
       }
     },
     "combined": {
       "title": "Combined Identity + Freshness",
       "description": "The raw identity head, food and freshness in one label.",
       "model": "yolov8n-cls (identity)",
-      "accuracy": 0.9939,
+      "accuracy": 0.9936,
       "macro": {
-        "precision": 0.9895,
-        "recall": 0.9906,
-        "f1": 0.9899
+        "precision": 0.9901,
+        "recall": 0.9911,
+        "f1": 0.9905
       },
       "weighted": {
-        "precision": 0.9941,
-        "recall": 0.9939,
-        "f1": 0.994
+        "precision": 0.9938,
+        "recall": 0.9936,
+        "f1": 0.9936
       },
       "perClass": [
         {
           "label": "fresh_apples",
-          "precision": 0.9922,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.9961,
+          "f1": 1.0,
           "support": 127
         },
         {
@@ -346,16 +448,30 @@
         },
         {
           "label": "fresh_cucumber",
-          "precision": 0.9818,
+          "precision": 0.9643,
           "recall": 0.9818,
-          "f1": 0.9818,
+          "f1": 0.973,
           "support": 55
         },
         {
-          "label": "fresh_okra",
+          "label": "fresh_eggplant",
+          "precision": 0.8958,
+          "recall": 0.9773,
+          "f1": 0.9348,
+          "support": 44
+        },
+        {
+          "label": "fresh_mango",
           "precision": 1.0,
-          "recall": 0.9623,
-          "f1": 0.9808,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 58
+        },
+        {
+          "label": "fresh_okra",
+          "precision": 0.9811,
+          "recall": 0.9811,
+          "f1": 0.9811,
           "support": 53
         },
         {
@@ -366,10 +482,17 @@
           "support": 130
         },
         {
+          "label": "fresh_papaya",
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 40
+        },
+        {
           "label": "fresh_potato",
-          "precision": 0.9672,
+          "precision": 0.9516,
           "recall": 0.9672,
-          "f1": 0.9672,
+          "f1": 0.9593,
           "support": 61
         },
         {
@@ -409,23 +532,37 @@
         },
         {
           "label": "rotten_capsicum",
-          "precision": 0.9936,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.9968,
+          "f1": 1.0,
           "support": 156
         },
         {
           "label": "rotten_cucumber",
           "precision": 1.0,
-          "recall": 0.9444,
-          "f1": 0.9714,
+          "recall": 0.9722,
+          "f1": 0.9859,
           "support": 36
         },
         {
-          "label": "rotten_okra",
-          "precision": 0.9091,
+          "label": "rotten_eggplant",
+          "precision": 0.9899,
+          "recall": 0.9515,
+          "f1": 0.9703,
+          "support": 103
+        },
+        {
+          "label": "rotten_mango",
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.9524,
+          "f1": 1.0,
+          "support": 56
+        },
+        {
+          "label": "rotten_okra",
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
           "support": 30
         },
         {
@@ -436,23 +573,36 @@
           "support": 150
         },
         {
+          "label": "rotten_papaya",
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 43
+        },
+        {
           "label": "rotten_potato",
-          "precision": 0.973,
-          "recall": 0.9863,
-          "f1": 0.9796,
+          "precision": 0.9859,
+          "recall": 0.9589,
+          "f1": 0.9722,
           "support": 73
         },
         {
           "label": "rotten_tomato",
           "precision": 0.9951,
-          "recall": 0.9878,
-          "f1": 0.9914,
+          "recall": 0.9951,
+          "f1": 0.9951,
           "support": 410
         }
       ],
       "confusionMatrix": [
         [
           127,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -491,12 +641,24 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         [
           0,
           0,
           29,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -533,6 +695,12 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -541,6 +709,36 @@
           0,
           0,
           54,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          43,
+          0,
+          0,
           0,
           0,
           0,
@@ -554,6 +752,9 @@
           1,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -562,7 +763,8 @@
           0,
           0,
           0,
-          51,
+          0,
+          58,
           0,
           0,
           0,
@@ -572,12 +774,46 @@
           0,
           0,
           0,
-          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          52,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
           0,
           0,
           0,
@@ -596,9 +832,43 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          40,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -607,6 +877,7 @@
           0,
           0,
           59,
+          1,
           0,
           0,
           0,
@@ -616,10 +887,15 @@
           0,
           0,
           0,
-          2,
+          0,
+          0,
+          1,
           0
         ],
         [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -629,6 +905,9 @@
           0,
           0,
           264,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -650,7 +929,13 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           172,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -662,6 +947,9 @@
           0
         ],
         [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -680,9 +968,15 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -701,9 +995,15 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -722,9 +1022,15 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -743,6 +1049,9 @@
           0,
           0,
           0,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -759,14 +1068,79 @@
           0,
           0,
           0,
-          1,
-          34,
+          0,
+          0,
+          0,
+          0,
+          35,
+          0,
+          0,
+          0,
           0,
           0,
           0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          98,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          56,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -785,9 +1159,15 @@
           30,
           0,
           0,
+          0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -806,6 +1186,7 @@
           0,
           150,
           0,
+          0,
           0
         ],
         [
@@ -816,7 +1197,6 @@
           0,
           0,
           0,
-          1,
           0,
           0,
           0,
@@ -826,18 +1206,27 @@
           0,
           0,
           0,
-          72,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          43,
+          0,
           0
         ],
         [
-          1,
           0,
           0,
           0,
           0,
           0,
           0,
-          1,
+          0,
+          0,
+          0,
+          0,
           3,
           0,
           0,
@@ -848,7 +1237,38 @@
           0,
           0,
           0,
-          405
+          0,
+          0,
+          0,
+          70,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          408
         ]
       ],
       "classNames": [
@@ -857,8 +1277,11 @@
         "fresh_bittergourd",
         "fresh_capsicum",
         "fresh_cucumber",
+        "fresh_eggplant",
+        "fresh_mango",
         "fresh_okra",
         "fresh_oranges",
+        "fresh_papaya",
         "fresh_potato",
         "fresh_tomato",
         "other",
@@ -867,13 +1290,16 @@
         "rotten_bittergourd",
         "rotten_capsicum",
         "rotten_cucumber",
+        "rotten_eggplant",
+        "rotten_mango",
         "rotten_okra",
         "rotten_oranges",
+        "rotten_papaya",
         "rotten_potato",
         "rotten_tomato"
       ],
-      "samples": 2476,
-      "correct": 2461
+      "samples": 2820,
+      "correct": 2802
     }
   },
   "benchmarks": [
@@ -882,15 +1308,18 @@
       "title": "Held-out split",
       "description": "Images set aside from the training collection. Same photographers and scenes as training, so this is the easiest of the tests.",
       "dataset": {
-        "images": 2652,
+        "images": 2996,
         "imagesByFood": {
           "apple": 339,
           "banana": 403,
           "bitter gourd": 58,
           "capsicum": 240,
           "cucumber": 91,
+          "eggplant": 147,
+          "mango": 114,
           "okra": 83,
           "orange": 280,
+          "papaya": 83,
           "potato": 134,
           "tomato": 676,
           "unknown": 172
@@ -901,23 +1330,23 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.9984,
+          "accuracy": 0.9989,
           "macro": {
-            "precision": 0.9974,
-            "recall": 0.9975,
-            "f1": 0.9974
+            "precision": 0.9981,
+            "recall": 0.9977,
+            "f1": 0.9979
           },
           "weighted": {
-            "precision": 0.9984,
-            "recall": 0.9984,
-            "f1": 0.9984
+            "precision": 0.9989,
+            "recall": 0.9989,
+            "f1": 0.9989
           },
           "perClass": [
             {
               "label": "apple",
-              "precision": 0.9971,
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9985,
+              "f1": 1.0,
               "support": 339
             },
             {
@@ -936,23 +1365,37 @@
             },
             {
               "label": "capsicum",
-              "precision": 0.9959,
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9979,
+              "f1": 1.0,
               "support": 240
             },
             {
               "label": "cucumber",
-              "precision": 1.0,
-              "recall": 0.978,
-              "f1": 0.9889,
+              "precision": 0.989,
+              "recall": 0.989,
+              "f1": 0.989,
               "support": 91
             },
             {
-              "label": "okra",
-              "precision": 0.9881,
+              "label": "eggplant",
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.994,
+              "f1": 1.0,
+              "support": 147
+            },
+            {
+              "label": "mango",
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 114
+            },
+            {
+              "label": "okra",
+              "precision": 0.988,
+              "recall": 0.988,
+              "f1": 0.988,
               "support": 83
             },
             {
@@ -963,17 +1406,24 @@
               "support": 280
             },
             {
-              "label": "potato",
-              "precision": 0.9926,
+              "label": "papaya",
+              "precision": 1.0,
               "recall": 1.0,
+              "f1": 1.0,
+              "support": 83
+            },
+            {
+              "label": "potato",
+              "precision": 1.0,
+              "recall": 0.9925,
               "f1": 0.9963,
               "support": 134
             },
             {
               "label": "tomato",
-              "precision": 1.0,
-              "recall": 0.997,
-              "f1": 0.9985,
+              "precision": 0.9985,
+              "recall": 1.0,
+              "f1": 0.9993,
               "support": 676
             },
             {
@@ -995,11 +1445,17 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
               0,
               403,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1019,6 +1475,9 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -1031,15 +1490,66 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              90,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              147,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              114,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
               0,
               0,
               0,
               1,
-              89,
-              1,
+              0,
+              0,
+              82,
+              0,
               0,
               0,
               0,
@@ -1048,16 +1558,6 @@
             [
               0,
               0,
-              0,
-              0,
-              0,
-              83,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -1067,6 +1567,22 @@
               280,
               0,
               0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              83,
+              0,
+              0,
               0
             ],
             [
@@ -1077,23 +1593,32 @@
               0,
               0,
               0,
-              134,
               0,
-              0
-            ],
-            [
+              0,
+              0,
+              133,
               1,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              674,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              676,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1112,94 +1637,97 @@
             "bitter gourd",
             "capsicum",
             "cucumber",
+            "eggplant",
+            "mango",
             "okra",
             "orange",
+            "papaya",
             "potato",
             "tomato",
             "unknown"
           ],
-          "samples": 2476,
-          "correct": 2472
+          "samples": 2820,
+          "correct": 2817
         },
         "freshness": {
           "title": "Freshness Detection",
           "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
           "model": "yolov8n-cls-freshness",
-          "accuracy": 0.9951,
+          "accuracy": 0.992,
           "macro": {
-            "precision": 0.9948,
-            "recall": 0.9952,
-            "f1": 0.995
+            "precision": 0.9914,
+            "recall": 0.9922,
+            "f1": 0.9918
           },
           "weighted": {
-            "precision": 0.9951,
-            "recall": 0.9951,
-            "f1": 0.9951
+            "precision": 0.992,
+            "recall": 0.992,
+            "f1": 0.992
           },
           "perClass": [
             {
               "label": "fresh",
-              "precision": 0.9929,
-              "recall": 0.9955,
-              "f1": 0.9942,
-              "support": 1121
+              "precision": 0.9874,
+              "recall": 0.9937,
+              "f1": 0.9905,
+              "support": 1263
             },
             {
               "label": "rotten",
-              "precision": 0.9967,
-              "recall": 0.9948,
-              "f1": 0.9958,
-              "support": 1531
+              "precision": 0.9954,
+              "recall": 0.9908,
+              "f1": 0.9931,
+              "support": 1733
             }
           ],
           "confusionMatrix": [
             [
-              1116,
-              5
+              1255,
+              8
             ],
             [
-              8,
-              1523
+              16,
+              1717
             ]
           ],
           "classNames": [
             "fresh",
             "rotten"
           ],
-          "samples": 2652,
-          "correct": 2639,
+          "samples": 2996,
+          "correct": 2972,
           "binary": {
             "positiveClass": "rotten",
-            "precision": 0.9967,
-            "recall": 0.9948,
-            "f1": 0.9958,
-            "truePositive": 1523,
-            "falsePositive": 5,
-            "falseNegative": 8,
-            "trueNegative": 1116
+            "precision": 0.9954,
+            "recall": 0.9908,
+            "f1": 0.9931,
+            "truePositive": 1717,
+            "falsePositive": 8,
+            "falseNegative": 16,
+            "trueNegative": 1255
           }
         },
         "combined": {
           "title": "Combined Identity + Freshness",
           "description": "The raw identity head, food and freshness in one label.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.9939,
+          "accuracy": 0.9936,
           "macro": {
-            "precision": 0.9895,
-            "recall": 0.9906,
-            "f1": 0.9899
+            "precision": 0.9901,
+            "recall": 0.9911,
+            "f1": 0.9905
           },
           "weighted": {
-            "precision": 0.9941,
-            "recall": 0.9939,
-            "f1": 0.994
+            "precision": 0.9938,
+            "recall": 0.9936,
+            "f1": 0.9936
           },
           "perClass": [
             {
               "label": "fresh_apples",
-              "precision": 0.9922,
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9961,
+              "f1": 1.0,
               "support": 127
             },
             {
@@ -1225,16 +1753,30 @@
             },
             {
               "label": "fresh_cucumber",
-              "precision": 0.9818,
+              "precision": 0.9643,
               "recall": 0.9818,
-              "f1": 0.9818,
+              "f1": 0.973,
               "support": 55
             },
             {
-              "label": "fresh_okra",
+              "label": "fresh_eggplant",
+              "precision": 0.8958,
+              "recall": 0.9773,
+              "f1": 0.9348,
+              "support": 44
+            },
+            {
+              "label": "fresh_mango",
               "precision": 1.0,
-              "recall": 0.9623,
-              "f1": 0.9808,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 58
+            },
+            {
+              "label": "fresh_okra",
+              "precision": 0.9811,
+              "recall": 0.9811,
+              "f1": 0.9811,
               "support": 53
             },
             {
@@ -1245,10 +1787,17 @@
               "support": 130
             },
             {
+              "label": "fresh_papaya",
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 40
+            },
+            {
               "label": "fresh_potato",
-              "precision": 0.9672,
+              "precision": 0.9516,
               "recall": 0.9672,
-              "f1": 0.9672,
+              "f1": 0.9593,
               "support": 61
             },
             {
@@ -1288,23 +1837,37 @@
             },
             {
               "label": "rotten_capsicum",
-              "precision": 0.9936,
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9968,
+              "f1": 1.0,
               "support": 156
             },
             {
               "label": "rotten_cucumber",
               "precision": 1.0,
-              "recall": 0.9444,
-              "f1": 0.9714,
+              "recall": 0.9722,
+              "f1": 0.9859,
               "support": 36
             },
             {
-              "label": "rotten_okra",
-              "precision": 0.9091,
+              "label": "rotten_eggplant",
+              "precision": 0.9899,
+              "recall": 0.9515,
+              "f1": 0.9703,
+              "support": 103
+            },
+            {
+              "label": "rotten_mango",
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9524,
+              "f1": 1.0,
+              "support": 56
+            },
+            {
+              "label": "rotten_okra",
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
               "support": 30
             },
             {
@@ -1315,23 +1878,36 @@
               "support": 150
             },
             {
+              "label": "rotten_papaya",
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 43
+            },
+            {
               "label": "rotten_potato",
-              "precision": 0.973,
-              "recall": 0.9863,
-              "f1": 0.9796,
+              "precision": 0.9859,
+              "recall": 0.9589,
+              "f1": 0.9722,
               "support": 73
             },
             {
               "label": "rotten_tomato",
               "precision": 0.9951,
-              "recall": 0.9878,
-              "f1": 0.9914,
+              "recall": 0.9951,
+              "f1": 0.9951,
               "support": 410
             }
           ],
           "confusionMatrix": [
             [
               127,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1370,12 +1946,24 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
               0,
               0,
               29,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1412,6 +2000,12 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -1420,6 +2014,36 @@
               0,
               0,
               54,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              43,
+              0,
+              0,
               0,
               0,
               0,
@@ -1433,6 +2057,9 @@
               1,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -1441,7 +2068,8 @@
               0,
               0,
               0,
-              51,
+              0,
+              58,
               0,
               0,
               0,
@@ -1451,12 +2079,46 @@
               0,
               0,
               0,
-              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              52,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
               0,
               0,
               0,
@@ -1475,9 +2137,43 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              40,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1486,6 +2182,7 @@
               0,
               0,
               59,
+              1,
               0,
               0,
               0,
@@ -1495,10 +2192,15 @@
               0,
               0,
               0,
-              2,
+              0,
+              0,
+              1,
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1508,6 +2210,9 @@
               0,
               0,
               264,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1529,7 +2234,13 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               172,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1541,6 +2252,9 @@
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1559,9 +2273,15 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1580,9 +2300,15 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1601,9 +2327,15 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1622,6 +2354,9 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -1638,14 +2373,79 @@
               0,
               0,
               0,
-              1,
-              34,
+              0,
+              0,
+              0,
+              0,
+              35,
+              0,
+              0,
+              0,
               0,
               0,
               0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              5,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              98,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              56,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1664,9 +2464,15 @@
               30,
               0,
               0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -1685,6 +2491,7 @@
               0,
               150,
               0,
+              0,
               0
             ],
             [
@@ -1695,7 +2502,6 @@
               0,
               0,
               0,
-              1,
               0,
               0,
               0,
@@ -1705,18 +2511,27 @@
               0,
               0,
               0,
-              72,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              43,
+              0,
               0
             ],
             [
-              1,
               0,
               0,
               0,
               0,
               0,
               0,
-              1,
+              0,
+              0,
+              0,
+              0,
               3,
               0,
               0,
@@ -1727,7 +2542,38 @@
               0,
               0,
               0,
-              405
+              0,
+              0,
+              0,
+              70,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              408
             ]
           ],
           "classNames": [
@@ -1736,8 +2582,11 @@
             "fresh_bittergourd",
             "fresh_capsicum",
             "fresh_cucumber",
+            "fresh_eggplant",
+            "fresh_mango",
             "fresh_okra",
             "fresh_oranges",
+            "fresh_papaya",
             "fresh_potato",
             "fresh_tomato",
             "other",
@@ -1746,827 +2595,16 @@
             "rotten_bittergourd",
             "rotten_capsicum",
             "rotten_cucumber",
+            "rotten_eggplant",
+            "rotten_mango",
             "rotten_okra",
             "rotten_oranges",
+            "rotten_papaya",
             "rotten_potato",
             "rotten_tomato"
           ],
-          "samples": 2476,
-          "correct": 2461
-        }
-      },
-      "baseline": {
-        "tasks": {
-          "food_identity": {
-            "title": "Food Identification",
-            "description": "Which food the CNN sees: one of 9 food types, or unknown.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.8401,
-            "macro": {
-              "precision": 0.7194,
-              "recall": 0.8148,
-              "f1": 0.7575
-            },
-            "weighted": {
-              "precision": 0.798,
-              "recall": 0.8401,
-              "f1": 0.8122
-            },
-            "perClass": [
-              {
-                "label": "apple",
-                "precision": 0.7943,
-                "recall": 0.9794,
-                "f1": 0.8771,
-                "support": 339
-              },
-              {
-                "label": "banana",
-                "precision": 0.955,
-                "recall": 1.0,
-                "f1": 0.977,
-                "support": 403
-              },
-              {
-                "label": "bitter gourd",
-                "precision": 0.8788,
-                "recall": 1.0,
-                "f1": 0.9355,
-                "support": 58
-              },
-              {
-                "label": "capsicum",
-                "precision": 0.8513,
-                "recall": 0.6917,
-                "f1": 0.7632,
-                "support": 240
-              },
-              {
-                "label": "cucumber",
-                "precision": 0.5299,
-                "recall": 0.7802,
-                "f1": 0.6311,
-                "support": 91
-              },
-              {
-                "label": "okra",
-                "precision": 0.8,
-                "recall": 0.9157,
-                "f1": 0.8539,
-                "support": 83
-              },
-              {
-                "label": "orange",
-                "precision": 0.8078,
-                "recall": 0.9607,
-                "f1": 0.8777,
-                "support": 280
-              },
-              {
-                "label": "potato",
-                "precision": 0.628,
-                "recall": 0.9701,
-                "f1": 0.7625,
-                "support": 134
-              },
-              {
-                "label": "tomato",
-                "precision": 0.9488,
-                "recall": 0.8506,
-                "f1": 0.897,
-                "support": 676
-              },
-              {
-                "label": "unknown",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 172
-              }
-            ],
-            "confusionMatrix": [
-              [
-                332,
-                0,
-                0,
-                5,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0
-              ],
-              [
-                0,
-                403,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                58,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                33,
-                0,
-                0,
-                166,
-                0,
-                0,
-                0,
-                40,
-                1,
-                0
-              ],
-              [
-                1,
-                10,
-                1,
-                0,
-                71,
-                8,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                7,
-                76,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                11,
-                0,
-                0,
-                0,
-                0,
-                0,
-                269,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                3,
-                0,
-                0,
-                130,
-                1,
-                0
-              ],
-              [
-                11,
-                4,
-                0,
-                12,
-                29,
-                3,
-                33,
-                9,
-                575,
-                0
-              ],
-              [
-                30,
-                5,
-                7,
-                12,
-                24,
-                8,
-                31,
-                28,
-                27,
-                0
-              ]
-            ],
-            "classNames": [
-              "apple",
-              "banana",
-              "bitter gourd",
-              "capsicum",
-              "cucumber",
-              "okra",
-              "orange",
-              "potato",
-              "tomato",
-              "unknown"
-            ],
-            "samples": 2476,
-            "correct": 2080
-          },
-          "freshness": {
-            "title": "Freshness Detection",
-            "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
-            "model": "mobilenetv2-tflite",
-            "accuracy": 0.8861,
-            "macro": {
-              "precision": 0.8871,
-              "recall": 0.8788,
-              "f1": 0.8822
-            },
-            "weighted": {
-              "precision": 0.8864,
-              "recall": 0.8861,
-              "f1": 0.8855
-            },
-            "perClass": [
-              {
-                "label": "fresh",
-                "precision": 0.8919,
-                "recall": 0.8314,
-                "f1": 0.8606,
-                "support": 1121
-              },
-              {
-                "label": "rotten",
-                "precision": 0.8824,
-                "recall": 0.9262,
-                "f1": 0.9038,
-                "support": 1531
-              }
-            ],
-            "confusionMatrix": [
-              [
-                932,
-                189
-              ],
-              [
-                113,
-                1418
-              ]
-            ],
-            "classNames": [
-              "fresh",
-              "rotten"
-            ],
-            "samples": 2652,
-            "correct": 2350,
-            "binary": {
-              "positiveClass": "rotten",
-              "precision": 0.8824,
-              "recall": 0.9262,
-              "f1": 0.9038,
-              "truePositive": 1418,
-              "falsePositive": 189,
-              "falseNegative": 113,
-              "trueNegative": 932
-            }
-          },
-          "combined": {
-            "title": "Combined Identity + Freshness",
-            "description": "The raw identity head, food and freshness in one label.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.8702,
-            "macro": {
-              "precision": 0.8357,
-              "recall": 0.8749,
-              "f1": 0.8481
-            },
-            "weighted": {
-              "precision": 0.8826,
-              "recall": 0.8702,
-              "f1": 0.8678
-            },
-            "perClass": [
-              {
-                "label": "fresh_apples",
-                "precision": 0.9407,
-                "recall": 1.0,
-                "f1": 0.9695,
-                "support": 127
-              },
-              {
-                "label": "fresh_banana",
-                "precision": 0.9793,
-                "recall": 0.993,
-                "f1": 0.9861,
-                "support": 143
-              },
-              {
-                "label": "fresh_bittergourd",
-                "precision": 0.9667,
-                "recall": 1.0,
-                "f1": 0.9831,
-                "support": 29
-              },
-              {
-                "label": "fresh_capsicum",
-                "precision": 0.908,
-                "recall": 0.9405,
-                "f1": 0.924,
-                "support": 84
-              },
-              {
-                "label": "fresh_cucumber",
-                "precision": 0.7121,
-                "recall": 0.8545,
-                "f1": 0.7769,
-                "support": 55
-              },
-              {
-                "label": "fresh_okra",
-                "precision": 0.8868,
-                "recall": 0.8868,
-                "f1": 0.8868,
-                "support": 53
-              },
-              {
-                "label": "fresh_oranges",
-                "precision": 0.795,
-                "recall": 0.9846,
-                "f1": 0.8797,
-                "support": 130
-              },
-              {
-                "label": "fresh_potato",
-                "precision": 0.6593,
-                "recall": 0.9836,
-                "f1": 0.7895,
-                "support": 61
-              },
-              {
-                "label": "fresh_tomato",
-                "precision": 0.9055,
-                "recall": 0.9361,
-                "f1": 0.9205,
-                "support": 266
-              },
-              {
-                "label": "rotten_apples",
-                "precision": 0.8103,
-                "recall": 0.967,
-                "f1": 0.8817,
-                "support": 212
-              },
-              {
-                "label": "rotten_banana",
-                "precision": 0.9559,
-                "recall": 1.0,
-                "f1": 0.9774,
-                "support": 260
-              },
-              {
-                "label": "rotten_bittergourd",
-                "precision": 1.0,
-                "recall": 1.0,
-                "f1": 1.0,
-                "support": 29
-              },
-              {
-                "label": "rotten_capsicum",
-                "precision": 0.8542,
-                "recall": 0.5256,
-                "f1": 0.6508,
-                "support": 156
-              },
-              {
-                "label": "rotten_cucumber",
-                "precision": 0.5455,
-                "recall": 0.6667,
-                "f1": 0.6,
-                "support": 36
-              },
-              {
-                "label": "rotten_okra",
-                "precision": 0.6765,
-                "recall": 0.7667,
-                "f1": 0.7188,
-                "support": 30
-              },
-              {
-                "label": "rotten_oranges",
-                "precision": 0.9929,
-                "recall": 0.9333,
-                "f1": 0.9622,
-                "support": 150
-              },
-              {
-                "label": "rotten_potato",
-                "precision": 0.5,
-                "recall": 0.6027,
-                "f1": 0.5466,
-                "support": 73
-              },
-              {
-                "label": "rotten_tomato",
-                "precision": 0.9539,
-                "recall": 0.7073,
-                "f1": 0.8123,
-                "support": 410
-              }
-            ],
-            "confusionMatrix": [
-              [
-                127,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                142,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                29,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                79,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                5,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                1,
-                0,
-                1,
-                0,
-                47,
-                5,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                47,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                6,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                128,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                60,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                5,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                249,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                11
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                205,
-                0,
-                0,
-                5,
-                0,
-                0,
-                0,
-                0,
-                2
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                260,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                29,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                33,
-                0,
-                0,
-                82,
-                0,
-                0,
-                0,
-                40,
-                1
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                10,
-                0,
-                0,
-                24,
-                2,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                7,
-                23,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                140,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                26,
-                0,
-                0,
-                0,
-                0,
-                0,
-                3,
-                0,
-                0,
-                44,
-                0
-              ],
-              [
-                2,
-                3,
-                0,
-                8,
-                19,
-                1,
-                33,
-                4,
-                25,
-                4,
-                1,
-                0,
-                4,
-                10,
-                2,
-                0,
-                4,
-                290
-              ]
-            ],
-            "classNames": [
-              "fresh_apples",
-              "fresh_banana",
-              "fresh_bittergourd",
-              "fresh_capsicum",
-              "fresh_cucumber",
-              "fresh_okra",
-              "fresh_oranges",
-              "fresh_potato",
-              "fresh_tomato",
-              "rotten_apples",
-              "rotten_banana",
-              "rotten_bittergourd",
-              "rotten_capsicum",
-              "rotten_cucumber",
-              "rotten_okra",
-              "rotten_oranges",
-              "rotten_potato",
-              "rotten_tomato"
-            ],
-            "samples": 2304,
-            "correct": 2005
-          }
+          "samples": 2820,
+          "correct": 2802
         }
       }
     },
@@ -2635,6 +2673,20 @@
               "support": 0
             },
             {
+              "label": "eggplant",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "mango",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
               "label": "okra",
               "precision": 0.0,
               "recall": 0.0,
@@ -2647,6 +2699,13 @@
               "recall": 1.0,
               "f1": 1.0,
               "support": 791
+            },
+            {
+              "label": "papaya",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
             },
             {
               "label": "potato",
@@ -2681,6 +2740,9 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -2693,15 +2755,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -2711,15 +2764,6 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -2741,9 +2785,74 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
               0,
               0,
               0,
@@ -2753,17 +2862,6 @@
               791,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0
             ],
@@ -2777,9 +2875,45 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -2798,8 +2932,11 @@
             "bitter gourd",
             "capsicum",
             "cucumber",
+            "eggplant",
+            "mango",
             "okra",
             "orange",
+            "papaya",
             "potato",
             "tomato",
             "unknown"
@@ -2811,37 +2948,37 @@
           "title": "Freshness Detection",
           "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
           "model": "yolov8n-cls-freshness",
-          "accuracy": 1.0,
+          "accuracy": 0.9996,
           "macro": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0
+            "precision": 0.9997,
+            "recall": 0.9996,
+            "f1": 0.9996
           },
           "weighted": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0
+            "precision": 0.9996,
+            "recall": 0.9996,
+            "f1": 0.9996
           },
           "perClass": [
             {
               "label": "fresh",
               "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
+              "recall": 0.9991,
+              "f1": 0.9996,
               "support": 1164
             },
             {
               "label": "rotten",
-              "precision": 1.0,
+              "precision": 0.9993,
               "recall": 1.0,
-              "f1": 1.0,
+              "f1": 0.9997,
               "support": 1534
             }
           ],
           "confusionMatrix": [
             [
-              1164,
-              0
+              1163,
+              1
             ],
             [
               0,
@@ -2853,32 +2990,32 @@
             "rotten"
           ],
           "samples": 2698,
-          "correct": 2698,
+          "correct": 2697,
           "binary": {
             "positiveClass": "rotten",
-            "precision": 1.0,
+            "precision": 0.9993,
             "recall": 1.0,
-            "f1": 1.0,
+            "f1": 0.9997,
             "truePositive": 1534,
-            "falsePositive": 0,
+            "falsePositive": 1,
             "falseNegative": 0,
-            "trueNegative": 1164
+            "trueNegative": 1163
           }
         },
         "combined": {
           "title": "Combined Identity + Freshness",
           "description": "The raw identity head, food and freshness in one label.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.9996,
+          "accuracy": 1.0,
           "macro": {
-            "precision": 0.9996,
-            "recall": 0.9996,
-            "f1": 0.9996
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
           },
           "weighted": {
-            "precision": 0.9996,
-            "recall": 0.9996,
-            "f1": 0.9996
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
           },
           "perClass": [
             {
@@ -2917,6 +3054,20 @@
               "support": 0
             },
             {
+              "label": "fresh_eggplant",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "fresh_mango",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
               "label": "fresh_okra",
               "precision": 0.0,
               "recall": 0.0,
@@ -2926,9 +3077,16 @@
             {
               "label": "fresh_oranges",
               "precision": 1.0,
-              "recall": 0.9974,
-              "f1": 0.9987,
+              "recall": 1.0,
+              "f1": 1.0,
               "support": 388
+            },
+            {
+              "label": "fresh_papaya",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
             },
             {
               "label": "fresh_potato",
@@ -2987,6 +3145,20 @@
               "support": 0
             },
             {
+              "label": "rotten_eggplant",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "rotten_mango",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
               "label": "rotten_okra",
               "precision": 0.0,
               "recall": 0.0,
@@ -2995,10 +3167,17 @@
             },
             {
               "label": "rotten_oranges",
-              "precision": 0.9975,
+              "precision": 1.0,
               "recall": 1.0,
-              "f1": 0.9988,
+              "f1": 1.0,
               "support": 403
+            },
+            {
+              "label": "rotten_papaya",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
             },
             {
               "label": "rotten_potato",
@@ -3018,6 +3197,12 @@
           "confusionMatrix": [
             [
               395,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3056,21 +3241,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -3086,21 +3256,6 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -3140,42 +3295,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              387,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -3185,6 +3304,12 @@
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3224,9 +3349,207 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              388,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3245,9 +3568,15 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3266,24 +3595,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -3296,21 +3607,6 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -3350,9 +3646,128 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3371,6 +3786,34 @@
               0,
               403,
               0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
@@ -3392,9 +3835,21 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
               0,
               0,
               0,
@@ -3422,8 +3877,11 @@
             "fresh_bittergourd",
             "fresh_capsicum",
             "fresh_cucumber",
+            "fresh_eggplant",
+            "fresh_mango",
             "fresh_okra",
             "fresh_oranges",
+            "fresh_papaya",
             "fresh_potato",
             "fresh_tomato",
             "other",
@@ -3432,827 +3890,16 @@
             "rotten_bittergourd",
             "rotten_capsicum",
             "rotten_cucumber",
+            "rotten_eggplant",
+            "rotten_mango",
             "rotten_okra",
             "rotten_oranges",
+            "rotten_papaya",
             "rotten_potato",
             "rotten_tomato"
           ],
           "samples": 2698,
-          "correct": 2697
-        }
-      },
-      "baseline": {
-        "tasks": {
-          "food_identity": {
-            "title": "Food Identification",
-            "description": "Which food the CNN sees: one of 9 food types, or unknown.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.9933,
-            "macro": {
-              "precision": 0.9941,
-              "recall": 0.9924,
-              "f1": 0.9932
-            },
-            "weighted": {
-              "precision": 0.9934,
-              "recall": 0.9933,
-              "f1": 0.9933
-            },
-            "perClass": [
-              {
-                "label": "apple",
-                "precision": 0.9822,
-                "recall": 1.0,
-                "f1": 0.991,
-                "support": 996
-              },
-              {
-                "label": "banana",
-                "precision": 1.0,
-                "recall": 1.0,
-                "f1": 1.0,
-                "support": 911
-              },
-              {
-                "label": "bitter gourd",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "capsicum",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "cucumber",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "okra",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "orange",
-                "precision": 1.0,
-                "recall": 0.9772,
-                "f1": 0.9885,
-                "support": 791
-              },
-              {
-                "label": "potato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "tomato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "unknown",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              }
-            ],
-            "confusionMatrix": [
-              [
-                996,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                911,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                18,
-                0,
-                0,
-                0,
-                0,
-                0,
-                773,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ]
-            ],
-            "classNames": [
-              "apple",
-              "banana",
-              "bitter gourd",
-              "capsicum",
-              "cucumber",
-              "okra",
-              "orange",
-              "potato",
-              "tomato",
-              "unknown"
-            ],
-            "samples": 2698,
-            "correct": 2680
-          },
-          "freshness": {
-            "title": "Freshness Detection",
-            "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
-            "model": "mobilenetv2-tflite",
-            "accuracy": 0.9974,
-            "macro": {
-              "precision": 0.9977,
-              "recall": 0.997,
-              "f1": 0.9974
-            },
-            "weighted": {
-              "precision": 0.9974,
-              "recall": 0.9974,
-              "f1": 0.9974
-            },
-            "perClass": [
-              {
-                "label": "fresh",
-                "precision": 1.0,
-                "recall": 0.994,
-                "f1": 0.997,
-                "support": 1164
-              },
-              {
-                "label": "rotten",
-                "precision": 0.9955,
-                "recall": 1.0,
-                "f1": 0.9977,
-                "support": 1534
-              }
-            ],
-            "confusionMatrix": [
-              [
-                1157,
-                7
-              ],
-              [
-                0,
-                1534
-              ]
-            ],
-            "classNames": [
-              "fresh",
-              "rotten"
-            ],
-            "samples": 2698,
-            "correct": 2691,
-            "binary": {
-              "positiveClass": "rotten",
-              "precision": 0.9955,
-              "recall": 1.0,
-              "f1": 0.9977,
-              "truePositive": 1534,
-              "falsePositive": 7,
-              "falseNegative": 0,
-              "trueNegative": 1157
-            }
-          },
-          "combined": {
-            "title": "Combined Identity + Freshness",
-            "description": "The raw identity head, food and freshness in one label.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.9918,
-            "macro": {
-              "precision": 0.9938,
-              "recall": 0.9908,
-              "f1": 0.9922
-            },
-            "weighted": {
-              "precision": 0.9921,
-              "recall": 0.9918,
-              "f1": 0.9918
-            },
-            "perClass": [
-              {
-                "label": "fresh_apples",
-                "precision": 1.0,
-                "recall": 0.9949,
-                "f1": 0.9975,
-                "support": 395
-              },
-              {
-                "label": "fresh_banana",
-                "precision": 1.0,
-                "recall": 1.0,
-                "f1": 1.0,
-                "support": 381
-              },
-              {
-                "label": "fresh_bittergourd",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "fresh_capsicum",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "fresh_cucumber",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "fresh_okra",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "fresh_oranges",
-                "precision": 1.0,
-                "recall": 0.9871,
-                "f1": 0.9935,
-                "support": 388
-              },
-              {
-                "label": "fresh_potato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "fresh_tomato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_apples",
-                "precision": 0.9678,
-                "recall": 1.0,
-                "f1": 0.9836,
-                "support": 601
-              },
-              {
-                "label": "rotten_banana",
-                "precision": 1.0,
-                "recall": 1.0,
-                "f1": 1.0,
-                "support": 530
-              },
-              {
-                "label": "rotten_bittergourd",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_capsicum",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_cucumber",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_okra",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_oranges",
-                "precision": 0.9949,
-                "recall": 0.9628,
-                "f1": 0.9786,
-                "support": 403
-              },
-              {
-                "label": "rotten_potato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "rotten_tomato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              }
-            ],
-            "confusionMatrix": [
-              [
-                393,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                381,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                383,
-                0,
-                0,
-                3,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                601,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                530,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                15,
-                0,
-                0,
-                0,
-                0,
-                0,
-                388,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ]
-            ],
-            "classNames": [
-              "fresh_apples",
-              "fresh_banana",
-              "fresh_bittergourd",
-              "fresh_capsicum",
-              "fresh_cucumber",
-              "fresh_okra",
-              "fresh_oranges",
-              "fresh_potato",
-              "fresh_tomato",
-              "rotten_apples",
-              "rotten_banana",
-              "rotten_bittergourd",
-              "rotten_capsicum",
-              "rotten_cucumber",
-              "rotten_okra",
-              "rotten_oranges",
-              "rotten_potato",
-              "rotten_tomato"
-            ],
-            "samples": 2698,
-            "correct": 2676
-          }
+          "correct": 2698
         }
       }
     },
@@ -4269,41 +3916,41 @@
           "title": "Freshness Detection",
           "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
           "model": "yolov8n-cls-freshness",
-          "accuracy": 0.9939,
+          "accuracy": 0.9959,
           "macro": {
-            "precision": 0.9939,
-            "recall": 0.9939,
-            "f1": 0.9939
+            "precision": 0.9959,
+            "recall": 0.9959,
+            "f1": 0.9959
           },
           "weighted": {
-            "precision": 0.9939,
-            "recall": 0.9939,
-            "f1": 0.9939
+            "precision": 0.9959,
+            "recall": 0.9959,
+            "f1": 0.9959
           },
           "perClass": [
             {
               "label": "fresh",
-              "precision": 0.9979,
-              "recall": 0.9898,
-              "f1": 0.9939,
+              "precision": 0.9939,
+              "recall": 0.998,
+              "f1": 0.9959,
               "support": 490
             },
             {
               "label": "rotten",
-              "precision": 0.9899,
-              "recall": 0.998,
-              "f1": 0.9939,
+              "precision": 0.998,
+              "recall": 0.9939,
+              "f1": 0.9959,
               "support": 490
             }
           ],
           "confusionMatrix": [
             [
-              485,
-              5
+              489,
+              1
             ],
             [
-              1,
-              489
+              3,
+              487
             ]
           ],
           "classNames": [
@@ -4311,78 +3958,16 @@
             "rotten"
           ],
           "samples": 980,
-          "correct": 974,
+          "correct": 976,
           "binary": {
             "positiveClass": "rotten",
-            "precision": 0.9899,
-            "recall": 0.998,
-            "f1": 0.9939,
-            "truePositive": 489,
-            "falsePositive": 5,
-            "falseNegative": 1,
-            "trueNegative": 485
-          }
-        }
-      },
-      "baseline": {
-        "tasks": {
-          "freshness": {
-            "title": "Freshness Detection",
-            "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
-            "model": "mobilenetv2-tflite",
-            "accuracy": 0.5,
-            "macro": {
-              "precision": 0.25,
-              "recall": 0.5,
-              "f1": 0.3333
-            },
-            "weighted": {
-              "precision": 0.25,
-              "recall": 0.5,
-              "f1": 0.3333
-            },
-            "perClass": [
-              {
-                "label": "fresh",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 490
-              },
-              {
-                "label": "rotten",
-                "precision": 0.5,
-                "recall": 1.0,
-                "f1": 0.6667,
-                "support": 490
-              }
-            ],
-            "confusionMatrix": [
-              [
-                0,
-                490
-              ],
-              [
-                0,
-                490
-              ]
-            ],
-            "classNames": [
-              "fresh",
-              "rotten"
-            ],
-            "samples": 980,
-            "correct": 490,
-            "binary": {
-              "positiveClass": "rotten",
-              "precision": 0.5,
-              "recall": 1.0,
-              "f1": 0.6667,
-              "truePositive": 490,
-              "falsePositive": 490,
-              "falseNegative": 0,
-              "trueNegative": 0
-            }
+            "precision": 0.998,
+            "recall": 0.9939,
+            "f1": 0.9959,
+            "truePositive": 487,
+            "falsePositive": 1,
+            "falseNegative": 3,
+            "trueNegative": 489
           }
         }
       }
@@ -4390,11 +3975,11 @@
     {
       "id": "unknown_foods",
       "title": "Foods the model has never seen",
-      "description": "Persimmon, peach, mango, pear, grape, kiwi, corn, onion, carrot, aubergine and beef. The right answer is 'unknown'.",
+      "description": "Persimmon, peach, pear, grape, kiwi, corn, onion, carrot and beef. The right answer is 'unknown'.",
       "dataset": {
-        "images": 1220,
+        "images": 1140,
         "imagesByFood": {
-          "unknown": 1220
+          "unknown": 1140
         }
       },
       "tasks": {
@@ -4402,16 +3987,16 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.3074,
+          "accuracy": 0.3491,
           "macro": {
             "precision": 1.0,
-            "recall": 0.3074,
-            "f1": 0.4702
+            "recall": 0.3491,
+            "f1": 0.5176
           },
           "weighted": {
             "precision": 1.0,
-            "recall": 0.3074,
-            "f1": 0.4702
+            "recall": 0.3491,
+            "f1": 0.5176
           },
           "perClass": [
             {
@@ -4450,6 +4035,20 @@
               "support": 0
             },
             {
+              "label": "eggplant",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "mango",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
               "label": "okra",
               "precision": 0.0,
               "recall": 0.0,
@@ -4458,6 +4057,13 @@
             },
             {
               "label": "orange",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "papaya",
               "precision": 0.0,
               "recall": 0.0,
               "f1": 0.0,
@@ -4480,9 +4086,9 @@
             {
               "label": "unknown",
               "precision": 1.0,
-              "recall": 0.3074,
-              "f1": 0.4702,
-              "support": 1220
+              "recall": 0.3491,
+              "f1": 0.5176,
+              "support": 1140
             }
           ],
           "confusionMatrix": [
@@ -4496,15 +4102,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -4514,15 +4111,6 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -4544,15 +4132,6 @@
               0,
               0,
               0,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
               0,
               0,
               0,
@@ -4562,15 +4141,6 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -4592,19 +4162,130 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
-              235,
-              41,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              193,
+              13,
               1,
-              60,
-              19,
               0,
-              160,
-              14,
-              315,
-              375
+              17,
+              23,
+              2,
+              4,
+              221,
+              0,
+              8,
+              260,
+              398
             ]
           ],
           "classNames": [
@@ -4613,242 +4294,17 @@
             "bitter gourd",
             "capsicum",
             "cucumber",
+            "eggplant",
+            "mango",
             "okra",
             "orange",
+            "papaya",
             "potato",
             "tomato",
             "unknown"
           ],
-          "samples": 1220,
-          "correct": 375
-        }
-      },
-      "baseline": {
-        "tasks": {
-          "food_identity": {
-            "title": "Food Identification",
-            "description": "Which food the CNN sees: one of 9 food types, or unknown.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.0,
-            "macro": {
-              "precision": 0.0,
-              "recall": 0.0,
-              "f1": 0.0
-            },
-            "weighted": {
-              "precision": 0.0,
-              "recall": 0.0,
-              "f1": 0.0
-            },
-            "perClass": [
-              {
-                "label": "apple",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "banana",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "bitter gourd",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "capsicum",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "cucumber",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "okra",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "orange",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "potato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "tomato",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "unknown",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 1220
-              }
-            ],
-            "confusionMatrix": [
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                414,
-                37,
-                4,
-                115,
-                86,
-                4,
-                217,
-                21,
-                322,
-                0
-              ]
-            ],
-            "classNames": [
-              "apple",
-              "banana",
-              "bitter gourd",
-              "capsicum",
-              "cucumber",
-              "okra",
-              "orange",
-              "potato",
-              "tomato",
-              "unknown"
-            ],
-            "samples": 1220,
-            "correct": 0
-          }
+          "samples": 1140,
+          "correct": 398
         }
       }
     },
@@ -4873,30 +4329,30 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.5657,
+          "accuracy": 0.4429,
           "macro": {
-            "precision": 0.7215,
-            "recall": 0.5657,
-            "f1": 0.5569
+            "precision": 0.7302,
+            "recall": 0.4429,
+            "f1": 0.4844
           },
           "weighted": {
-            "precision": 0.7215,
-            "recall": 0.5657,
-            "f1": 0.5569
+            "precision": 0.7302,
+            "recall": 0.4429,
+            "f1": 0.4844
           },
           "perClass": [
             {
               "label": "apple",
-              "precision": 0.402,
-              "recall": 0.82,
-              "f1": 0.5395,
+              "precision": 0.4737,
+              "recall": 0.63,
+              "f1": 0.5408,
               "support": 100
             },
             {
               "label": "banana",
-              "precision": 0.7961,
-              "recall": 0.82,
-              "f1": 0.8079,
+              "precision": 0.9492,
+              "recall": 0.56,
+              "f1": 0.7044,
               "support": 100
             },
             {
@@ -4908,17 +4364,31 @@
             },
             {
               "label": "capsicum",
-              "precision": 0.9231,
-              "recall": 0.24,
-              "f1": 0.381,
+              "precision": 1.0,
+              "recall": 0.15,
+              "f1": 0.2609,
               "support": 100
             },
             {
               "label": "cucumber",
-              "precision": 0.9216,
-              "recall": 0.47,
-              "f1": 0.6225,
+              "precision": 0.7727,
+              "recall": 0.34,
+              "f1": 0.4722,
               "support": 100
+            },
+            {
+              "label": "eggplant",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
+              "label": "mango",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
             },
             {
               "label": "okra",
@@ -4929,23 +4399,30 @@
             },
             {
               "label": "orange",
-              "precision": 0.7273,
-              "recall": 0.8,
-              "f1": 0.7619,
+              "precision": 0.73,
+              "recall": 0.73,
+              "f1": 0.73,
               "support": 100
             },
             {
+              "label": "papaya",
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            {
               "label": "potato",
-              "precision": 0.9583,
-              "recall": 0.23,
-              "f1": 0.371,
+              "precision": 1.0,
+              "recall": 0.27,
+              "f1": 0.4252,
               "support": 100
             },
             {
               "label": "tomato",
-              "precision": 0.3222,
-              "recall": 0.58,
-              "f1": 0.4143,
+              "precision": 0.1858,
+              "recall": 0.42,
+              "f1": 0.2577,
               "support": 100
             },
             {
@@ -4958,27 +4435,33 @@
           ],
           "confusionMatrix": [
             [
-              82,
+              63,
               1,
               0,
               0,
               0,
+              4,
+              0,
+              0,
+              1,
+              1,
+              0,
+              30,
+              0
+            ],
+            [
+              1,
+              56,
+              0,
+              0,
+              5,
+              10,
               0,
               2,
               1,
-              14,
-              0
-            ],
-            [
-              3,
-              82,
               0,
               0,
-              3,
-              0,
-              0,
-              0,
-              12,
+              25,
               0
             ],
             [
@@ -4991,81 +4474,150 @@
               0,
               0,
               0,
+              0,
+              0,
+              0,
               0
             ],
             [
-              20,
-              5,
+              9,
               0,
-              24,
+              0,
+              15,
+              1,
+              16,
               0,
               0,
               16,
               0,
-              35,
+              0,
+              43,
               0
             ],
             [
-              27,
-              12,
+              8,
+              0,
+              0,
+              0,
+              34,
+              34,
+              0,
+              0,
+              0,
+              0,
+              0,
+              24,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              3,
+              8,
+              0,
+              0,
+              73,
+              0,
+              0,
+              10,
+              6
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              14,
+              2,
+              0,
               0,
               1,
-              47,
+              2,
+              0,
+              0,
+              2,
+              0,
+              27,
+              52,
+              0
+            ],
+            [
+              38,
+              0,
               0,
               0,
               0,
               13,
+              0,
+              0,
+              7,
+              0,
+              0,
+              42,
               0
             ],
             [
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
-              3,
-              0,
-              0,
-              0,
-              1,
-              0,
-              80,
-              0,
-              15,
-              1
-            ],
-            [
-              37,
-              3,
-              0,
-              1,
-              0,
-              0,
-              3,
-              23,
-              33,
-              0
-            ],
-            [
-              32,
-              0,
-              1,
-              0,
-              0,
-              0,
-              9,
-              0,
-              58,
-              0
-            ],
-            [
               0,
               0,
               0,
@@ -5084,242 +4636,17 @@
             "bitter gourd",
             "capsicum",
             "cucumber",
+            "eggplant",
+            "mango",
             "okra",
             "orange",
+            "papaya",
             "potato",
             "tomato",
             "unknown"
           ],
           "samples": 700,
-          "correct": 396
-        }
-      },
-      "baseline": {
-        "tasks": {
-          "food_identity": {
-            "title": "Food Identification",
-            "description": "Which food the CNN sees: one of 9 food types, or unknown.",
-            "model": "yolov8n-cls (food_multiclass)",
-            "accuracy": 0.6,
-            "macro": {
-              "precision": 0.7228,
-              "recall": 0.6,
-              "f1": 0.5998
-            },
-            "weighted": {
-              "precision": 0.7228,
-              "recall": 0.6,
-              "f1": 0.5998
-            },
-            "perClass": [
-              {
-                "label": "apple",
-                "precision": 0.4258,
-                "recall": 0.89,
-                "f1": 0.5761,
-                "support": 100
-              },
-              {
-                "label": "banana",
-                "precision": 0.869,
-                "recall": 0.73,
-                "f1": 0.7935,
-                "support": 100
-              },
-              {
-                "label": "bitter gourd",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "capsicum",
-                "precision": 0.8,
-                "recall": 0.24,
-                "f1": 0.3692,
-                "support": 100
-              },
-              {
-                "label": "cucumber",
-                "precision": 0.7971,
-                "recall": 0.55,
-                "f1": 0.6509,
-                "support": 100
-              },
-              {
-                "label": "okra",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              },
-              {
-                "label": "orange",
-                "precision": 0.7798,
-                "recall": 0.85,
-                "f1": 0.8134,
-                "support": 100
-              },
-              {
-                "label": "potato",
-                "precision": 0.9714,
-                "recall": 0.34,
-                "f1": 0.5037,
-                "support": 100
-              },
-              {
-                "label": "tomato",
-                "precision": 0.4167,
-                "recall": 0.6,
-                "f1": 0.4918,
-                "support": 100
-              },
-              {
-                "label": "unknown",
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0,
-                "support": 0
-              }
-            ],
-            "confusionMatrix": [
-              [
-                89,
-                0,
-                0,
-                2,
-                1,
-                0,
-                1,
-                1,
-                6,
-                0
-              ],
-              [
-                1,
-                73,
-                1,
-                1,
-                5,
-                6,
-                4,
-                0,
-                9,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                21,
-                1,
-                0,
-                24,
-                2,
-                0,
-                10,
-                0,
-                42,
-                0
-              ],
-              [
-                32,
-                4,
-                1,
-                1,
-                55,
-                7,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                3,
-                2,
-                1,
-                1,
-                2,
-                0,
-                85,
-                0,
-                6,
-                0
-              ],
-              [
-                40,
-                2,
-                0,
-                0,
-                1,
-                0,
-                2,
-                34,
-                21,
-                0
-              ],
-              [
-                23,
-                2,
-                0,
-                1,
-                3,
-                4,
-                7,
-                0,
-                60,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-              ]
-            ],
-            "classNames": [
-              "apple",
-              "banana",
-              "bitter gourd",
-              "capsicum",
-              "cucumber",
-              "okra",
-              "orange",
-              "potato",
-              "tomato",
-              "unknown"
-            ],
-            "samples": 700,
-            "correct": 420
-          }
+          "correct": 310
         }
       }
     }

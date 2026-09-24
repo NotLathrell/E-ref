@@ -8,7 +8,7 @@ the models being scored:
   original_val      the original dataset's ``val``/``Test`` images that are NOT also in
                     ``train`` (apples, bananas and oranges only)
   meat_external     ``dataset2/test``: fresh vs rotten beef from a separate collection
-  unknown_foods     foods the model never trained on (persimmon, peach, mango, grape...);
+  unknown_foods     foods the model never trained on (persimmon, peach, pear, grape...);
                     the right answer is "unknown"
   white_background  Dataset-FV's unlabelled cut-out photos of the app's foods, a very
                     different look from the training photos
@@ -185,7 +185,7 @@ def gather_sets(sem_per_food: int) -> dict[str, dict]:
     sets["unknown_foods"] = {
         "title": "Foods the model has never seen",
         "description": (
-            "Persimmon, peach, mango, pear, grape, kiwi, corn, onion, carrot, aubergine and beef. "
+            "Persimmon, peach, pear, grape, kiwi, corn, onion, carrot and beef. "
             "The right answer is 'unknown'."
         ),
         "items": unknown,

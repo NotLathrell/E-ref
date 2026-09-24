@@ -10,7 +10,7 @@ Each `POST /predict` runs three stages:
 | Stage | Model | Weights | Job |
 | --- | --- | --- | --- |
 | 1. Detection | YOLOv8n (COCO) | `yolov8n.pt` | Locate the food and cross-check the CNN |
-| 2. Identification | YOLOv8n-cls (CNN) | `runs/classify/runs/classify/eref_identity_v2/weights/best.pt` | Classify the full frame into 19 classes: 9 foods x fresh/rotten, plus `other` |
+| 2. Identification | YOLOv8n-cls (CNN) | `runs/classify/runs/classify/eref_identity_v2/weights/best.pt` | Classify the full frame into 25 classes: 12 foods x fresh/rotten, plus `other` |
 | 3. Freshness | YOLOv8n-cls (CNN) | `runs/classify/runs/classify/eref_freshness_v2/weights/best.pt` | Binary fresh vs rotten on the full frame |
 
 `yolov8n.pt` is COCO-pretrained, so it recognises apples, bananas and oranges
@@ -22,7 +22,7 @@ always comes from the CNN, and `detection.agreement` reports whether the detecto
 agreed (`agrees`), named a different food (`differs`) or named something that is
 not a food type it can identify (`outside_vocabulary`).
 
-Stage 2's 19th class, `other`, is for anything that is not one of the app's nine
+Stage 2's 25th class, `other`, is for anything that is not one of the app's twelve
 foods — the response then reports `foodName: null` and the app tells the user
 their item is not one of the supported foods, instead of forcing a guess. `other`
 has no freshness meaning of its own, so it is left out of stage 3's identity-side
@@ -78,6 +78,29 @@ python backend\build_dataset.py
 python backend\train.py            # both models, GPU if available
 ```
 
+### Data sources
+
+None of these datasets are committed to the repository (see `.gitignore`); download
+them into `Datasets/` yourself before running `build_dataset.py`. Cite them by
+their DOI if this project's results are reported elsewhere.
+
+| Food(s) | Dataset | Source | Licence |
+| --- | --- | --- | --- |
+| Apple, banana, orange, tomato, potato, cucumber, capsicum, okra, bitter gourd | the project's original combined dataset | bundled with this repo's history | — |
+| Banana, orange, apple, cucumber, capsicum, tomato, potato (supplementary) | Dataset-FV | course-provided | — |
+| Beef | dataset2 (fresh/rotten beef) | course-provided | — |
+| Mango | "FruitVision: A Benchmark Dataset for Fresh, Rotten, and Formalin-mixed Fruit Detection" | Mendeley Data, [doi:10.17632/xkbjx8959c.2](https://doi.org/10.17632/xkbjx8959c.2) | CC BY-NC-ND 4.0 |
+| Papaya | "Papaya Freshness Classification Dataset" | Mendeley Data, [doi:10.17632/7mgj5bvp5h.1](https://doi.org/10.17632/7mgj5bvp5h.1) | CC BY 4.0 |
+| Eggplant | "BrinjalFruitX: A Field-Collected Image Dataset for Machine Learning and Deep Learning-Based Disease Identification in Brinjal Fruits" | Mendeley Data, [doi:10.17632/ngc58fsxgd.1](https://doi.org/10.17632/ngc58fsxgd.1) | CC BY 4.0 |
+
+The mango dataset's licence is non-commercial and no-derivatives: it is used here
+only to train a model for this non-commercial academic project, the raw images are
+never redistributed (they are gitignored), and the app does not ship or resell the
+dataset itself — only model weights trained on it, which is standard academic
+practice for research use of an NC-ND dataset. If this project is ever put to
+commercial use, the mango model should be retrained on a permissively-licensed
+substitute first.
+
 ## Evaluation
 
 Model metrics are measured, not hard-coded. Generate the report before the app
@@ -97,50 +120,52 @@ headline numbers come from the held-out split; the rest appear underneath as
 
 Three tasks are scored per set:
 
-- **food_identity** — which of the 9 food types it is, or `unknown`
+- **food_identity** — which of the 12 food types it is, or `unknown`
 - **freshness** — fresh vs rotten, with `rotten` as the positive class
-- **combined** — the raw 19-class head, identity and freshness together
+- **combined** — the raw 25-class head, identity and freshness together
 
 Each reports accuracy, macro and support-weighted precision / recall / F1,
 per-class scores with support, and a confusion matrix. Definitions match
 scikit-learn's `classification_report`; `metrics.py` computes them with numpy so
 the backend stays light.
 
-Headline results, over 2,652 held-out images spanning all 9 foods:
+Headline results, over 2,996 held-out images spanning all 12 foods:
 
 | Task | Accuracy | Precision | Recall | F1 |
 | --- | --- | --- | --- | --- |
-| Food identification | 99.84% | 99.74% | 99.75% | 99.74% |
-| Freshness detection | 99.51% | 99.48% | 99.52% | 99.50% |
-| Combined (19-class) | 99.39% | 98.95% | 99.06% | 98.99% |
+| Food identification | 99.89% | 99.81% | 99.77% | 99.79% |
+| Freshness detection | 99.20% | 99.14% | 99.22% | 99.18% |
+| Combined (25-class) | 99.36% | 99.01% | 99.11% | 99.05% |
 
 ### What these numbers do not cover
 
 The held-out split is the friendliest test: never-seen photos, but from the same
-collections as training. `--baseline` compares the new and previous models on four
-tougher, independent sets:
+collections as training. Four tougher, independent sets tell a fuller story. The
+table below tracks two retraining rounds: the 9-food model from the previous round
+(apple, banana, orange, tomato, potato, cucumber, capsicum, okra, bitter gourd)
+against the current 12-food model (adding mango, papaya and eggplant from separate
+public datasets):
 
-| Check | Previous models | New models |
+| Check | 9-food model (previous round) | 12-food model (this round) |
 | --- | --- | --- |
-| Held-out split (identity / freshness) | 84.0% / 88.6% | 99.8% / 99.5% |
-| Original dataset's own unseen apple/banana/orange | 99.3% | 100% |
-| Fresh vs rotten beef, separate collection | 50.0% | 99.4% |
-| Foods never trained on, correctly called "unknown" | 0% | 30.7% |
-| Cut-out photos on a plain white background | 60.0% | 56.6% |
+| Held-out split (identity / freshness) | 99.8% / 99.5% | 99.9% / 99.2% |
+| Original dataset's own unseen apple/banana/orange | 100% | 100% |
+| Fresh vs rotten beef, separate collection | 99.4% | 99.6% |
+| Foods never trained on, correctly called "unknown" | 30.7% | 34.9% |
+| Cut-out photos on a plain white background | 56.6% | 44.3% |
 
 The last two rows are real weaknesses. Sweeping a confidence threshold for
 "unknown" (`benchmark.py --tune`, then a dedicated known-vs-unknown sweep) found
-the model is frequently confident but wrong on food it has never seen — at a 0.9
-threshold it still only rejects 22% of unseen foods while wrongly rejecting 11%
-of known ones — so no threshold is applied; `MIN_IDENTITY_CONFIDENCE` in
-`pipeline.py` is 0 (disabled). An earlier retraining round used Dataset-FV's
-unlabelled cut-out photos as `other` training examples and that pushed the
-white-background number down to 13%: the model had learned "plain background
-means unknown" instead of learning the foods themselves. Removing those images
-from training fixed that (56.6%) at the cost of some of the unknown-food score,
-which had been inflated by the same shortcut. Both numbers reflect a real gap —
-more training photos in exactly those conditions is what would close it, not a
-setting.
+the model is frequently confident but wrong on food it has never seen — so no
+threshold is applied; `MIN_IDENTITY_CONFIDENCE` in `pipeline.py` is 0 (disabled).
+Adding mango, papaya and eggplant nudged the unknown-food score up (there are more
+labelled classes now, so a misfire is more likely to land on a class that isn't
+`unknown`, but also more training diversity to draw the line correctly some of the
+time) but pulled the white-background score down: eggplant and mango occupy more
+of the label space, so a plain-background photo of an existing food (apple,
+capsicum, cucumber, potato, tomato) has more ways to be misclassified into a food
+that wasn't there before. Both numbers reflect a real gap — more training photos in
+exactly those conditions is what would close it, not a setting.
 
 ## Endpoints
 

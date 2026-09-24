@@ -58,8 +58,11 @@ Extracted information can be used as part of the food item's shelf-life and risk
 A captured image runs through a three-stage pipeline on the backend:
 
 1. **YOLOv8 detection** locates the food in the frame.
-2. **A CNN classifier** identifies the food from the full image: one of 9 food
-   types, or "not one of the supported foods" for anything else.
+2. **A CNN classifier** identifies the food from the full image: one of 12 food
+   types — apple, banana, orange, tomato, potato, cucumber, capsicum, okra,
+   bitter gourd, mango, papaya and eggplant, the last three added from separate
+   public datasets to cover fruits and vegetables common in Philippine kitchens
+   — or "not one of the supported foods" for anything else.
 3. **A second CNN** decides whether that food is fresh or rotten.
 
 Identity always comes from the CNN. The detector is COCO-pretrained and only
@@ -85,11 +88,11 @@ fresh/rotten outcome breakdown.
 
 | Task | Accuracy | Precision | Recall | F1 |
 | --- | --- | --- | --- | --- |
-| Food identification | 99.84% | 99.74% | 99.75% | 99.74% |
-| Freshness detection | 99.51% | 99.48% | 99.52% | 99.50% |
-| Combined identity + freshness | 99.39% | 98.95% | 99.06% | 98.99% |
+| Food identification | 99.89% | 99.81% | 99.77% | 99.79% |
+| Freshness detection | 99.20% | 99.14% | 99.22% | 99.18% |
+| Combined identity + freshness | 99.36% | 99.01% | 99.11% | 99.05% |
 
-Measured over 2,652 images the models have not trained on, spanning all 9 foods;
+Measured over 2,996 images the models have not trained on, spanning all 12 foods;
 precision, recall and F1 are macro-averaged. Regenerate with
 `python backend/benchmark.py`.
 
@@ -101,18 +104,21 @@ independent checks — images from entirely separate collections:
 | Check | Food identification | Freshness |
 | --- | --- | --- |
 | Original dataset's own unseen apple/banana/orange photos | 100% | 100% |
-| Fresh vs rotten beef, a separate photo collection | — | 99.4% |
-| Foods never trained on (persimmon, mango, pear, grape…), correctly called "unknown" | 30.7% | — |
-| Cut-out product photos on a plain white background | 56.6% | — |
+| Fresh vs rotten beef, a separate photo collection | — | 99.6% |
+| Foods never trained on (persimmon, pear, grape, corn…), correctly called "unknown" | 34.9% | — |
+| Cut-out product photos on a plain white background | 44.3% | — |
 
 The last two are real weaknesses, not polish items. The model is frequently
-**confident but wrong** on food it has never seen — a persimmon at high confidence
-reads as an apple or tomato rather than "unknown" — and a plain white background is
-a different-enough look that capsicum, cucumber, potato and tomato are
-misidentified about half the time there (apple, banana and orange fare much
-better, at 80%+). Both would need more training data in those specific conditions
-to fix; raising a confidence threshold does not help; it was tested and rejects
-almost as many correct answers as wrong ones.
+**confident but wrong** on food it has never seen — an unfamiliar fruit at high
+confidence reads as one of the 12 known foods rather than "unknown" — and a plain
+white background is a different-enough look that several foods are misidentified
+there. Adding mango, papaya and eggplant gave the model more label space to fall
+back on, which nudged the unknown-food score up but pulled the white-background
+score down, since a plain-background photo of an existing food now has more ways
+to land on a food that wasn't in the vocabulary before. Both would need more
+training data in those specific conditions to fix; raising a confidence threshold
+does not help — it was tested and rejects almost as many correct answers as wrong
+ones.
 
 ### Shelf-Life and TTI Estimation
 The system estimates the remaining usable life of a food item based on factors such as:

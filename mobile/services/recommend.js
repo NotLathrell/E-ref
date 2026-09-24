@@ -32,6 +32,10 @@ export function generateRecommendations(item) {
     bestPractice: {
       title: 'Best Practice',
       storage: `Best storage: ${bestStorage.label}`,
+      storageId: bestStorage.id,
+      storageLabel: bestStorage.label,
+      storageTempC: bestStorage.tempC,
+      freezeable: food.freezeable,
       freezeBy: item.freezeByDate
         ? `Freeze by: ${formatDate(item.freezeByDate)}`
         : food.freezeable

@@ -2,19 +2,36 @@
 
 Two ImageFolder datasets are written under ``Datasets/dataset/.training/eref_v2``:
 
-  identity/    19 classes: the original 18 ``fresh_*`` / ``rotten_*`` labels plus
-               ``other`` for anything that is not one of the app's nine foods
-               (other fruit, meat...). The app can then say "unknown food"
-               instead of forcing an answer.
+  identity/    25 classes: 12 foods x fresh/rotten, plus ``other`` for anything
+               that is not one of the app's foods (other fruit, meat...). The app
+               can then say "unknown food" instead of forcing an answer.
   freshness/   fresh vs rotten, trained on produce and on the meat photos of
                ``dataset2``.
+
+Three of the twelve foods — mango, papaya and eggplant — are common in Philippine
+cooking and were not covered by any of this project's original sources. They were
+added from separate public collections under ``Datasets/ph_extra/`` (downloaded
+into that folder, not committed — see ``backend/README.md`` for the exact source,
+licence and citation of each):
+
+  mango       "FruitVision" (Mendeley, CC BY-NC-ND 4.0) — Fresh/Rotten photos.
+              Its "Formalin-mixed" class (chemically adulterated, not naturally
+              spoiled) is not used.
+  papaya      "Papaya Freshness Classification Dataset" (Mendeley, CC BY 4.0) —
+              GOOD/BAD photos.
+  eggplant    "BrinjalFruitX" (Mendeley, CC BY 4.0) — fruit photos in five
+              condition classes. Only the healthy class maps to "fresh"; pest
+              damage, cracking and disease all map to "rotten", since none of
+              them is fruit a home cook would judge fit to eat as-is.
 
 Held-out data is kept out of training on purpose:
 
   * Original ``val`` / ``Test`` images that are not also in ``train`` are kept out of
     every pool, so ``evaluate.py`` keeps scoring the same independent images as before.
   * ``identity_unseen/`` holds foods the model never trains on (persimmon, peach,
-    mango, pear, grape...). The model should answer ``other`` for them.
+    pear, grape, kiwi, corn, onion, carrot...). The model should answer ``other``
+    for them. Mango and eggplant are excluded from this set (see ``KNOWN_SEM``)
+    now that they are trained foods, not unseen ones.
   * ``freshness_ext/`` is ``dataset2/test`` in full, a different photographer and
     scene from ``dataset2/train``.
   * Foods of the app that exist only in ``sem_classificacao`` are never trained on;
@@ -44,7 +61,25 @@ DATASETS = PROJECT_ROOT / "Datasets"
 ORIG = DATASETS / "dataset" / ".training" / "food_multiclass"
 FV = DATASETS / "Dataset-FV"
 DS2 = DATASETS / "dataset2"
+PH = DATASETS / "ph_extra"
 OUT = DATASETS / "dataset" / ".training" / "eref_v2"
+
+# Three foods common in the Philippines, added from separate public collections
+# (none of the app's existing sources cover them). Each maps that collection's own
+# quality folders onto this app's fresh/rotten split; see build_dataset.py's module
+# docstring update below and backend/README.md for the source and licence of each.
+MANGO_DIR = PH / "mango" / "Fruits Original" / "Mango"
+PAPAYA_DIR = PH / "papaya" / "Dataset"
+EGGPLANT_DIR = PH / "eggplant"
+# Only "Healty Brinjal" (their spelling) is a clean, undamaged fruit; the other four
+# folders are pest, crack and disease damage, which this app reports as "rotten"
+# since a home cook would not judge them fit to eat as-is.
+EGGPLANT_ROTTEN_DIRS = (
+    "Wet Rot",
+    "Shoot and Fruit Borer",
+    "Brinjal Fruit Creaking",
+    "Phomopsis Bright",
+)
 
 EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 MAX_SIDE = 384
@@ -60,9 +95,12 @@ KNOWN_FV = {
 }
 # Foods in Dataset-FV the model never trains on, to test "unknown food" handling.
 UNSEEN_COM = {"caqui", "pessego"}
-UNSEEN_SEM = {"manga", "pera", "uva", "cebola", "cenoura", "kiwi", "milho", "berinjela"}
-# Foods of the app that appear in Dataset-FV's unlabelled folder; kept as an external test.
-KNOWN_SEM = {"banana", "laranja", "maca", "pepino", "pimentao", "tomate", "batata"}
+UNSEEN_SEM = {"pera", "uva", "cebola", "cenoura", "kiwi", "milho"}
+# Foods of the app that appear in Dataset-FV's unlabelled folder; skipped rather than
+# fed to the "other"/unknown pools, since the app now identifies them (mango and eggplant
+# were added from separate Mendeley datasets; treating them as "other" here would teach
+# the model to contradict the labelled examples of the same foods).
+KNOWN_SEM = {"banana", "laranja", "maca", "pepino", "pimentao", "tomate", "batata", "manga", "berinjela"}
 
 CAP_OTHER_COM = 250  # per unknown food and quality
 # Dataset-FV's unlabelled folder is mostly single cut-outs on a white background. Used as
@@ -176,6 +214,21 @@ def main() -> None:
             add(f, "pool-meat", None, quality, "dataset2-train")
         for f in images(DS2 / "test" / "test" / quality):
             add(f, "ext", None, quality, "dataset2-test")
+
+    # 5. Philippine-relevant additions: mango, papaya, eggplant
+    for quality, fresh in (("Fresh", "fresh"), ("Rotten", "rotten")):
+        for f in images(MANGO_DIR / quality):
+            add(f, "pool", f"{fresh}_mango", fresh, f"ph-mango/{quality}")
+
+    for quality, fresh in (("GOOD", "fresh"), ("BAD", "rotten")):
+        for f in images(PAPAYA_DIR / quality):
+            add(f, "pool", f"{fresh}_papaya", fresh, f"ph-papaya/{quality}")
+
+    for f in images(EGGPLANT_DIR / "Healty Brinjal"):
+        add(f, "pool", "fresh_eggplant", "fresh", "ph-eggplant/Healty Brinjal")
+    for class_dir in EGGPLANT_ROTTEN_DIRS:
+        for f in images(EGGPLANT_DIR / class_dir):
+            add(f, "pool", "rotten_eggplant", "rotten", f"ph-eggplant/{class_dir}")
 
     print(f"Hashing {len(entries)} candidate images ...", flush=True)
     seen: set[str] = set()
