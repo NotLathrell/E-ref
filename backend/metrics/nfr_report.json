@@ -1,0 +1,52 @@
+{
+  "predict": {
+    "runs": 20,
+    "meanMs": 71.3,
+    "p50Ms": 71.0,
+    "p95Ms": 75.3,
+    "maxMs": 78.2,
+    "targetP95Ms": 3000.0
+  },
+  "ocr": {
+    "runs": 10,
+    "meanMs": 466.3,
+    "p50Ms": 456.3,
+    "p95Ms": 567.0,
+    "maxMs": 567.0,
+    "targetP95Ms": 4000.0
+  },
+  "login": {
+    "runs": 8,
+    "meanMs": 77.3,
+    "p50Ms": 76.9,
+    "p95Ms": 82.9,
+    "maxMs": 82.9,
+    "targetP95Ms": 1000.0
+  },
+  "inventoryList": {
+    "runs": 30,
+    "meanMs": 7.3,
+    "p50Ms": 7.2,
+    "p95Ms": 9.5,
+    "maxMs": 10.1,
+    "targetP95Ms": 250.0
+  },
+  "inventorySave": {
+    "runs": 30,
+    "meanMs": 16.8,
+    "p50Ms": 16.2,
+    "p95Ms": 20.5,
+    "maxMs": 22.1,
+    "targetP95Ms": 250.0
+  },
+  "reliability": {
+    "requests": 50,
+    "failures": 0
+  },
+  "concurrency": {
+    "users": 6,
+    "requestsPerUser": 16,
+    "errors": 0
+  },
+  "generatedAt": "2026-10-01T15:58:39+0800"
+}

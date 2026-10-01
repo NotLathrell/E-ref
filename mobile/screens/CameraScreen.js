@@ -1,34 +1,30 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-import { analyzeScan } from "../services/scanPipeline";
+import { analyzeScan, applyFoodChoice, draftFromObject, foodChoicesFromTopK } from "../services/scanPipeline";
+import { MAX_EXTRA_ANGLES } from "../services/cnn";
+import { scanLabelImage, formatLabelDate } from "../services/ocr";
 import { enrichItem } from "../services/enrich";
-import { STORAGE_LOCATIONS, CATEGORIES } from "../data/foodCatalog";
+import { STORAGE_LOCATIONS, CATEGORIES, getFoodById } from "../data/foodCatalog";
 import { useInventory } from "../context/InventoryContext";
 
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { DetectionImage, FoodPickerModal, ObjectRow, ReviewBanner, tierColor } from "../components/detection";
+import { ManualAddModal } from "../components/inventory";
 import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
+import { ActivityIndicator, Image, Ionicons, ScrollView, Text, TextInput, View } from "../components/themed";
 
 const COLORS = {
-  background: "#FFF9F0",
-  card: "#F8F0E3",
-  primary: "#5C4033",
-  accent: "#B86B4B",
-  gold: "#D6A85F",
-  text: "#2F241F",
-  muted: "#7A6A60",
-  border: "#E6D8C8",
+  background: "#FFF7ED",
+  card: "#FFEDD5",
+  primary: "#C2410C",
+  accent: "#9A3412",
+  gold: "#FBBF24",
+  text: "#431407",
+  muted: "#8A6D56",
+  border: "#FED7AA",
   white: "#FFFFFF",
   success: "#6F9B72",
   warning: "#D89B3D",
@@ -37,6 +33,25 @@ const COLORS = {
 
 const BRAND = COLORS.primary;
 const BRAND_GREEN = COLORS.success;
+
+const TIER_TEXT_COLOR = { fresh: "#15803d", subfresh: "#8A5D14", rotten: "#b91c1c" };
+const TIER_ICON = {
+  fresh: "checkmark-circle-outline",
+  subfresh: "alert-circle-outline",
+  rotten: "close-circle-outline",
+};
+
+function freshnessTierColor(tier) {
+  return tierColor(tier);
+}
+
+function freshnessTierTextColor(tier) {
+  return TIER_TEXT_COLOR[tier] || TIER_TEXT_COLOR.rotten;
+}
+
+function freshnessTierIcon(tier) {
+  return TIER_ICON[tier] || TIER_ICON.rotten;
+}
 
 const FLAG_LABELS = {
   discoloration: "Discoloration",
@@ -663,7 +678,7 @@ const cancelButtonTextStyle = {
 };
 
 const buttonTextStyle = {
-  color: COLORS.Brand,
+  color: BRAND,
   fontSize: 16,
   fontWeight: "600",
   marginLeft: 8,
@@ -687,6 +702,36 @@ export function CameraScreen() {
   const [busy, setBusy] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [labelBusy, setLabelBusy] = useState(false);
+  const [labelInfo, setLabelInfo] = useState(null);
+  // When the models are unsure the user confirms or corrects the food before saving.
+  const [choice, setChoice] = useState(null); // food id picked for the whole-photo result
+  const [confirmed, setConfirmed] = useState(false);
+  const [picker, setPicker] = useState(null); // null | "single" | a detected object's id
+  const [objectChoice, setObjectChoice] = useState({}); // detected object id -> food id
+  const [excluded, setExcluded] = useState({}); // detected object id -> true when unticked
+  const [manualOpen, setManualOpen] = useState(false); // the add-by-hand form
+  const [extraImageUris, setExtraImageUris] = useState([]); // other angles of the same item
+
+  // ---- what the models found, and what the user has decided about it
+  const detected = (analysis?.cnn?.objects || []).filter((object) => object.source === "detector");
+  const multi = detected.length >= 2;
+  const review = analysis?.cnn?.review || null;
+  const choices = foodChoicesFromTopK(analysis?.cnn?.identity?.topK);
+  const settledFoodId = choice || (confirmed ? analysis?.draftItem?.foodId : null);
+  const settledName = settledFoodId ? getFoodById(settledFoodId).name : null;
+  const activeDraft = analysis?.draftItem
+    ? settledFoodId
+      ? applyFoodChoice(analysis.draftItem, settledFoodId, { from: analysis.cnn.identity.foodName })
+      : analysis.draftItem
+    : null;
+
+  const objectFoodId = (object) => objectChoice[object.id] || object.foodId;
+  const includedObjects = detected.filter((object) => !excluded[object.id]);
+  const unresolved = includedObjects.filter((object) => objectFoodId(object) === "unknown");
+  const blocked = multi
+    ? includedObjects.length === 0 || unresolved.length > 0
+    : review?.level === "low" && !settledFoodId;
 
   const toggleFlag = (key) => {
     setFlags((prev) =>
@@ -744,6 +789,7 @@ export function CameraScreen() {
       }
 
       setImageUri(result.assets[0].uri);
+      setExtraImageUris([]);
       setStep("review");
       setAnalysis(null);
       setPreview(null);
@@ -752,6 +798,97 @@ export function CameraScreen() {
         "Unable to select image",
         error?.message || "Please try again.",
       );
+    }
+  };
+
+  // A photo of the same item from another angle (its back, underside, and so on): a
+  // single side can look fresh while the rest is not, so the worst angle checked
+  // decides the freshness verdict, not just the first photo taken.
+  const addAngle = async (fromCamera) => {
+    if (extraImageUris.length >= MAX_EXTRA_ANGLES) return;
+    try {
+      const permission = fromCamera
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission needed",
+          fromCamera
+            ? "Allow camera access to photograph another angle."
+            : "Allow photo access to choose another angle.",
+        );
+        return;
+      }
+
+      const result = fromCamera
+        ? await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true, aspect: [3, 4], mediaTypes: ["images"] })
+        : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true, aspect: [3, 4], mediaTypes: ["images"] });
+
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      setExtraImageUris((prev) => [...prev, result.assets[0].uri]);
+    } catch (error) {
+      Alert.alert("Unable to select image", error?.message || "Please try again.");
+    }
+  };
+
+  const removeAngle = (uri) => {
+    setExtraImageUris((prev) => prev.filter((u) => u !== uri));
+  };
+
+  const choosePhoto = async (fromCamera) => {
+    const permission = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission needed",
+        fromCamera
+          ? "Allow camera access to photograph the label."
+          : "Allow photo access to choose a label photo.",
+      );
+      return null;
+    }
+
+    const options = { quality: 0.9, allowsEditing: false, mediaTypes: ["images"] };
+    const result = fromCamera
+      ? await ImagePicker.launchCameraAsync(options)
+      : await ImagePicker.launchImageLibraryAsync(options);
+
+    return result.canceled || !result.assets?.[0]?.uri ? null : result.assets[0].uri;
+  };
+
+  const describeLabel = (info) => {
+    const expiry = formatLabelDate(info.expiryDate);
+    const made = formatLabelDate(info.manufacturingDate);
+    if (!expiry && !made) {
+      return "No dates found on that photo. Try again in better light, or type the date below.";
+    }
+    const parts = [];
+    if (expiry) parts.push(`Expires ${expiry}`);
+    if (made) parts.push(`Made ${made}`);
+    return `${parts.join(" · ")}${info.warnings?.length ? `
+${info.warnings[0]}` : ""}`;
+  };
+
+  const scanLabel = async (fromCamera) => {
+    try {
+      const uri = await choosePhoto(fromCamera);
+      if (!uri) return;
+
+      setLabelBusy(true);
+      setLabelInfo(null);
+      const info = await scanLabelImage(uri);
+      setLabelInfo(info);
+      if (info.rawText) setLabelText(info.rawText);
+    } catch (error) {
+      Alert.alert(
+        "Could not read the label",
+        error?.message || "Type the dates in the box below instead.",
+      );
+    } finally {
+      setLabelBusy(false);
     }
   };
 
@@ -766,6 +903,7 @@ export function CameraScreen() {
     try {
       const result = await analyzeScan({
         imageUri,
+        extraImageUris,
         labelText: labelText.trim(),
         category,
         storageId,
@@ -791,6 +929,10 @@ export function CameraScreen() {
 
       setAnalysis(result);
       setPreview(enriched);
+      setChoice(null);
+      setConfirmed(false);
+      setObjectChoice({});
+      setExcluded({});
       setStep("result");
     } catch (error) {
       Alert.alert(
@@ -803,8 +945,12 @@ export function CameraScreen() {
   };
 
   const saveToShelf = async () => {
-    if (!analysis?.draftItem) {
+    if (!activeDraft) {
       Alert.alert("Nothing to save", "Run an analysis before saving the item.");
+      return;
+    }
+    if (blocked) {
+      Alert.alert("Confirm the food", "The models are not sure what this is. Pick the right food first.");
       return;
     }
 
@@ -813,11 +959,11 @@ export function CameraScreen() {
     try {
       // Save the lean draft; derived fields (risk, TTI, recommendations) are
       // recomputed from it every time the shelf loads.
-      await addItem(analysis.draftItem);
+      await addItem(activeDraft);
 
       Alert.alert(
         "Saved to shelf",
-        `${analysis.draftItem.title || "This item"} was added to your shelf.`,
+        `${activeDraft.title || "This item"} was added to your shelf.`,
         [
           {
             text: "View Shelf",
@@ -839,9 +985,48 @@ export function CameraScreen() {
     }
   };
 
+  // A photo of several foods: add each ticked food as its own shelf item.
+  const saveObjects = async () => {
+    if (blocked) {
+      Alert.alert(
+        "Check the foods",
+        unresolved.length
+          ? "Choose what the unrecognised food is, or untick it."
+          : "Tick at least one food to add.",
+      );
+      return;
+    }
+
+    setBusy(true);
+    try {
+      for (const object of includedObjects) {
+        await addItem(draftFromObject(object, { imageUri, foodId: objectChoice[object.id] }));
+      }
+      Alert.alert(
+        "Saved to shelf",
+        `${includedObjects.length} item${includedObjects.length === 1 ? " was" : "s were"} added to your shelf.`,
+        [
+          { text: "View Shelf", onPress: () => navigation.navigate("Shelf") },
+          { text: "Scan Another", onPress: reset },
+        ],
+      );
+      reset();
+    } catch (error) {
+      Alert.alert("Save failed", error?.message || "Could not save the items.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reset = () => {
+    setChoice(null);
+    setConfirmed(false);
+    setPicker(null);
+    setObjectChoice({});
+    setExcluded({});
     setStep("capture");
     setImageUri(null);
+    setExtraImageUris([]);
     setCategory("Dairy");
     setStorageId("fridge_top");
     setLabelText("");
@@ -850,6 +1035,8 @@ export function CameraScreen() {
     setAnalysis(null);
     setPreview(null);
     setBusy(false);
+    setLabelBusy(false);
+    setLabelInfo(null);
   };
 
   // ───────────────────────────────────────────────────────────
@@ -857,6 +1044,17 @@ export function CameraScreen() {
   // ───────────────────────────────────────────────────────────
 
   if (step === "result" && preview) {
+    // A corrected food changes shelf life and advice, so the preview is worked out again.
+    const view = choice
+      ? enrichItem({
+          ...activeDraft,
+          imageUri: preview.imageUri,
+          storageId: preview.storageId,
+          scannedAt: preview.scannedAt,
+          createdAt: preview.createdAt,
+        })
+      : preview;
+
     return (
       <AnimatedScreen direction="center">
         <ScrollView
@@ -869,47 +1067,53 @@ export function CameraScreen() {
             <Text style={headerSubtitleStyle}>Here's what we found</Text>
           </View>
 
-          {/* Food Image */}
-          <View
-            style={{
-              borderRadius: 16,
-              overflow: "hidden",
-              backgroundColor: COLORS.border,
-              marginBottom: 16,
-            }}
-          >
-            {preview.imageUri ? (
-              <Image
-                source={{ uri: preview.imageUri }}
-                style={{ width: "100%", height: 200 }}
-                resizeMode="cover"
-              />
-            ) : (
-              <View
-                style={{
-                  width: "100%",
-                  height: 200,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="image-outline" size={40} color={COLORS.muted} />
-                <Text
-                  style={{ color: COLORS.muted, fontSize: 13, marginTop: 6 }}
-                >
-                  No image available
+          {/* Food image, with a box around every food the detector found */}
+          <DetectionImage
+            uri={view.imageUri}
+            imageSize={analysis.cnn.imageSize}
+            objects={detected}
+          />
+
+          {multi ? (
+            <>
+              <View style={cardStyle}>
+                <Text style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}>
+                  {detected.length} foods found
+                </Text>
+                <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 4, lineHeight: 17 }}>
+                  Each box is a food we found. Untick anything you don't want to add.
+                  Amber means we're not sure, so check the name.
                 </Text>
               </View>
-            )}
-          </View>
 
+              {detected.map((object, index) => (
+                <ObjectRow
+                  key={object.id}
+                  index={index}
+                  object={object}
+                  foodName={objectFoodId(object) === "unknown" ? null : getFoodById(objectFoodId(object)).name}
+                  included={!excluded[object.id]}
+                  onToggle={() => setExcluded((prev) => ({ ...prev, [object.id]: !prev[object.id] }))}
+                  onChange={() => setPicker(object.id)}
+                />
+              ))}
+            </>
+          ) : null}
+
+          {!multi ? (
+            <>
           {/* Food name + freshness verdict */}
           <View style={cardStyle}>
             <Text
               style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}
             >
-              {preview.title}
+              {view.title}
             </Text>
+            {analysis.cnn.identity.confidence > 0 ? (
+              <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 3 }}>
+                {Math.round(analysis.cnn.identity.confidence * 100)}% sure of the food
+              </Text>
+            ) : null}
 
             <View
               style={{
@@ -925,17 +1129,11 @@ export function CameraScreen() {
                   borderRadius: 22,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: analysis.cnn.freshness.isSpoiled
-                    ? "#ef4444"
-                    : "#22c55e",
+                  backgroundColor: freshnessTierColor(analysis.cnn.freshness.tier),
                 }}
               >
                 <Ionicons
-                  name={
-                    analysis.cnn.freshness.isSpoiled
-                      ? "close-circle-outline"
-                      : "checkmark-circle-outline"
-                  }
+                  name={freshnessTierIcon(analysis.cnn.freshness.tier)}
                   size={26}
                   color="#ffffff"
                 />
@@ -946,18 +1144,15 @@ export function CameraScreen() {
                   style={{
                     fontSize: 20,
                     fontWeight: "800",
-                    color: analysis.cnn.freshness.isSpoiled
-                      ? "#b91c1c"
-                      : "#15803d",
+                    color: freshnessTierTextColor(analysis.cnn.freshness.tier),
                   }}
                 >
-                  {analysis.cnn.freshness.isSpoiled ? "Rotten" : "Fresh"}
+                  {analysis.cnn.freshness.tierLabel}
                 </Text>
                 <Text
                   style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}
                 >
-                  {(analysis.cnn.freshness.confidence * 100).toFixed(0)}%
-                  confidence
+                  {analysis.cnn.freshness.percent.toFixed(0)}% freshness
                 </Text>
               </View>
             </View>
@@ -989,6 +1184,50 @@ export function CameraScreen() {
                 </Text>
               </View>
             ) : null}
+
+            {analysis.cnn.anglesChecked > 1 ? (
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ fontSize: 11, color: COLORS.muted, marginBottom: 6 }}>
+                  Checked {analysis.cnn.anglesChecked} angles · showing the least fresh one
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {analysis.cnn.angles.map((angle) => (
+                    <View
+                      key={angle.index}
+                      style={{
+                        alignItems: "center",
+                        marginRight: 12,
+                        opacity: angle.freshnessPercent === analysis.cnn.freshness.percent ? 1 : 0.6,
+                      }}
+                    >
+                      <Image
+                        source={{ uri: angle.imageUri }}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 10,
+                          borderWidth: angle.freshnessPercent === analysis.cnn.freshness.percent ? 2 : 0,
+                          borderColor: freshnessTierColor(angle.freshnessTier),
+                        }}
+                      />
+                      <Text style={{ fontSize: 10, color: COLORS.muted, marginTop: 3 }}>
+                        {Math.round(angle.freshnessPercent)}%
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            <ReviewBanner
+              review={review}
+              foodName={analysis.cnn.identity.foodName}
+              choices={choices}
+              resolved={settledName}
+              onConfirm={() => setConfirmed(true)}
+              onChoose={(foodId) => setChoice(foodId)}
+              onOther={() => setPicker("single")}
+            />
           </View>
 
           {/* Expiry & manufactured dates */}
@@ -1130,7 +1369,7 @@ export function CameraScreen() {
               <Text
                 style={{ fontSize: 18, fontWeight: "800", color: COLORS.text }}
               >
-                {preview.daysLabel}
+                {view.daysLabel}
               </Text>
             </View>
           </View>
@@ -1153,8 +1392,8 @@ export function CameraScreen() {
 
             <Text style={recsSectionTitleStyle}>Recommended Actions</Text>
 
-            {preview.recommendations.ruleBased?.length > 0 ? (
-              preview.recommendations.ruleBased.map((action) => (
+            {view.recommendations.ruleBased?.length > 0 ? (
+              view.recommendations.ruleBased.map((action) => (
                 <View key={action.id} style={recCardStyle}>
                   <View style={recRowStyle}>
                     <View style={recIconBoxStyle}>
@@ -1181,7 +1420,7 @@ export function CameraScreen() {
 
             <Text style={recsSectionTitleStyle}>Storage & Preservation</Text>
 
-            {preview.recommendations.bestPractice ? (
+            {view.recommendations.bestPractice ? (
               <View style={recCardStyle}>
                 <View style={recRowStyle}>
                   <View
@@ -1189,7 +1428,7 @@ export function CameraScreen() {
                       recIconBoxStyle,
                       {
                         backgroundColor: storageIconFor(
-                          preview.recommendations.bestPractice.storageId,
+                          view.recommendations.bestPractice.storageId,
                         ).bg,
                       },
                     ]}
@@ -1197,24 +1436,24 @@ export function CameraScreen() {
                     <Ionicons
                       name={
                         storageIconFor(
-                          preview.recommendations.bestPractice.storageId,
+                          view.recommendations.bestPractice.storageId,
                         ).icon
                       }
                       size={14}
                       color={
                         storageIconFor(
-                          preview.recommendations.bestPractice.storageId,
+                          view.recommendations.bestPractice.storageId,
                         ).color
                       }
                     />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={recLabelStyle}>
-                      {preview.recommendations.bestPractice.storageLabel}
+                      {view.recommendations.bestPractice.storageLabel}
                     </Text>
                     <Text style={recDescStyle}>
                       Best place to keep this item, around{" "}
-                      {preview.recommendations.bestPractice.storageTempC}
+                      {view.recommendations.bestPractice.storageTempC}
                       °C.
                     </Text>
                   </View>
@@ -1222,7 +1461,7 @@ export function CameraScreen() {
               </View>
             ) : null}
 
-            {preview.recommendations.contentBased?.storageSuggestions
+            {view.recommendations.contentBased?.storageSuggestions
               ?.slice(1)
               .map((tip, index) => (
                 <View key={`storage-${index}`} style={usageIdeaRowStyle}>
@@ -1251,18 +1490,18 @@ export function CameraScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={recLabelStyle}>
-                    {preview.recommendations.bestPractice?.freezeable
+                    {view.recommendations.bestPractice?.freezeable
                       ? "Can be frozen"
                       : "Do not freeze"}
                   </Text>
                   <Text style={recDescStyle}>
-                    {preview.recommendations.bestPractice?.freezeBy}
+                    {view.recommendations.bestPractice?.freezeBy}
                   </Text>
                 </View>
               </View>
             </View>
 
-            {preview.recommendations.contentBased?.preservationSuggestions?.map(
+            {view.recommendations.contentBased?.preservationSuggestions?.map(
               (tip, index) => (
                 <View key={`preserve-${index}`} style={usageIdeaRowStyle}>
                   <View
@@ -1284,9 +1523,9 @@ export function CameraScreen() {
 
             <Text style={recsSectionTitleStyle}>Usage Ideas</Text>
 
-            {preview.recommendations.contentBased?.usageSuggestions?.length >
+            {view.recommendations.contentBased?.usageSuggestions?.length >
             0 ? (
-              preview.recommendations.contentBased.usageSuggestions.map(
+              view.recommendations.contentBased.usageSuggestions.map(
                 (tip, index) => (
                   <View key={`${tip}-${index}`} style={usageIdeaRowStyle}>
                     <View style={usageIconBoxStyle}>
@@ -1307,13 +1546,16 @@ export function CameraScreen() {
             )}
           </View>
 
+            </>
+          ) : null}
+
           {/* Final Actions */}
           <View style={{ marginTop: 4, marginBottom: 4 }}>
             <AnimatedTouchableOpacity
               activeOpacity={0.85}
               style={addToShelfButtonStyle}
-              onPress={saveToShelf}
-              disabled={busy}
+              onPress={multi ? saveObjects : saveToShelf}
+              disabled={busy || blocked}
             >
               {busy ? (
                 <View
@@ -1332,7 +1574,15 @@ export function CameraScreen() {
                     size={23}
                     color={COLORS.white}
                   />
-                  <Text style={actionButtonTextStyle}>Add to Shelf</Text>
+                  <Text style={actionButtonTextStyle}>
+                    {blocked
+                      ? multi && !unresolved.length
+                        ? "Tick a food to add"
+                        : "Confirm the food to add it"
+                      : multi
+                        ? `Add ${includedObjects.length} to Shelf`
+                        : "Add to Shelf"}
+                  </Text>
                 </>
               )}
             </AnimatedTouchableOpacity>
@@ -1348,6 +1598,16 @@ export function CameraScreen() {
             </AnimatedTouchableOpacity>
           </View>
         </ScrollView>
+
+        <FoodPickerModal
+          visible={picker !== null}
+          onClose={() => setPicker(null)}
+          onPick={(foodId) => {
+            if (picker === "single") setChoice(foodId);
+            else setObjectChoice((prev) => ({ ...prev, [picker]: foodId }));
+            setPicker(null);
+          }}
+        />
       </AnimatedScreen>
     );
   }
@@ -1373,8 +1633,10 @@ export function CameraScreen() {
           </Text>
         </View>
 
-        {/* Camera Preview */}
-        <View style={previewContainerStyle}>
+        {/* Camera Preview: a fixed-colour placeholder box, so its white-on-brand
+            text and icon stay readable no matter what the brand colour is set to
+            or which theme is active. */}
+        <View themed={false} style={previewContainerStyle}>
           {imageUri ? (
             <Image
               source={{ uri: imageUri }}
@@ -1382,14 +1644,14 @@ export function CameraScreen() {
               resizeMode="cover"
             />
           ) : (
-            <View style={previewEmptyStyle}>
-              <View style={previewEmptyIconContainerStyle}>
-                <Ionicons name="camera-outline" size={32} color="#ffffff" />
+            <View themed={false} style={previewEmptyStyle}>
+              <View themed={false} style={previewEmptyIconContainerStyle}>
+                <Ionicons themed={false} name="camera-outline" size={32} color="#ffffff" />
               </View>
 
-              <Text style={previewEmptyTitleStyle}>No image selected</Text>
+              <Text themed={false} style={previewEmptyTitleStyle}>No image selected</Text>
 
-              <Text style={previewEmptySubtitleStyle}>
+              <Text themed={false} style={previewEmptySubtitleStyle}>
                 Take a photo or choose one from your gallery
               </Text>
             </View>
@@ -1415,6 +1677,15 @@ export function CameraScreen() {
             >
               <Ionicons name="images-outline" size={20} color={BRAND} />
               <Text style={galleryButtonTextStyle}>Choose from Gallery</Text>
+            </AnimatedTouchableOpacity>
+
+            <AnimatedTouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setManualOpen(true)}
+              style={galleryButtonStyle}
+            >
+              <Ionicons name="create-outline" size={20} color={BRAND} />
+              <Text style={galleryButtonTextStyle}>Add food by hand</Text>
             </AnimatedTouchableOpacity>
           </>
         )}
@@ -1526,15 +1797,142 @@ export function CameraScreen() {
               })}
             </ScrollView>
 
-            {/* Label text */}
-            <Text style={fieldLabelStyle}>Label Text (optional)</Text>
+            {/* Package label: scan it, or type it */}
+            <Text style={fieldLabelStyle}>Package Label (optional)</Text>
+            <View style={{ flexDirection: "row", marginBottom: 10 }}>
+              <AnimatedTouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => scanLabel(true)}
+                disabled={labelBusy}
+                style={[
+                  retakeButtonStyle,
+                  {
+                    flex: 1,
+                    marginRight: 6,
+                    marginBottom: 0,
+                    borderRadius: 14,
+                    backgroundColor: "#F3E4D5",
+                  },
+                ]}
+              >
+                {labelBusy ? (
+                  <ActivityIndicator color={BRAND} />
+                ) : (
+                  <Ionicons name="scan-outline" size={16} color={BRAND} />
+                )}
+                <Text style={retakeButtonTextStyle}>
+                  {labelBusy ? "Reading..." : "Scan label"}
+                </Text>
+              </AnimatedTouchableOpacity>
+
+              <AnimatedTouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => scanLabel(false)}
+                disabled={labelBusy}
+                style={[
+                  retakeButtonStyle,
+                  {
+                    flex: 1,
+                    marginLeft: 6,
+                    marginBottom: 0,
+                    borderRadius: 14,
+                    backgroundColor: COLORS.card,
+                  },
+                ]}
+              >
+                <Ionicons name="images-outline" size={16} color={BRAND} />
+                <Text style={retakeButtonTextStyle}>From gallery</Text>
+              </AnimatedTouchableOpacity>
+            </View>
+
+            {labelInfo ? (
+              <Text
+                style={{
+                  color: labelInfo.fieldsFound?.expiry ? COLORS.success : COLORS.muted,
+                  fontSize: 13,
+                  fontWeight: "600",
+                  marginBottom: 8,
+                }}
+              >
+                {describeLabel(labelInfo)}
+              </Text>
+            ) : null}
+
             <TextInput
               value={labelText}
-              onChangeText={setLabelText}
-              placeholder="Expiry date or text on the label"
+              onChangeText={(text) => {
+                setLabelText(text);
+                setLabelInfo(null);
+              }}
+              multiline
+              placeholder="Or type the label, e.g. EXP: 15/09/2026"
               placeholderTextColor={COLORS.muted}
               style={textInputStyle}
             />
+
+            {/* Other angles */}
+            <Text style={fieldLabelStyle}>Other Angles (optional)</Text>
+            <Text style={{ fontSize: 12, color: COLORS.muted, marginBottom: 10, lineHeight: 17 }}>
+              One photo only shows one side. Add the back or underside and the least
+              fresh angle sets the result.
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 4 }}
+            >
+              {extraImageUris.map((uri) => (
+                <View key={uri} style={{ marginRight: 10 }}>
+                  <Image
+                    source={{ uri }}
+                    style={{ width: 64, height: 64, borderRadius: 12 }}
+                  />
+                  <AnimatedTouchableOpacity
+                    onPress={() => removeAngle(uri)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove this angle"
+                    style={{
+                      position: "absolute",
+                      top: -6,
+                      right: -6,
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: COLORS.danger,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="close" size={13} color="#ffffff" />
+                  </AnimatedTouchableOpacity>
+                </View>
+              ))}
+
+              {extraImageUris.length < MAX_EXTRA_ANGLES ? (
+                <AnimatedTouchableOpacity
+                  onPress={() =>
+                    Alert.alert("Add another angle", "Photograph another side of this same item.", [
+                      { text: "Camera", onPress: () => addAngle(true) },
+                      { text: "Gallery", onPress: () => addAngle(false) },
+                      { text: "Cancel", style: "cancel" },
+                    ])
+                  }
+                  activeOpacity={0.8}
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderStyle: "dashed",
+                    borderColor: COLORS.border,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="add" size={22} color={BRAND} />
+                </AnimatedTouchableOpacity>
+              ) : null}
+            </ScrollView>
 
             {/* Spoilage flags */}
             <Text style={fieldLabelStyle}>Spoilage Indicators</Text>
@@ -1600,6 +1998,15 @@ export function CameraScreen() {
           </>
         )}
       </ScrollView>
+
+      <ManualAddModal
+        visible={manualOpen}
+        onClose={() => setManualOpen(false)}
+        onSave={async (draft) => {
+          await addItem(draft);
+          Alert.alert("Saved to shelf", `${draft.title} was added to your shelf.`);
+        }}
+      />
     </AnimatedScreen>
   );
 }

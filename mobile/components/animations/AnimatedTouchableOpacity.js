@@ -7,6 +7,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Pressable } from "react-native";
+import { useTheme } from "../../src/theme/ThemeContext";
+import { darkStyle } from "../../src/theme/darkMode";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -42,11 +44,15 @@ export function AnimatedTouchableOpacity({
   style,
   entering,
   exiting,
+  themed = true,
   onPressIn,
   onPressOut,
   ...props
 }) {
-  const { outerStyle, innerStyle } = splitStyle(style);
+  const { isDark } = useTheme();
+  const { outerStyle, innerStyle } = splitStyle(
+    isDark && themed ? darkStyle(style, StyleSheet.flatten) : style
+  );
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({

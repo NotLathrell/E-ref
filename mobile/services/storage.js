@@ -1,34 +1,64 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFoodById } from '../data/foodCatalog';
 
 const KEYS = {
-  inventory: '@eref/inventory',
   user: '@eref/user',
   alertsRead: '@eref/alertsRead',
-  settings: '@eref/settings'
+  settings: '@eref/settings',
+  legacyInventory: '@eref/inventory',
+  notified: '@eref/notified',
+  notifAsked: '@eref/notifAsked'
 };
+
+const inventoryKey = (userId) => `@eref/inventory/${userId}`;
+const queueKey = (userId) => `@eref/queue/${userId}`;
+const tasteKey = (userId) => `@eref/taste/${userId}`;
 
 export const DEFAULT_SETTINGS = {
-  alertsEnabled: true
+  alertsEnabled: true,
+  notifyLeadHours: 24,
+  themeMode: 'system'
 };
 
-export async function loadInventory() {
-  const raw = await AsyncStorage.getItem(KEYS.inventory);
-  if (!raw) {
-    const seed = buildSeedInventory();
-    await AsyncStorage.setItem(KEYS.inventory, JSON.stringify(seed));
-    return seed;
+async function readJson(key, fallback) {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
   }
-  return JSON.parse(raw);
 }
 
-export async function saveInventory(items) {
-  await AsyncStorage.setItem(KEYS.inventory, JSON.stringify(items));
+/** The last inventory this device saw for the user, shown at once while the server syncs. */
+export function loadInventoryCache(userId) {
+  return readJson(inventoryKey(userId), []);
 }
 
-export async function loadUser() {
-  const raw = await AsyncStorage.getItem(KEYS.user);
-  return raw ? JSON.parse(raw) : null;
+export async function saveInventoryCache(userId, items) {
+  await AsyncStorage.setItem(inventoryKey(userId), JSON.stringify(items));
+}
+
+/** Changes made while offline that still have to reach the server. */
+export function loadQueue(userId) {
+  return readJson(queueKey(userId), []);
+}
+
+export async function saveQueue(userId, queue) {
+  await AsyncStorage.setItem(queueKey(userId), JSON.stringify(queue));
+}
+
+/** Items saved on-device before accounts existed, so signing in does not lose them. */
+export async function loadLegacyInventory() {
+  const items = await readJson(KEYS.legacyInventory, []);
+  // The earlier build seeded every install with sample food; those are not the user's.
+  return Array.isArray(items) ? items.filter((item) => !String(item.id).startsWith('seed-')) : [];
+}
+
+export async function clearLegacyInventory() {
+  await AsyncStorage.removeItem(KEYS.legacyInventory);
+}
+
+export function loadUser() {
+  return readJson(KEYS.user, null);
 }
 
 export async function saveUser(user) {
@@ -39,9 +69,8 @@ export async function clearUser() {
   await AsyncStorage.removeItem(KEYS.user);
 }
 
-export async function loadAlertsRead() {
-  const raw = await AsyncStorage.getItem(KEYS.alertsRead);
-  return raw ? JSON.parse(raw) : {};
+export function loadAlertsRead() {
+  return readJson(KEYS.alertsRead, {});
 }
 
 export async function saveAlertsRead(map) {
@@ -49,62 +78,45 @@ export async function saveAlertsRead(map) {
 }
 
 export async function loadSettings() {
-  const raw = await AsyncStorage.getItem(KEYS.settings);
-  if (!raw) return { ...DEFAULT_SETTINGS };
-  try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
+  const saved = await readJson(KEYS.settings, {});
+  return { ...DEFAULT_SETTINGS, ...saved };
 }
 
 export async function saveSettings(settings) {
   await AsyncStorage.setItem(KEYS.settings, JSON.stringify(settings));
 }
 
-function buildSeedInventory() {
-  const now = Date.now();
-  const yogurt = getFoodById('yogurt');
-  const meat = getFoodById('meat');
+/** Which alerts were already shown today, so a re-plan never repeats a notification. */
+export function loadNotified() {
+  return readJson(KEYS.notified, {});
+}
 
-  return [
-    {
-      id: 'seed-yogurt',
-      foodId: yogurt.id,
-      title: yogurt.name,
-      category: yogurt.category,
-      storageId: 'fridge_top',
-      imageUri: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80',
-      expiryDate: new Date(now + 2 * 86400000).toISOString(),
-      manufacturingDate: new Date(now - 5 * 86400000).toISOString(),
-      scannedAt: new Date(now - 3 * 86400000).toISOString(),
-      createdAt: new Date(now - 3 * 86400000).toISOString(),
-      cnnSpoilageScore: 0.22,
-      cnnIdentityConfidence: 0.9,
-      frozen: false,
-      discarded: false,
-      history: [
-        { at: new Date(now - 3 * 86400000).toISOString(), event: 'Scanned (Shelf)' }
-      ]
-    },
-    {
-      id: 'seed-meat',
-      foodId: meat.id,
-      title: meat.name,
-      category: meat.category,
-      storageId: 'fridge_bottom',
-      imageUri: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80',
-      expiryDate: new Date(now + 1 * 86400000).toISOString(),
-      manufacturingDate: new Date(now - 1 * 86400000).toISOString(),
-      scannedAt: new Date(now - 2 * 86400000).toISOString(),
-      createdAt: new Date(now - 2 * 86400000).toISOString(),
-      cnnSpoilageScore: 0.35,
-      cnnIdentityConfidence: 0.86,
-      frozen: false,
-      discarded: false,
-      history: [
-        { at: new Date(now - 2 * 86400000).toISOString(), event: 'Scanned (Shelf)' }
-      ]
-    }
-  ];
+export async function saveNotified(map) {
+  await AsyncStorage.setItem(KEYS.notified, JSON.stringify(map));
+}
+
+export async function hasAskedForNotifications() {
+  return (await AsyncStorage.getItem(KEYS.notifAsked)) === '1';
+}
+
+export async function markAskedForNotifications() {
+  await AsyncStorage.setItem(KEYS.notifAsked, '1');
+}
+
+/**
+ * What the user likes to cook: liked and avoided foods, diet, and the recipes they have
+ * opened, saved, cooked or dismissed. Kept on this device, per account.
+ */
+export async function loadTaste(userId) {
+  const saved = await readJson(tasteKey(userId), {});
+  return {
+    liked: Array.isArray(saved.liked) ? saved.liked : [],
+    avoided: Array.isArray(saved.avoided) ? saved.avoided : [],
+    diet: saved.diet === 'vegetarian' ? 'vegetarian' : 'none',
+    log: Array.isArray(saved.log) ? saved.log : []
+  };
+}
+
+export async function saveTaste(userId, taste) {
+  await AsyncStorage.setItem(tasteKey(userId), JSON.stringify(taste));
 }

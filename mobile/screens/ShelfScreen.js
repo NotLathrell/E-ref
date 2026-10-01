@@ -1,30 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-  Modal,
-  Pressable,
-  Alert,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Modal, Alert } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { CATEGORIES, STORAGE_LOCATIONS } from "../data/foodCatalog";
 import { useInventory } from "../context/InventoryContext";
+import { EditDateModal } from "../components/inventory";
+import { FlatList, Image, Ionicons, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "../components/themed";
 
 const COLORS = {
-  background: "#FFF9F0",
-  card: "#F8F0E3",
-  primary: "#5C4033",
-  accent: "#B86B4B",
-  gold: "#D6A85F",
-  text: "#2F241F",
-  muted: "#7A6A60",
-  border: "#E6D8C8",
+  background: "#FFF7ED",
+  card: "#FFEDD5",
+  primary: "#C2410C",
+  accent: "#9A3412",
+  gold: "#FBBF24",
+  text: "#431407",
+  muted: "#8A6D56",
+  border: "#FED7AA",
   white: "#FFFFFF",
 
   success: "#6F9B72",
@@ -49,6 +39,20 @@ function formatDate(iso) {
 function freshnessPalette(percent) {
   if (percent >= 70) return { bg: "#E3F1E4", fg: "#2F6B34" };
   if (percent >= 45) return { bg: "#FBEFD8", fg: "#8A5D14" };
+  return { bg: "#FBE3E1", fg: "#A63B33" };
+}
+
+/** Colour for the CNN's Fresh / Sub Fresh / Rotten tier. */
+function tierColor(tier) {
+  if (tier === "fresh") return COLORS.success;
+  if (tier === "subfresh") return COLORS.warning;
+  return COLORS.danger;
+}
+
+/** Badge background/foreground for the CNN's Fresh / Sub Fresh / Rotten tier. */
+function tierPalette(tier) {
+  if (tier === "fresh") return { bg: "#E3F1E4", fg: "#2F6B34" };
+  if (tier === "subfresh") return { bg: "#FBEFD8", fg: "#8A5D14" };
   return { bg: "#FBE3E1", fg: "#A63B33" };
 }
 
@@ -229,13 +233,10 @@ function ShelfItemCard({ item, onPress }) {
                     fontSize: 11,
                     fontWeight: "700",
                     marginLeft: 8,
-                    color:
-                      item.modelFreshness === "spoiled"
-                        ? COLORS.danger
-                        : COLORS.success,
+                    color: tierColor(item.modelFreshnessTier),
                   }}
                 >
-                  CNN: {item.modelFreshnessLabel}
+                  Scan: {item.modelFreshnessLabel}
                 </Text>
               ) : null}
             </View>
@@ -289,19 +290,35 @@ function ShelfItemCard({ item, onPress }) {
 
 export function ShelfScreen() {
   const route = useRoute();
-  const { items, freezeItem, discardItem, updateItem } = useInventory();
-  const [activeTab, setActiveTab] = useState("All");
-  const [selectedId, setSelectedId] = useState(null);
+  const { items, freezeItem, discardItem, consumeItem, updateItem } = useInventory();
+  // Set from route.params on first mount so a category tile or the Soon to Spoil card
+  // lands here already filtered/opened, with no flash of the unfiltered list first.
+  const [activeTab, setActiveTab] = useState(() => {
+    const incoming = route.params?.category;
+    return incoming && CATEGORIES.includes(incoming) ? incoming : "All";
+  });
+  const [selectedId, setSelectedId] = useState(() => route.params?.itemId || null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [editingDate, setEditingDate] = useState(false);
 
   const listRef = useRef(null);
 
-  // Home taps a category tile and lands here with that filter already applied.
+  // The Shelf tab stays mounted while the user visits other tabs, so a second tap on a
+  // category tile (or the Soon to Spoil card) needs these to re-apply, not just the
+  // once-only initial state above.
+  // `at` is a nonce Home attaches to every navigation (see HomeScreen.js), so tapping
+  // the same category or item twice in a row still re-applies it: without `at`, these
+  // dependency arrays would see the same category/itemId value as last time and skip
+  // the effect, leaving a closed modal closed on the second tap.
   useEffect(() => {
     const incoming = route.params?.category;
     if (incoming && CATEGORIES.includes(incoming)) setActiveTab(incoming);
-  }, [route.params?.category]);
+  }, [route.params?.category, route.params?.at]);
+
+  useEffect(() => {
+    if (route.params?.itemId) setSelectedId(route.params.itemId);
+  }, [route.params?.itemId, route.params?.at]);
 
   const filteredItems = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -333,6 +350,20 @@ export function ShelfScreen() {
       storageId,
       frozen: storageId === "freezer" ? selected.frozen : false,
     });
+  };
+
+  const onUsed = () => {
+    if (!selected) return;
+    Alert.alert("Mark as used?", `${selected.title} will leave your shelf and be kept in your history.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Used it",
+        onPress: async () => {
+          await consumeItem(selected.id);
+          setSelectedId(null);
+        },
+      },
+    ]);
   };
 
   const onDiscard = () => {
@@ -529,7 +560,7 @@ export function ShelfScreen() {
             >
               {query.trim()
                 ? `Nothing matches "${query.trim()}".`
-                : "No items in this category. Scan food to add it."}
+                : "No items in this category. Scan food to add."}
             </Text>
           </View>
         }
@@ -701,10 +732,7 @@ export function ShelfScreen() {
                   {selected.modelFreshnessLabel ? (
                     <View
                       style={{
-                        backgroundColor:
-                          selected.modelFreshness === "spoiled"
-                            ? "#FBE3E1"
-                            : "#E3F1E4",
+                        backgroundColor: tierPalette(selected.modelFreshnessTier).bg,
                         borderRadius: 6,
                         paddingHorizontal: 9,
                         paddingVertical: 4,
@@ -713,18 +741,17 @@ export function ShelfScreen() {
                     >
                       <Text
                         style={{
-                          color:
-                            selected.modelFreshness === "spoiled"
-                              ? "#A63B33"
-                              : "#2F6B34",
+                          color: tierPalette(selected.modelFreshnessTier).fg,
                           fontSize: 11,
                           fontWeight: "700",
                         }}
                       >
-                        CNN: {selected.modelFreshnessLabel}
-                        {selected.modelFreshnessConfidence
-                          ? ` ${(selected.modelFreshnessConfidence * 100).toFixed(0)}%`
-                          : ""}
+                        Scan: {selected.modelFreshnessLabel}
+                        {selected.modelFreshnessPercent != null
+                          ? ` ${selected.modelFreshnessPercent.toFixed(0)}%`
+                          : selected.modelFreshnessConfidence
+                            ? ` ${(selected.modelFreshnessConfidence * 100).toFixed(0)}%`
+                            : ""}
                       </Text>
                     </View>
                   ) : null}
@@ -871,6 +898,35 @@ export function ShelfScreen() {
                   </TouchableOpacity>
                 )}
 
+                {/* Used it up */}
+                <TouchableOpacity
+                  onPress={onUsed}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  style={{
+                    height: 48,
+                    borderRadius: 8,
+                    borderWidth: 1.5,
+                    borderColor: "#6F9B72",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "row",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="checkmark-circle-outline" size={21} color="#4F7A52" />
+                  <Text
+                    style={{
+                      color: "#4F7A52",
+                      fontSize: 15,
+                      fontWeight: "800",
+                      marginLeft: 8,
+                    }}
+                  >
+                    MARK AS USED
+                  </Text>
+                </TouchableOpacity>
+
                 {/* Best Practice */}
                 <View
                   style={{
@@ -950,6 +1006,17 @@ export function ShelfScreen() {
                     color="#E53935"
                     style={{ marginLeft: 5 }}
                   />
+
+                  <TouchableOpacity
+                    onPress={() => setEditingDate(true)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    style={{ marginLeft: "auto" }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: "800", color: COLORS.primary }}>
+                      Edit date
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Tracking History */}
@@ -1030,6 +1097,13 @@ export function ShelfScreen() {
                 </View>
               </ScrollView>
             )}
+
+            <EditDateModal
+              visible={editingDate}
+              item={selected}
+              onClose={() => setEditingDate(false)}
+              onSave={(iso) => updateItem(selected.id, { expiryDate: iso })}
+            />
           </View>
         </View>
       </Modal>

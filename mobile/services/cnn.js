@@ -2,17 +2,16 @@
  * Food identification and freshness analysis.
  *
  * Calls the E-REF inference API, which runs a three-stage pipeline:
- *   1. YOLOv8 detection locates the food and crops the frame
+ *   1. YOLOv8 detection locates the food and cross-checks the classifier
  *   2. A CNN classifier identifies the food type
  *   3. A CNN classifier decides fresh vs rotten
  *
- * `identifyFood` and `detectSpoilage` remain available as offline heuristics
- * for demos or when the server is unreachable.
+ * There is deliberately no offline fallback: a guess made without the models
+ * would be presented to the user as a measurement.
  */
 
-import { FOOD_CATALOG, findFoodByName } from '../data/foodCatalog';
-import { getApiUrl } from './apiConfig';
-import * as FileSystem from 'expo-file-system/legacy';
+import { findFoodByName } from '../data/foodCatalog';
+import { uploadImage } from './upload';
 
 const SPOILAGE_INDICATORS = [
   'discoloration',
@@ -21,79 +20,6 @@ const SPOILAGE_INDICATORS = [
   'mold_spots',
   'excess_moisture'
 ];
-
-/**
- * Identify food item from optional hint + category prior.
- * Offline fallback — the server pipeline is preferred.
- */
-export function identifyFood({ productHint, category, imageUri } = {}) {
-  let food = productHint ? findFoodByName(productHint) : null;
-
-  if (!food || food.id === 'unknown') {
-    if (category) {
-      const inCat = FOOD_CATALOG.filter((f) => f.category === category && f.id !== 'unknown');
-      food = inCat[Math.floor(Math.random() * inCat.length)] || findFoodByName('unknown');
-    } else {
-      const usable = FOOD_CATALOG.filter((f) => f.id !== 'unknown');
-      food = usable[Math.floor(Math.random() * usable.length)];
-    }
-  }
-
-  const confidence = productHint ? 0.88 : 0.72;
-
-  return {
-    foodId: food.id,
-    foodName: food.name,
-    category: food.category,
-    confidence: round2(confidence),
-    imageUri: imageUri || null,
-    model: 'eref-heuristic-fallback'
-  };
-}
-
-/**
- * Detect visible spoilage indicators without a server.
- * Higher scores when the user flags issues or the item is near expiry.
- */
-export function detectSpoilage({
-  foodId,
-  daysToExpiry = 7,
-  userFlags = [],
-  packagingDamaged = false
-} = {}) {
-  const flags = new Set(userFlags);
-  if (packagingDamaged) flags.add('packaging_damage');
-
-  // Base spoilage prior rises as expiry approaches
-  let score = 0.08;
-  if (daysToExpiry < 0) score += 0.55;
-  else if (daysToExpiry <= 1) score += 0.35;
-  else if (daysToExpiry <= 3) score += 0.2;
-  else if (daysToExpiry <= 5) score += 0.1;
-
-  const indicatorScores = {};
-  for (const key of SPOILAGE_INDICATORS) {
-    const flagged = flags.has(key);
-    const base = flagged ? 0.75 + Math.random() * 0.2 : Math.random() * 0.12;
-    indicatorScores[key] = round2(base);
-    if (flagged) score += 0.12;
-  }
-
-  score = Math.max(0, Math.min(1, score + (Math.random() * 0.06 - 0.03)));
-
-  const detected = Object.entries(indicatorScores)
-    .filter(([, v]) => v >= 0.5)
-    .map(([k]) => k);
-
-  return {
-    spoilageScore: round2(score),
-    indicators: indicatorScores,
-    detectedIndicators: detected,
-    status: score >= 0.7 ? 'spoiled_likely' : score >= 0.4 ? 'warning' : 'ok',
-    model: 'eref-heuristic-fallback',
-    foodId
-  };
-}
 
 /**
  * Full inference pass used by the scan pipeline.
@@ -161,39 +87,130 @@ export async function runCnnAnalysis({
     detection,
     freshness,
     spoilage,
+    // How far to trust this result: { level: 'high'|'medium'|'low', needsConfirmation, reasons }.
+    review: normalizeReview(payload.review, identity),
+    // Every food the detector found in the frame, each classified on its own crop.
+    objects: normalizeObjects(payload.objects),
+    imageSize: Array.isArray(payload.imageSize) ? payload.imageSize : null,
     stages: payload.stages || [],
     inferenceMs: payload.inferenceMs ?? null,
     analyzedAt: new Date().toISOString()
   };
 }
 
-async function uploadForPrediction(imageUri) {
-  let upload;
-  try {
-    upload = await FileSystem.uploadAsync(`${getApiUrl()}/predict`, imageUri, {
-      fieldName: 'image',
-      httpMethod: 'POST',
-      mimeType: 'image/jpeg',
-      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-      headers: { Accept: 'application/json' }
-    });
-  } catch {
-    throw new Error(
-      `Cannot reach the model server at ${getApiUrl()}. Start it with "uvicorn backend.server:app --host 0.0.0.0 --port 8000".`
-    );
+/** The server's review block, or one worked out here for a server that predates it. */
+export function normalizeReview(review, identity) {
+  if (review && typeof review.level === 'string') {
+    return {
+      level: review.level,
+      needsConfirmation: Boolean(review.needsConfirmation),
+      reasons: Array.isArray(review.reasons) ? review.reasons : []
+    };
+  }
+  const confidence = identity?.confidence ?? 0;
+  const known = identity?.inCatalog;
+  const level = !known ? 'low' : confidence >= 0.9 ? 'high' : confidence >= 0.6 ? 'medium' : 'low';
+  return {
+    level,
+    needsConfirmation: level !== 'high',
+    reasons: level === 'high' ? [] : [known ? `only ${Math.round(confidence * 100)}% confident of the food` : 'not one of the supported foods']
+  };
+}
+
+/** Detected foods with the catalog food each one maps to. */
+export function normalizeObjects(objects) {
+  if (!Array.isArray(objects)) return [];
+  return objects.map((object, index) => {
+    const food = findFoodByName(object.foodName || '');
+    const percent = object.freshnessPercent ?? Math.round((1 - (object.spoilageScore ?? 0)) * 100);
+    const tier = object.freshnessTier ?? freshnessTierFromPercent(percent);
+    return {
+      id: object.id ?? index,
+      source: object.source || 'detector',
+      box: Array.isArray(object.box) ? object.box : null,
+      detectorLabel: object.detectorLabel || null,
+      detectorConfidence: object.detectorConfidence ?? null,
+      foodId: food.id,
+      foodName: object.foodName ? titleCase(object.foodName) : null,
+      confidence: object.confidence ?? 0,
+      topK: object.topK || [],
+      isSpoiled: object.freshness === 'spoiled',
+      freshnessConfidence: object.freshnessConfidence ?? 0,
+      freshnessPercent: percent,
+      freshnessTier: tier,
+      freshnessTierLabel: object.freshnessTierLabel ?? TIER_LABELS[tier],
+      spoilageScore: object.spoilageScore ?? 0,
+      agreement: object.agreement || null,
+      review: normalizeReview(object.review, { confidence: object.confidence, inCatalog: food.id !== 'unknown' })
+    };
+  });
+}
+
+/** Extra angle photos allowed per scan, on top of the first one. */
+export const MAX_EXTRA_ANGLES = 3;
+
+/**
+ * Fold several `runCnnAnalysis` readings of the same food item — different angles,
+ * e.g. front and back — into one result.
+ *
+ * A single bad angle can hide spoilage the others would have caught (a bruise on the
+ * far side, mould on the underside), so the *least* fresh angle decides the verdict
+ * rather than an average: food safety calls for the worst case, not the typical one.
+ * The food's identity comes from whichever angle the model was most sure about, since
+ * a blurry or foreshortened angle is more likely to be the wrong photo than the food
+ * being two different things.
+ */
+export function combineAngles(results) {
+  if (!Array.isArray(results) || results.length === 0) return null;
+  if (results.length === 1) {
+    return { ...results[0], angles: [angleSummary(results[0], 0)], anglesChecked: 1 };
   }
 
-  let payload;
-  try {
-    payload = JSON.parse(upload.body);
-  } catch {
-    throw new Error(`Unexpected response from the model server (HTTP ${upload.status}).`);
-  }
+  const worst = results.reduce((a, b) => (b.freshness.percent < a.freshness.percent ? b : a));
+  const surest = results.reduce((a, b) => (b.identity.confidence > a.identity.confidence ? b : a));
+  const disagreesOnFood = results.some(
+    (r) => r.identity.foodName && surest.identity.foodName && r.identity.foodName !== surest.identity.foodName
+  );
+  const spoilageScore = Math.max(...results.map((r) => r.spoilage.spoilageScore));
 
-  if (upload.status < 200 || upload.status >= 300) {
-    throw new Error(payload.detail || 'Food model request failed.');
+  const reasons = [...surest.review.reasons];
+  if (worst !== surest && worst.freshness.percent < 70) {
+    reasons.push(`one angle looked less fresh (${Math.round(worst.freshness.percent)}%) than the rest`);
   }
-  return payload;
+  if (disagreesOnFood) {
+    reasons.push('the angles do not agree on what food this is');
+  }
+  const needsConfirmation = surest.review.needsConfirmation || reasons.length > surest.review.reasons.length;
+  const level = disagreesOnFood && surest.review.level === 'high' ? 'medium' : surest.review.level;
+
+  return {
+    ...results[0],
+    identity: surest.identity,
+    freshness: worst.freshness,
+    spoilage: { ...results[0].spoilage, spoilageScore, modelSpoilageScore: round2(spoilageScore) },
+    review: { level, needsConfirmation, reasons },
+    angles: results.map((r, index) => angleSummary(r, index)),
+    anglesChecked: results.length
+  };
+}
+
+function angleSummary(result, index) {
+  return {
+    index,
+    imageUri: result.identity.imageUri,
+    foodName: result.identity.foodName,
+    confidence: result.identity.confidence,
+    freshnessPercent: result.freshness.percent,
+    freshnessTier: result.freshness.tier,
+    freshnessTierLabel: result.freshness.tierLabel
+  };
+}
+
+function uploadForPrediction(imageUri) {
+  return uploadImage('/predict', imageUri, {
+    unreachable:
+      'Cannot reach the model server. Start it with "uvicorn backend.server:app --host 0.0.0.0 --port 8000".'
+  });
 }
 
 function normalizeDetection(detection, boxes = []) {
@@ -217,6 +234,10 @@ function normalizeDetection(detection, boxes = []) {
 function normalizeFreshness(payload) {
   const detail = payload.freshnessDetail || {};
   const isSpoiled = (payload.freshness || detail.freshness) === 'spoiled';
+  const probFresh = detail.probFresh ?? 1 - (payload.spoilageScore ?? 0);
+  const percent = payload.freshnessPercent ?? detail.freshnessPercent ?? Math.round(probFresh * 100);
+  const tier = payload.freshnessTier ?? detail.tier ?? freshnessTierFromPercent(percent);
+  const tierLabel = payload.freshnessTierLabel ?? detail.tierLabel ?? TIER_LABELS[tier];
 
   return {
     verdict: isSpoiled ? 'spoiled' : 'fresh',
@@ -224,12 +245,25 @@ function normalizeFreshness(payload) {
     isSpoiled,
     confidence: payload.freshnessConfidence ?? detail.confidence ?? 0,
     probRotten: detail.probRotten ?? payload.spoilageScore ?? 0,
-    probFresh: detail.probFresh ?? 1 - (payload.spoilageScore ?? 0),
+    probFresh,
+    // The more specific 0-100% reading: Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%).
+    percent,
+    tier,
+    tierLabel,
     model: detail.model || 'cnn-freshness',
     sources: detail.sources || null,
     agreement: detail.agreement ?? null
   };
 }
+
+/** Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%) — matches the backend's tiers. */
+export function freshnessTierFromPercent(percent) {
+  if (percent >= 70) return 'fresh';
+  if (percent >= 30) return 'subfresh';
+  return 'rotten';
+}
+
+export const TIER_LABELS = { fresh: 'Fresh', subfresh: 'Sub Fresh', rotten: 'Rotten' };
 
 function titleCase(value) {
   if (!value) return null;

@@ -6,6 +6,7 @@ import { getFoodById, getStorageById } from '../data/foodCatalog';
 import { computeTTI, estimateShelfLife } from './tti';
 import { computeWeightedRisk } from './riskScore';
 import { generateRecommendations } from './recommend';
+import { freshnessTierFromPercent, TIER_LABELS } from './cnn';
 
 export function enrichItem(raw, now = new Date()) {
   const food = getFoodById(raw.foodId);
@@ -55,14 +56,24 @@ export function enrichItem(raw, now = new Date()) {
     riskComponents: risk.components,
     daysLabel: formatDaysLabel(shelf.estimatedDaysLeft),
     freshnessLabel: `Freshness ${risk.freshnessPercent}%`,
-    // The CNN's own fresh/rotten call, kept separate from the computed score.
+    // The CNN's own reading, kept separate from the computed risk score.
+    // Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%).
     modelFreshness: raw.modelFreshness || null,
-    modelFreshnessLabel: raw.modelFreshness
-      ? raw.modelFreshness === 'spoiled'
-        ? 'Rotten'
-        : 'Fresh'
-      : null,
     modelFreshnessConfidence: raw.modelFreshnessConfidence ?? null,
+    modelFreshnessPercent: raw.modelFreshnessPercent ?? null,
+    modelFreshnessTier:
+      raw.modelFreshnessTier ||
+      (raw.modelFreshnessPercent != null ? freshnessTierFromPercent(raw.modelFreshnessPercent) : null),
+    modelFreshnessLabel: raw.modelFreshness
+      ? TIER_LABELS[
+          raw.modelFreshnessTier ||
+            (raw.modelFreshnessPercent != null
+              ? freshnessTierFromPercent(raw.modelFreshnessPercent)
+              : raw.modelFreshness === 'spoiled'
+                ? 'rotten'
+                : 'fresh')
+        ]
+      : null,
     scannedLabel: formatScannedLabel(raw.scannedAt || raw.createdAt, now)
   };
 

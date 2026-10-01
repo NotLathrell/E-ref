@@ -45,6 +45,24 @@ export async function fetchTaskMetrics(taskKey) {
   return normalizeTask(taskKey, task);
 }
 
+/** The food detector's evaluation, or null when it has not been measured (or the server is old). */
+export async function fetchDetectorMetrics() {
+  try {
+    return await getJson(`${getApiUrl()}/metrics/detector`);
+  } catch {
+    return null;
+  }
+}
+
+/** How trustworthy the models' confidence is, and the thresholds chosen from it; null if unavailable. */
+export async function fetchConfidenceCalibration() {
+  try {
+    return await getJson(`${getApiUrl()}/metrics/confidence`);
+  } catch {
+    return null;
+  }
+}
+
 /** Check whether the backend is up and which models loaded. */
 export async function fetchHealth() {
   return getJson(`${getApiUrl()}/health`);

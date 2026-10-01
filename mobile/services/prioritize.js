@@ -1,6 +1,14 @@
 /**
  * Greedy prioritization: always pick the highest-risk remaining item next.
  * Produces an urgency-ranked list for consume/use-first decisions.
+ *
+ * Each item's priority is its weighted risk score (expiry date, time-temperature
+ * indicator, the CNN's spoilage reading and storage mismatch; see riskScore.js). At every
+ * step the algorithm takes the remaining item with the highest priority, commits to it
+ * without reconsidering, and repeats on what is left. That locally best choice is what
+ * makes it greedy. Ties on risk are broken by fewer days left, then by name, so the order
+ * is always the same for the same shelf. Discarded and used-up items are not eligible, and
+ * an empty shelf gives an empty list.
  */
 
 /**
@@ -9,7 +17,7 @@
  */
 export function prioritizeByGreedy(items = [], limit = Infinity) {
   const pool = items
-    .filter((item) => !item.discarded)
+    .filter((item) => !item.discarded && !item.consumed)
     .map((item) => ({ ...item }));
 
   const ranked = [];
@@ -41,6 +49,22 @@ function compareUrgency(a, b) {
   if (daysA !== daysB) return daysA - daysB;
 
   return String(a.title || '').localeCompare(String(b.title || ''));
+}
+
+/** Short, human reasons an item sits where it does in the priority list. */
+export function explainPriority(item) {
+  const reasons = [];
+  const days = item.estimatedDaysLeft;
+  if (days != null) {
+    if (days < 0) reasons.push('Past its date');
+    else if (days < 1) reasons.push('Less than a day left');
+    else reasons.push(`${Math.ceil(days)} day${Math.ceil(days) === 1 ? '' : 's'} left`);
+  }
+  const cnn = Number(item.cnnSpoilageScore) || 0;
+  if (cnn >= 0.5) reasons.push(`Looks spoiled (${Math.round(cnn * 100)}%)`);
+  if (item.storageMismatch) reasons.push('Not in its best storage');
+  if (item.frozen) reasons.push('Frozen — countdown paused');
+  return reasons;
 }
 
 /**

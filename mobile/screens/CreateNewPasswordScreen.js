@@ -1,127 +1,36 @@
 import { useState } from "react";
+import { changePassword, resetPassword } from "../services/auth";
 import {
-  View,
-  Text,
-  Image,
-  TextInput,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from "react-native";
+  AuthField,
+  AuthHeading,
+  AuthLayout,
+  ErrorText,
+  PrimaryButton,
+} from "../components/auth";
 
-import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
-
-const BRAND = "#16567b";
-
-const keyboardAvoidingViewStyle = {
-  flex: 1,
-  backgroundColor: "#FFFFFF",
-};
-
-const scrollContentStyle = {
-  flexGrow: 1,
-  paddingHorizontal: 28,
-  paddingTop: 50,
-  paddingBottom: 40,
-};
-
-const logoContainerStyle = {
-  alignItems: "center",
-  marginBottom: 25,
-};
-
-const logoImageStyle = {
-  width: 170,
-  height: 170,
-};
-
-const titleContainerStyle = {
-  alignItems: "center",
-  marginBottom: 35,
-};
-
-const titleStyle = {
-  fontSize: 30,
-  fontWeight: "700",
-  color: "#000",
-};
-
-const subtitleStyle = {
-  marginTop: 10,
-  textAlign: "center",
-  fontSize: 15,
-  color: "#777",
-  lineHeight: 22,
-};
-
-const sectionContainerStyle = {
-  marginBottom: 20,
-};
-
-const sectionLabelStyle = {
-  color: "#888",
-  marginBottom: 8,
-  fontSize: 15,
-  fontWeight: "500",
-};
-
-const inputWrapperStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#ECECEC",
-  borderRadius: 8,
-  paddingHorizontal: 15,
-};
-
-const inputStyle = {
-  flex: 1,
-  paddingVertical: 14,
-  fontSize: 16,
-};
-
-const toggleTextStyle = {
-  color: BRAND,
-  fontWeight: "600",
-};
-
-const errorTextStyle = {
-  color: "#E53935",
-  textAlign: "center",
-  marginBottom: 20,
-};
-
-const saveButtonStyle = {
-  backgroundColor: BRAND,
-  borderRadius: 8,
-  paddingVertical: 16,
-  alignItems: "center",
-  marginTop: 10,
-};
-
-const saveButtonTextStyle = {
-  color: "#FFF",
-  fontSize: 18,
-  fontWeight: "700",
-};
-
-export function CreateNewPasswordScreen({ navigation }) {
+export function CreateNewPasswordScreen({ navigation, route }) {
+  // Arriving from the emailed-code flow carries a reset token; arriving from the
+  // Profile screen means the user is signed in and must give their current password.
+  const resetToken = route?.params?.resetToken;
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [error, setError] = useState("");
 
-  const handleSavePassword = () => {
-    if (!password || !confirmPassword) {
+  const edit = (setter) => (text) => {
+    setter(text);
+    setError("");
+  };
+
+  const handleSavePassword = async () => {
+    if (!password || !confirmPassword || (!resetToken && !currentPassword)) {
       setError("Please complete all fields.");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
@@ -131,100 +40,63 @@ export function CreateNewPasswordScreen({ navigation }) {
     }
 
     setError("");
-
-    navigation.navigate("PasswordSuccess");
+    setBusy(true);
+    try {
+      if (resetToken) {
+        await resetPassword(resetToken, password);
+      } else {
+        await changePassword(currentPassword, password);
+      }
+      navigation.navigate("PasswordSuccess");
+    } catch (err) {
+      setError(err?.message || "Could not update your password. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <AnimatedScreen>
-      <KeyboardAvoidingView
-        style={keyboardAvoidingViewStyle}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={scrollContentStyle}
-        >
-          <View style={logoContainerStyle}>
-            <Image
-              source={require("../assets/ERef-Logo.png")}
-              resizeMode="contain"
-              style={logoImageStyle}
-            />
-          </View>
+    <AuthLayout tagline={null}>
+      <AuthHeading
+        title="Create New Password"
+        subtitle="Choose a strong password for your E-REF account."
+      />
 
-          <View style={titleContainerStyle}>
-            <Text style={titleStyle}>Create New Password</Text>
+      {resetToken ? null : (
+        <AuthField
+          label="Current Password"
+          secure
+          value={currentPassword}
+          onChangeText={edit(setCurrentPassword)}
+          placeholder="Your current password"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      )}
 
-            <Text style={subtitleStyle}>
-              Create a strong password for
-              {"\n"}
-              your E-REF account.
-            </Text>
-          </View>
+      <AuthField
+        label="New Password"
+        secure
+        value={password}
+        onChangeText={edit(setPassword)}
+        placeholder="At least 8 characters"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
 
-          <View style={sectionContainerStyle}>
-            <Text style={sectionLabelStyle}>New Password</Text>
+      <AuthField
+        label="Confirm Password"
+        secure
+        value={confirmPassword}
+        onChangeText={edit(setConfirmPassword)}
+        placeholder="Repeat your new password"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
 
-            <View style={inputWrapperStyle}>
-              <TextInput
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  setError("");
-                }}
-                secureTextEntry={!showPassword}
-                placeholder="Enter new password"
-                placeholderTextColor="#999"
-                style={inputStyle}
-              />
+      <ErrorText>{error}</ErrorText>
 
-              <AnimatedTouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Text style={toggleTextStyle}>
-                  {showPassword ? "Hide" : "Show"}
-                </Text>
-              </AnimatedTouchableOpacity>
-            </View>
-          </View>
-
-          <View style={sectionContainerStyle}>
-            <Text style={sectionLabelStyle}>Confirm Password</Text>
-
-            <View style={inputWrapperStyle}>
-              <TextInput
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  setError("");
-                }}
-                secureTextEntry={!showConfirmPassword}
-                placeholder="Confirm your password"
-                placeholderTextColor="#999"
-                style={inputStyle}
-              />
-
-              <AnimatedTouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                <Text style={toggleTextStyle}>
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </Text>
-              </AnimatedTouchableOpacity>
-            </View>
-          </View>
-
-          {error ? <Text style={errorTextStyle}>{error}</Text> : null}
-
-          <AnimatedTouchableOpacity
-            onPress={handleSavePassword}
-            style={saveButtonStyle}
-          >
-            <Text style={saveButtonTextStyle}>Save Password</Text>
-          </AnimatedTouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </AnimatedScreen>
+      <PrimaryButton label="Save Password" busyLabel="Saving..." busy={busy} onPress={handleSavePassword} />
+    </AuthLayout>
   );
 }

@@ -1,10 +1,12 @@
 /**
  * Hybrid recommendation engine:
  * - Rule-based: predefined actions from risk / spoilage / freezeability
- * - Content-based: usage & storage tips from food catalog attributes
+ * - Content-based: recipes ranked by TF-IDF cosine similarity to the item's content
+ *   features (see contentBased.js), plus storage tips from its catalog attributes
  */
 
 import { getFoodById, getStorageById } from '../data/foodCatalog';
+import { recipesForItem } from './contentBased';
 
 const ACTIONS = {
   discard: { id: 'discard', label: 'Discard', description: 'Unsafe or spoiled — dispose safely.' },
@@ -91,10 +93,15 @@ function buildRuleBasedActions(item, food) {
 }
 
 function buildContentBased(item, food, bestStorage) {
+  const recipes = recipesForItem(item, { limit: 2 }).map(
+    ({ recipe }) => `${recipe.name} (${recipe.minutes} min)`
+  );
+
   return {
     foodName: food.name,
     category: food.category,
-    usageSuggestions: food.usageIdeas.slice(0, 3),
+    // Best-matching recipes first, then the catalog's general ideas.
+    usageSuggestions: [...recipes, ...food.usageIdeas].slice(0, 4),
     storageSuggestions: [
       `Preferred location: ${bestStorage.label} (~${bestStorage.tempC}°C)`,
       ...food.storageTips

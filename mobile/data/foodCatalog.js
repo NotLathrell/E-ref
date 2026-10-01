@@ -309,10 +309,82 @@ export const FOOD_CATALOG = [
   }
 ];
 
-export const CATEGORIES = ['All', 'Meat', 'Dairy', 'Pantry', 'Produce'];
+const BUNDLED_CATEGORIES = ['All', 'Produce', 'Dairy', 'Meat', 'Pantry'];
+
+/**
+ * The Shelf tabs and the choices when adding food. A Super Admin can add categories on
+ * the server; setRemoteCategories() fills them in here, in place, so every screen that
+ * imported this array sees them.
+ */
+export const CATEGORIES = [...BUNDLED_CATEGORIES];
+
+/** Apply the server's category list. The bundled ones always stay, since bundled foods use them. */
+export function setRemoteCategories(categories = []) {
+  const names = (Array.isArray(categories) ? categories : [])
+    .map((category) => (typeof category === 'string' ? category : category && category.name))
+    .filter((name) => typeof name === 'string' && name.trim() && name !== 'All');
+  const extra = names.filter((name) => !BUNDLED_CATEGORIES.some((b) => b.toLowerCase() === name.toLowerCase()));
+  CATEGORIES.splice(0, CATEGORIES.length, ...BUNDLED_CATEGORIES, ...new Set(extra));
+}
+
+// ------------------------------------------------------------ food database
+/**
+ * The catalog above is bundled with the app. An administrator can change how a food is
+ * treated, or add a food, on the server; those entries arrive here (see services/foods.js)
+ * and are laid over the bundled ones, so every screen and algorithm that asks for a food
+ * by id sees the corrected values without a new app release.
+ */
+let overlay = new Map();
+let merged = null;
+let byId = null;
+const listeners = new Set();
+
+function build() {
+  const bundled = FOOD_CATALOG.filter((food) => food.id !== 'unknown').map((food) =>
+    overlay.has(food.id) ? { ...food, ...overlay.get(food.id) } : food
+  );
+  const known = new Set(FOOD_CATALOG.map((food) => food.id));
+  const added = [...overlay.values()].filter((food) => !known.has(food.id));
+  merged = [...bundled, ...added, FOOD_CATALOG.find((food) => food.id === 'unknown')];
+  byId = new Map(merged.map((food) => [food.id, food]));
+}
+
+/** Every food the app knows: bundled, corrected by the server, and added by the server. */
+export function getFoods() {
+  if (!merged) build();
+  return merged;
+}
+
+/** Replace the server's entries. Anything that is not a usable food record is ignored. */
+export function setRemoteFoods(foods = []) {
+  overlay = new Map(
+    (Array.isArray(foods) ? foods : [])
+      .filter((food) => food && typeof food.id === 'string' && food.id !== 'unknown' && food.name)
+      .map((food) => [food.id, food])
+  );
+  merged = null;
+  byId = null;
+  listeners.forEach((listener) => listener());
+}
+
+export function getRemoteFoods() {
+  return [...overlay.values()];
+}
+
+/** True when the id is one of the foods that ships with the app. */
+export function isBundledFood(id) {
+  return FOOD_CATALOG.some((food) => food.id === id);
+}
+
+/** Subscribe to changes of the food database; returns an unsubscribe function. */
+export function onFoodsChange(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
 
 export function getFoodById(id) {
-  return FOOD_CATALOG.find((f) => f.id === id) || FOOD_CATALOG.find((f) => f.id === 'unknown');
+  if (!byId) build();
+  return byId.get(id) || byId.get('unknown');
 }
 
 export function getStorageById(id) {
@@ -322,8 +394,8 @@ export function getStorageById(id) {
 export function findFoodByName(name = '') {
   const q = name.toLowerCase().trim();
   if (!q) return getFoodById('unknown');
-  const hit = FOOD_CATALOG.find(
-    (f) => f.name.toLowerCase() === q || f.keywords.some((k) => q.includes(k))
+  const hit = getFoods().find(
+    (f) => f.name.toLowerCase() === q || (f.keywords || []).some((k) => q.includes(k))
   );
   return hit || getFoodById('unknown');
 }

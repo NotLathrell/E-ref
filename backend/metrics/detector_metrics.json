@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-09-25T23:23:48",
+  "model": "eref-detector-v1 (YOLOv8n fine-tuned, 12 foods)",
+  "settings": {
+    "imgsz": 416,
+    "confidence": 0.3,
+    "nmsIou": 0.5
+  },
+  "composedFrames": {
+    "frames": 300,
+    "precision": 0.9619,
+    "recall": 0.944,
+    "map50": 0.9742,
+    "map50_95": 0.974,
+    "ap50PerClass": {
+      "apple": 0.9437,
+      "banana": 0.9937,
+      "bitter gourd": 0.995,
+      "capsicum": 0.995,
+      "cucumber": 0.9149,
+      "eggplant": 0.985,
+      "mango": 0.995,
+      "okra": 0.9386,
+      "orange": 0.9822,
+      "papaya": 0.995,
+      "potato": 0.9802,
+      "tomato": 0.9715
+    }
+  },
+  "objectCounts": {
+    "frames": 300,
+    "exactCount": 0.9967,
+    "withinOne": 1.0,
+    "missedBoxes": 1,
+    "extraBoxes": 0
+  },
+  "realPhotos": {
+    "photos": 600,
+    "foodFound": 0.9967,
+    "missed": 0.0033,
+    "bestBoxIsRightFood": 0.9533,
+    "meanBoxCoverage": 0.9921,
+    "boxCoversAtLeastQuarter": 0.9967,
+    "perFood": {
+      "apple": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 0.86
+      },
+      "banana": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "bitter gourd": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "capsicum": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 0.98
+      },
+      "cucumber": {
+        "photos": 50,
+        "found": 0.98,
+        "rightLabel": 0.9
+      },
+      "eggplant": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "mango": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "okra": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 0.9
+      },
+      "orange": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 0.92
+      },
+      "papaya": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "potato": {
+        "photos": 50,
+        "found": 1.0,
+        "rightLabel": 1.0
+      },
+      "tomato": {
+        "photos": 50,
+        "found": 0.98,
+        "rightLabel": 0.88
+      }
+    }
+  },
+  "falseDetections": {
+    "otherObjects": {
+      "photos": 150,
+      "wronglyBoxed": 0.0733
+    },
+    "unseenFoods": {
+      "photos": 150,
+      "wronglyBoxed": 0.58
+    }
+  },
+  "note": "Training frames are composed from single-food photos with exact boxes, so the composed-frame scores are optimistic. 'realPhotos' and 'falseDetections' use photos as they were taken, from splits the detector never saw."
+}

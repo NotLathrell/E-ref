@@ -1,17 +1,20 @@
+import { LIGHT_COLORS } from "./ThemeContext";
+
+/** The palette Alerts and Metrics were written against, now the one shared design. */
 export const COLORS = {
-  primary: "#4A3026",       // Dark Warm Earth Brown
-  primaryLight: "#124A69",  // Darker Teal/Blue Accent
+  primary: LIGHT_COLORS.primary,
+  primaryLight: LIGHT_COLORS.accent,
 
-  background: "#F5EDE1",    // Slightly Darker Cream
-  card: "#EDE2D2",          // Darker Card
-  cardBorder: "#D4C3AF",    // Darker Border
+  background: LIGHT_COLORS.background,
+  card: LIGHT_COLORS.card,
+  cardBorder: LIGHT_COLORS.border,
 
-  text: "#241B17",          // Dark Espresso Text
-  muted: "#66564D",         // Darker Muted Text
-  white: "#FFFFFF",
+  text: LIGHT_COLORS.text,
+  muted: LIGHT_COLORS.muted,
+  white: LIGHT_COLORS.white,
 
   // Status Colors
-  success: "#5D8561",       // Darker Green
-  warning: "#B87E2E",       // Darker Amber
-  danger: "#B64D47",        // Darker Red
+  success: LIGHT_COLORS.success,
+  warning: LIGHT_COLORS.warning,
+  danger: LIGHT_COLORS.danger,
 };

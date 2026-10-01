@@ -35,6 +35,13 @@
           "photosPermission": "Allow E-Ref to select food photos for scanning.",
           "cameraPermission": "Allow E-Ref to use the camera to identify food."
         }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#16567b"
+        }
       ]
     ]
   }

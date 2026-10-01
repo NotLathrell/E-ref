@@ -1,6 +1,4 @@
-import { View, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
 
 import { HomeScreen } from "../screens/HomeScreen";
 import { ShelfScreen } from "../screens/ShelfScreen";
@@ -8,6 +6,8 @@ import { CameraScreen } from "../screens/CameraScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { useInventory } from "../context/InventoryContext";
+import { Ionicons, Text, View } from "../components/themed";
+import { useTheme } from "../src/theme/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -21,21 +21,24 @@ const TAB_ICONS = {
 
 export default function AppNavigator() {
   const { unreadAlertCount } = useInventory();
+  // The tab bar is drawn by the navigator, not by our components, so it takes the
+  // already-resolved colours for the current theme.
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
 
-        tabBarActiveTintColor: "#5C4033",
-        tabBarInactiveTintColor: "#7A6A60",
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
 
         tabBarStyle: {
           height: 68,
           paddingBottom: 8,
           paddingTop: 8,
-          backgroundColor: "#FFF9F0",
-          borderTopColor: "#E6D8C8",
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
         },
 
         tabBarIcon: ({ color, size }) => (
@@ -44,6 +47,7 @@ export default function AppNavigator() {
               name={TAB_ICONS[route.name]}
               size={size}
               color={color}
+              themed={false}
             />
 
             {/* Unread alert count on the Alerts tab */}

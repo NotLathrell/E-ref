@@ -78,10 +78,17 @@ function normalizeUrl(value) {
   const trimmed = String(value || '').trim();
   if (!trimmed) return null;
 
-  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  const hasScheme = /^https?:\/\//i.test(trimmed);
+  const host = trimmed.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  const isLocalHost = /^(localhost|\d{1,3}(\.\d{1,3}){3})(:\d+)?$/i.test(host);
+
+  // A bare IP address or localhost is a LAN server over plain HTTP; a bare domain name
+  // (for example a Cloudflare tunnel address) is public and served over HTTPS.
+  const withScheme = hasScheme ? trimmed : `${isLocalHost ? 'http' : 'https'}://${trimmed}`;
   const withoutTrailingSlash = withScheme.replace(/\/+$/, '');
 
-  // Default to the port the backend documents when none was given.
+  // Only a plain-HTTP address falls back to the backend's documented port.
+  const isHttps = /^https:\/\//i.test(withoutTrailingSlash);
   const hasPort = /:\d+$/.test(withoutTrailingSlash.replace(/^https?:\/\//i, ''));
-  return hasPort ? withoutTrailingSlash : `${withoutTrailingSlash}:8000`;
+  return hasPort || isHttps ? withoutTrailingSlash : `${withoutTrailingSlash}:8000`;
 }

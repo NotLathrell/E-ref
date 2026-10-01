@@ -1,169 +1,28 @@
 import { useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { forgotPassword, verifyResetCode } from "../services/auth";
 import {
-  View,
-  Text,
-  Image,
-  TextInput,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-
-import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
-
-const BRAND = "#16567b";
-
-const keyboardAvoidingViewStyle = {
-  flex: 1,
-  backgroundColor: "#FFFFFF",
-};
-
-const scrollContentStyle = {
-  flexGrow: 1,
-  paddingHorizontal: 29,
-  paddingTop: 45,
-  paddingBottom: 40,
-};
-
-const logoContainerStyle = {
-  alignItems: "center",
-  marginBottom: 42,
-};
-
-const logoImageStyle = {
-  width: 180,
-  height: 180,
-};
-
-const logoTaglineStyle = {
-  marginTop: -5,
-  fontSize: 14,
-  color: "#222222",
-};
-
-const titleContainerStyle = {
-  alignItems: "center",
-  marginBottom: 115,
-};
-
-const titleStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: "#111111",
-};
-
-const subtitleStyle = {
-  marginTop: 8,
-  fontSize: 13,
-  color: "#C4C4C4",
-};
-
-const emailContainerStyle = {
-  marginBottom: 5,
-};
-
-const emailLabelStyle = {
-  color: "#B5B5B5",
-  fontSize: 13,
-  marginBottom: 5,
-};
-
-const emailDisplayInputStyle = {
-  height: 39,
-  backgroundColor: "#D9D9D9",
-  borderRadius: 6,
-  paddingHorizontal: 10,
-  fontSize: 13,
-  color: "#666666",
-};
-
-const changeEmailRowStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 17,
-};
-
-const changeEmailTextStyle = {
-  color: "#C4C4C4",
-  fontSize: 13,
-};
-
-const changeEmailLinkStyle = {
-  color: BRAND,
-  fontSize: 13,
-  fontWeight: "700",
-};
-
-const codeContainerStyle = {
-  marginBottom: 5,
-};
-
-const codeLabelStyle = {
-  color: "#B5B5B5",
-  fontSize: 13,
-  marginBottom: 5,
-};
-
-const codeInputStyle = {
-  height: 39,
-  backgroundColor: "#D9D9D9",
-  borderRadius: 6,
-  paddingHorizontal: 10,
-  fontSize: 16,
-  color: "#222222",
-  letterSpacing: 4,
-};
-
-const refreshRowStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 27,
-};
-
-const refreshTextStyle = {
-  color: "#C4C4C4",
-  fontSize: 13,
-};
-
-const refreshLinkStyle = {
-  color: BRAND,
-  fontSize: 13,
-  fontWeight: "700",
-};
-
-const errorTextStyle = {
-  color: "#E53935",
-  fontSize: 12,
-  marginBottom: 10,
-};
-
-const changePasswordButtonStyle = {
-  height: 44,
-  backgroundColor: BRAND,
-  borderRadius: 6,
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const changePasswordButtonTextStyle = {
-  color: "#FFFFFF",
-  fontSize: 16,
-  fontWeight: "700",
-};
+  AuthField,
+  AuthHeading,
+  AuthLayout,
+  ErrorText,
+  InfoText,
+  LinkRow,
+  PrimaryButton,
+} from "../components/auth";
 
 export function VerifyCodeScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
 
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const email = "thisisyourmail123@gmail.com";
+  const email = route?.params?.email || "";
 
-  const handleChangePassword = () => {
+  const handleVerify = async () => {
     if (!code.trim()) {
       setError("Please enter the verification code.");
       return;
@@ -175,98 +34,63 @@ export function VerifyCodeScreen() {
     }
 
     setError("");
-
-    navigation.navigate("CreateNewPassword");
+    setBusy(true);
+    try {
+      const { resetToken } = await verifyResetCode(email, code.trim());
+      navigation.navigate("CreateNewPassword", { resetToken });
+    } catch (err) {
+      setError(err?.message || "Could not verify the code. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleRefreshCode = () => {
+  const handleResend = async () => {
     setError("");
+    setInfo("");
+    try {
+      await forgotPassword(email);
+      setInfo("A new code has been sent.");
+    } catch (err) {
+      setError(err?.message || "Could not send a new code. Please try again.");
+    }
   };
 
   return (
-    <AnimatedScreen>
-      <KeyboardAvoidingView
-        style={keyboardAvoidingViewStyle}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={scrollContentStyle}
-        >
-          <View style={logoContainerStyle}>
-            <Image
-              source={require("../assets/ERef-Logo.png")}
-              resizeMode="contain"
-              style={logoImageStyle}
-            />
+    <AuthLayout>
+      <AuthHeading
+        title="Enter your code"
+        subtitle="We sent a 6-digit code to the email below. It expires in 15 minutes."
+      />
 
-            <Text style={logoTaglineStyle}>
-              Scan, predict, and reduce food waste.
-            </Text>
-          </View>
+      <AuthField label="Email" value={email} editable={false} />
 
-          <View style={titleContainerStyle}>
-            <Text style={titleStyle}>Forgot your password?</Text>
+      <LinkRow
+        prompt="Not your email?"
+        action="Change it"
+        align="flex-start"
+        onPress={() => navigation.goBack()}
+      />
 
-            <Text style={subtitleStyle}>Enter the details below</Text>
-          </View>
+      <AuthField
+        label="Verification Code"
+        value={code}
+        onChangeText={(text) => {
+          setCode(text);
+          setError("");
+          setInfo("");
+        }}
+        placeholder="6-digit code"
+        keyboardType="number-pad"
+        maxLength={6}
+      />
 
-          <View style={emailContainerStyle}>
-            <Text style={emailLabelStyle}>Verify Your Email:</Text>
+      <ErrorText>{error}</ErrorText>
+      <InfoText>{info}</InfoText>
 
-            <TextInput
-              value={email}
-              editable={false}
-              style={emailDisplayInputStyle}
-            />
-          </View>
+      <PrimaryButton label="Verify Code" busyLabel="Checking..." busy={busy} onPress={handleVerify} />
 
-          <View style={changeEmailRowStyle}>
-            <Text style={changeEmailTextStyle}>Not your email?</Text>
-
-            <AnimatedTouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={changeEmailLinkStyle}
-            >
-              <Text style={changeEmailLinkStyle}>Change Email</Text>
-            </AnimatedTouchableOpacity>
-          </View>
-
-          <View style={codeContainerStyle}>
-            <Text style={codeLabelStyle}>Enter Code:</Text>
-
-            <TextInput
-              value={code}
-              onChangeText={(text) => {
-                setCode(text);
-                setError("");
-              }}
-              keyboardType="number-pad"
-              maxLength={6}
-              placeholder=""
-              style={codeInputStyle}
-            />
-          </View>
-
-          <View style={refreshRowStyle}>
-            <Text style={refreshTextStyle}>Did not receive the code yet?</Text>
-
-            <AnimatedTouchableOpacity onPress={handleRefreshCode}>
-              <Text style={refreshLinkStyle}>Refresh Code</Text>
-            </AnimatedTouchableOpacity>
-          </View>
-
-          {error ? <Text style={errorTextStyle}>{error}</Text> : null}
-
-          <AnimatedTouchableOpacity
-            onPress={handleChangePassword}
-            activeOpacity={0.8}
-            style={changePasswordButtonStyle}
-          >
-            <Text style={changePasswordButtonTextStyle}>Change Password</Text>
-          </AnimatedTouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </AnimatedScreen>
+      <LinkRow prompt="Did not get the code?" action="Send it again" onPress={handleResend} />
+    </AuthLayout>
   );
 }

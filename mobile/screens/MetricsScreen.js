@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { fetchMetrics, fetchHealth, formatPercent } from "../services/metrics";
+import { fetchMetrics, fetchHealth, fetchDetectorMetrics, fetchConfidenceCalibration, formatPercent } from "../services/metrics";
 
 import { COLORS as THEME } from "../src/theme/colors";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { ActivityIndicator, Ionicons, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "../components/themed";
 
 // Shared palette from src/theme/colors, mapped to the roles this screen uses.
 const COLORS = {
@@ -397,6 +389,84 @@ function BenchmarkCard({ benchmark }) {
   );
 }
 
+/** Detection is a different task from classification, so it has its own measurements. */
+function DetectorCard({ detector }) {
+  const frames = detector.composedFrames || {};
+  const counts = detector.objectCounts || {};
+  const real = detector.realPhotos || {};
+  const others = detector.falseDetections || {};
+  const row = (label, value) => (
+    <View key={label} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 }}>
+      <Text style={{ fontSize: 12, color: COLORS.muted, flex: 1, paddingRight: 8 }}>{label}</Text>
+      <Text style={{ fontSize: 12, fontWeight: "800", color: COLORS.text }}>{value}</Text>
+    </View>
+  );
+
+  return (
+    <View style={{ backgroundColor: COLORS.card, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, padding: 16, marginBottom: 16 }}>
+      <Text style={{ fontSize: 17, fontWeight: "800", color: COLORS.text }}>YOLOv8 food detector</Text>
+      <Text style={{ fontSize: 12, color: COLORS.muted, lineHeight: 18, marginTop: 3, marginBottom: 12 }}>
+        Finds every food in the photo and boxes it, so several foods can be added at once. Classification
+        (above) says what one photo is; detection says which foods are where.
+      </Text>
+
+      <View style={{ flexDirection: "row", flexWrap: "wrap", marginHorizontal: -5 }}>
+        <MetricTile label="mAP@0.5" value={frames.map50 ?? 0} icon="locate-outline" />
+        <MetricTile label="mAP@0.5:0.95" value={frames.map50_95 ?? 0} icon="scan-outline" />
+        <MetricTile label="Right count" value={counts.exactCount ?? 0} icon="apps-outline" />
+        <MetricTile label="Real photos found" value={real.foodFound ?? 0} icon="camera-outline" />
+      </View>
+
+      {row("Best box is the right food (real photos)", formatPercent(real.bestBoxIsRightFood, 1))}
+      {row("Missed detections (real photos)", formatPercent(real.missed, 1))}
+      {Object.entries(others).map(([name, value]) =>
+        row(`False boxes on ${name === "otherObjects" ? "non-food objects" : "unseen foods"}`, formatPercent(value.wronglyBoxed, 1))
+      )}
+
+      <Text style={{ fontSize: 11, color: COLORS.muted, lineHeight: 16, marginTop: 8 }}>
+        {detector.note}
+      </Text>
+    </View>
+  );
+}
+
+/** What confidence the app trusts, and what that costs. */
+function CalibrationCard({ calibration }) {
+  const shown = (calibration.identity || []).filter((row) => [0.6, 0.8, 0.9, 0.95].includes(row.threshold));
+  const inUse = calibration.inUse || {};
+
+  return (
+    <View style={{ backgroundColor: COLORS.card, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, padding: 16, marginBottom: 16 }}>
+      <Text style={{ fontSize: 17, fontWeight: "800", color: COLORS.text }}>Confidence thresholds</Text>
+      <Text style={{ fontSize: 12, color: COLORS.muted, lineHeight: 18, marginTop: 3, marginBottom: 10 }}>
+        A result at or above {formatPercent(inUse.confidentIdentity, 0)} is shown as confident, one below{" "}
+        {formatPercent(inUse.unsureIdentity, 0)} must be confirmed by you, and anything between asks you to check it.
+        Measured on photos held out from training:
+      </Text>
+
+      <View style={{ flexDirection: "row", paddingBottom: 4 }}>
+        <Text style={{ flex: 1, fontSize: 11, fontWeight: "800", color: COLORS.muted }}>At least</Text>
+        <Text style={{ flex: 2, fontSize: 11, fontWeight: "800", color: COLORS.muted }}>Known foods accepted</Text>
+        <Text style={{ flex: 2, fontSize: 11, fontWeight: "800", color: COLORS.muted }}>Cut-outs accepted</Text>
+        <Text style={{ flex: 2, fontSize: 11, fontWeight: "800", color: COLORS.muted }}>Unseen foods wrongly named</Text>
+      </View>
+      {shown.map((row) => (
+        <View key={row.threshold} style={{ flexDirection: "row", paddingVertical: 3 }}>
+          <Text style={{ flex: 1, fontSize: 12, color: COLORS.text }}>{formatPercent(row.threshold, 0)}</Text>
+          <Text style={{ flex: 2, fontSize: 12, color: COLORS.text }}>{formatPercent(row.knownAccepted, 1)}</Text>
+          <Text style={{ flex: 2, fontSize: 12, color: COLORS.text }}>{formatPercent(row.cutoutsAccepted, 1)}</Text>
+          <Text style={{ flex: 2, fontSize: 12, color: COLORS.text }}>{formatPercent(row.unseenWronglyAccepted, 1)}</Text>
+        </View>
+      ))}
+
+      <Text style={{ fontSize: 11, color: COLORS.muted, lineHeight: 16, marginTop: 8 }}>
+        A threshold reduces, but cannot remove, confident mistakes on foods the model never saw. That is why the
+        scan screen also shows the runner-up foods and lets you correct the answer.
+      </Text>
+    </View>
+  );
+}
+
 export function MetricsScreen() {
   const navigation = useNavigation();
   const [report, setReport] = useState(null);
@@ -404,16 +474,22 @@ export function MetricsScreen() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [detector, setDetector] = useState(null);
+  const [calibration, setCalibration] = useState(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [metrics, status] = await Promise.all([
+      const [metrics, status, detection, confidence] = await Promise.all([
         fetchMetrics(),
         fetchHealth().catch(() => null),
+        fetchDetectorMetrics(),
+        fetchConfidenceCalibration(),
       ]);
       setReport(metrics);
       setHealth(status);
+      setDetector(detection);
+      setCalibration(confidence);
     } catch (err) {
       setError(err.message || "Could not load model metrics.");
       setReport(null);
@@ -621,6 +697,9 @@ export function MetricsScreen() {
           {report.tasks.map((task) => (
             <TaskCard key={task.key} task={task} />
           ))}
+
+          {detector ? <DetectorCard detector={detector} /> : null}
+          {calibration ? <CalibrationCard calibration={calibration} /> : null}
 
           {report.benchmarks?.length > 1 ? (
             <>

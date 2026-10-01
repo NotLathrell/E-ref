@@ -1,11 +1,10 @@
-import { ScrollView, View, Text } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
 import { COLORS } from "../src/theme/colors";
 
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
 import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
+import { Ionicons, ScrollView, Text, View } from "../components/themed";
 
 const scrollContentStyle = {
   paddingHorizontal: 20,

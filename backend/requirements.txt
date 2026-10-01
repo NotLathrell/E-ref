@@ -3,9 +3,14 @@ numpy
 opencv-python
 pillow
 python-multipart
+rapidocr-onnxruntime
 ultralytics
 uvicorn[standard]
 
 # Freshness CNN (MobileNetV2, TFLite). If this wheel is unavailable for your
 # Python version the API falls back to the YOLOv8n-cls freshness classifier.
 ai-edge-litert
+
+# Test suite (python -m pytest backend/tests)
+pytest
+httpx

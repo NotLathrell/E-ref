@@ -26,3 +26,14 @@ runs/classify/val/
 runs/classify/runs/classify/food_multiclass/
 .venv-train/
 /weights/
+
+# Local accounts database and signing key
+backend/data/
+
+# Detector training: keep best.pt so a fresh clone can run, drop resume checkpoints and logs
+runs/detect/**/last.pt
+runs/detect/*.log
+
+# Classifier training: same idea, plus an old experiment run kept only on disk
+runs/classify/**/last.pt
+runs/classify/train/

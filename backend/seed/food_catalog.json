@@ -1,0 +1,107 @@
+[
+  {
+    "id": "yogurt",
+    "name": "Yogurt",
+    "category": "Dairy"
+  },
+  {
+    "id": "milk",
+    "name": "Milk",
+    "category": "Dairy"
+  },
+  {
+    "id": "cheese",
+    "name": "Cheese",
+    "category": "Dairy"
+  },
+  {
+    "id": "meat",
+    "name": "Meat",
+    "category": "Meat"
+  },
+  {
+    "id": "fish",
+    "name": "Fish",
+    "category": "Meat"
+  },
+  {
+    "id": "tomato",
+    "name": "Tomato",
+    "category": "Produce"
+  },
+  {
+    "id": "apple",
+    "name": "Apple",
+    "category": "Produce"
+  },
+  {
+    "id": "orange",
+    "name": "Orange",
+    "category": "Produce"
+  },
+  {
+    "id": "cucumber",
+    "name": "Cucumber",
+    "category": "Produce"
+  },
+  {
+    "id": "okra",
+    "name": "Okra",
+    "category": "Produce"
+  },
+  {
+    "id": "potato",
+    "name": "Potato",
+    "category": "Produce"
+  },
+  {
+    "id": "capsicum",
+    "name": "Capsicum",
+    "category": "Produce"
+  },
+  {
+    "id": "bitter_gourd",
+    "name": "Bitter Gourd",
+    "category": "Produce"
+  },
+  {
+    "id": "mango",
+    "name": "Mango",
+    "category": "Produce"
+  },
+  {
+    "id": "papaya",
+    "name": "Papaya",
+    "category": "Produce"
+  },
+  {
+    "id": "eggplant",
+    "name": "Eggplant",
+    "category": "Produce"
+  },
+  {
+    "id": "lettuce",
+    "name": "Lettuce",
+    "category": "Produce"
+  },
+  {
+    "id": "banana",
+    "name": "Banana",
+    "category": "Produce"
+  },
+  {
+    "id": "bread",
+    "name": "Bread",
+    "category": "Pantry"
+  },
+  {
+    "id": "eggs",
+    "name": "Eggs",
+    "category": "Dairy"
+  },
+  {
+    "id": "leftovers",
+    "name": "Cooked Leftovers",
+    "category": "Pantry"
+  }
+]

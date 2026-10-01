@@ -1,17 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Switch,
-  Modal,
-  Pressable,
-  StyleSheet,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, CommonActions } from "@react-navigation/native";
+import { Modal, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { getLocalIpAddress } from "../utils/network";
 import {
   getApiUrl,
@@ -20,23 +9,26 @@ import {
 } from "../services/apiConfig";
 import { fetchHealth } from "../services/metrics";
 import { useInventory } from "../context/InventoryContext";
+import { sendTestNotification } from "../services/notifications";
+import { LIGHT_COLORS } from "../src/theme/ThemeContext";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
+import { Ionicons, Pressable, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "../components/themed";
 
 const LIGHT_THEME = {
-  background: "#F8F3E8",
-  card: "#FFFDF7",
-  border: "#E3D8C8",
-  text: "#2F2924",
-  muted: "#806F60",
-  primary: "#6B4F3A",
-  iconBackground: "#F1E8D8",
+  background: LIGHT_COLORS.background,
+  card: LIGHT_COLORS.card,
+  border: LIGHT_COLORS.border,
+  text: LIGHT_COLORS.text,
+  muted: LIGHT_COLORS.muted,
+  primary: LIGHT_COLORS.primary,
+  iconBackground: "#F3E4D5",
   profileIconBackground: "#E8D8BD",
-  inputBackground: "#F8F5EF",
-  success: "#6F8B5E",
-  danger: "#B94A48",
-  dangerBackground: "#FCE7E3",
-  modalBackground: "#FFFFFF",
-  placeholder: "#94A3B8",
+  inputBackground: LIGHT_COLORS.background,
+  success: LIGHT_COLORS.success,
+  danger: LIGHT_COLORS.danger,
+  dangerBackground: "#F9E9E5",
+  modalBackground: LIGHT_COLORS.background,
+  placeholder: LIGHT_COLORS.muted,
 };
 
 const createStyles = (theme) => ({
@@ -326,6 +318,12 @@ const createStyles = (theme) => ({
   },
 });
 
+const THEME_OPTIONS = [
+  ["system", "System"],
+  ["light", "Light"],
+  ["dark", "Dark"],
+];
+
 export function ProfileScreen() {
   const navigation = useNavigation();
   const { user, signOut, settings, updateSettings } = useInventory();
@@ -339,6 +337,7 @@ export function ProfileScreen() {
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  const [testStatus, setTestStatus] = useState("");
 
   const theme = LIGHT_THEME;
   const baseStyles = createStyles(theme);
@@ -436,17 +435,22 @@ export function ProfileScreen() {
 
   const handleConfirmLogout = async () => {
     setLogoutVisible(false);
+    // The navigator returns to the sign-in screen as soon as the session ends.
     await signOut();
-    const parent =
-      navigation.getParent()?.getParent() ||
-      navigation.getParent() ||
-      navigation;
-    parent.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "Auth" }],
-      }),
-    );
+  };
+
+  const handleTestAlert = async () => {
+    setTestStatus("");
+    try {
+      const sent = await sendTestNotification();
+      setTestStatus(
+        sent
+          ? "Test alert sent."
+          : "Notifications are turned off for E-REF. Enable them in your phone's settings.",
+      );
+    } catch {
+      setTestStatus("Could not send a test alert on this device.");
+    }
   };
 
   return (
@@ -473,12 +477,12 @@ export function ProfileScreen() {
 
           {/* Name */}
           <Text style={styles.profileNameStyle}>
-            {user?.name || "Lathrell"}
+            {user?.name || "Guest"}
           </Text>
 
           {/* Email */}
           <Text style={styles.profileEmailStyle}>
-            {user?.email || "lathrell@gmail.com"}
+            {user?.email || ""}
           </Text>
         </View>
 
@@ -512,30 +516,111 @@ export function ProfileScreen() {
           />
         </View>
 
-        {/* Dark Mode */}
-        <View style={settingRowStyle}>
-          <View style={settingIconContainerStyle}>
-            <Ionicons name="moon-outline" size={20} color={BRAND} />
+        {/* Alert lead time */}
+        <View style={styles.settingRowStyle}>
+          <View style={styles.settingIconContainerStyle}>
+            <Ionicons name="time-outline" size={20} color={theme.primary} />
           </View>
 
-          <View style={settingLabelContainerStyle}>
-            <Text style={settingTitleStyle}>Dark Mode</Text>
+          <View style={styles.settingLabelContainerStyle}>
+            <Text style={styles.settingTitleStyle}>Warn me before expiry</Text>
+
+            <View style={{ flexDirection: "row", marginTop: 8 }}>
+              {[12, 24, 48, 72].map((hours) => {
+                const active = settings.notifyLeadHours === hours;
+                return (
+                  <TouchableOpacity
+                    key={hours}
+                    activeOpacity={0.8}
+                    onPress={() => updateSettings({ notifyLeadHours: hours })}
+                    style={{
+                      paddingVertical: 6,
+                      paddingHorizontal: 12,
+                      borderRadius: 14,
+                      marginRight: 8,
+                      backgroundColor: active ? theme.primary : theme.iconBackground,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "700",
+                        color: active ? "#FFFFFF" : theme.text,
+                      }}
+                    >
+                      {hours}h
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        {/* Test alert */}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleTestAlert}
+          style={settingButtonStyle}
+        >
+          <View style={settingIconContainerStyle}>
+            <Ionicons name="paper-plane-outline" size={20} color={BRAND} />
+          </View>
+
+          <View style={settingButtonTextContainerStyle}>
+            <Text style={settingTitleStyle}>Send a test alert</Text>
 
             <Text style={settingDescStyle}>
-              Change the appearance of the application.
+              {testStatus || "Check that spoilage alerts reach this phone."}
             </Text>
           </View>
 
-          <Switch
-            value={false}
-            disabled
-            trackColor={{
-              false: theme.border,
-              true: theme.success,
-            }}
-            thumbColor={theme.text}
-            ios_backgroundColor={theme.border}
-          />
+          <Ionicons name="chevron-forward" size={20} color={theme.muted} />
+        </TouchableOpacity>
+
+        {/* Appearance */}
+        <View style={styles.settingRowStyle}>
+          <View style={styles.settingIconContainerStyle}>
+            <Ionicons name="moon-outline" size={20} color={BRAND} />
+          </View>
+
+          <View style={styles.settingLabelContainerStyle}>
+            <Text style={styles.settingTitleStyle}>Appearance</Text>
+
+            <Text style={styles.settingDescStyle}>
+              Light, dark, or follow your phone.
+            </Text>
+
+            <View style={{ flexDirection: "row", marginTop: 8 }}>
+              {THEME_OPTIONS.map(([mode, label]) => {
+                const active = (settings.themeMode || "system") === mode;
+                return (
+                  <TouchableOpacity
+                    key={mode}
+                    activeOpacity={0.8}
+                    onPress={() => updateSettings({ themeMode: mode })}
+                    style={{
+                      paddingVertical: 6,
+                      paddingHorizontal: 14,
+                      borderRadius: 14,
+                      marginRight: 8,
+                      backgroundColor: active ? theme.primary : theme.iconBackground,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "700",
+                        color: active ? "#FFFFFF" : theme.text,
+                      }}
+                    >
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         {/* Change Password */}
@@ -577,6 +662,72 @@ export function ProfileScreen() {
 
           <Ionicons name="chevron-forward" size={20} color={MUTED} />
         </TouchableOpacity>
+
+        {/* Recipes, history and administration */}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => navigation.navigate("Recipes")}
+          style={settingButtonStyle}
+        >
+          <View style={settingIconContainerStyle}>
+            <Ionicons name="restaurant-outline" size={20} color={BRAND} />
+          </View>
+
+          <View style={settingButtonTextContainerStyle}>
+            <Text style={settingTitleStyle}>Recipes & Taste</Text>
+
+            <Text style={settingDescStyle}>
+              Recipe suggestions for your shelf, and the foods you like or avoid.
+            </Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={20} color={MUTED} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => navigation.navigate("History")}
+          style={settingButtonStyle}
+        >
+          <View style={settingIconContainerStyle}>
+            <Ionicons name="time-outline" size={20} color={BRAND} />
+          </View>
+
+          <View style={settingButtonTextContainerStyle}>
+            <Text style={settingTitleStyle}>History</Text>
+
+            <Text style={settingDescStyle}>
+              Every scan, move, freeze, and what you used or threw away.
+            </Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={20} color={MUTED} />
+        </TouchableOpacity>
+
+        {user?.role === "admin" || user?.role === "super_admin" ? (
+          <>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => navigation.navigate("Admin")}
+              style={settingButtonStyle}
+            >
+              <View style={settingIconContainerStyle}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={BRAND} />
+              </View>
+
+              <View style={settingButtonTextContainerStyle}>
+                <Text style={settingTitleStyle}>Admin</Text>
+
+                <Text style={settingDescStyle}>
+                  Manage the food database and accounts.
+                </Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={20} color={MUTED} />
+            </TouchableOpacity>
+
+          </>
+        ) : null}
 
         {/* Model Performance */}
         <TouchableOpacity

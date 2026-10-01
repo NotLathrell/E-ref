@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>E-REF Super Admin</title>
+    <link rel="icon" type="image/png" href="img/favicon.png" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script>
+      // Apply the saved appearance before the page paints, so there is no flash of the wrong theme.
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('eref.theme') || 'system';
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p class="noscript">The E-REF Super Admin console needs JavaScript.</p>
+    </noscript>
+    <div id="app" aria-live="polite"></div>
+    <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,214 @@
+{
+  "generatedAt": "2026-09-25T23:25:03",
+  "sample": {
+    "knownIdentity": 718,
+    "plainCutouts": 210,
+    "unseenFoods": 180,
+    "freshness": 240
+  },
+  "identity": [
+    {
+      "threshold": 0.3,
+      "knownAccepted": 1.0,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.9905,
+      "cutoutsAcceptedAccuracy": 0.4519,
+      "unseenWronglyAccepted": 0.6444
+    },
+    {
+      "threshold": 0.35,
+      "knownAccepted": 1.0,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.981,
+      "cutoutsAcceptedAccuracy": 0.4563,
+      "unseenWronglyAccepted": 0.6389
+    },
+    {
+      "threshold": 0.4,
+      "knownAccepted": 1.0,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.9714,
+      "cutoutsAcceptedAccuracy": 0.4608,
+      "unseenWronglyAccepted": 0.6167
+    },
+    {
+      "threshold": 0.45,
+      "knownAccepted": 1.0,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.9524,
+      "cutoutsAcceptedAccuracy": 0.46,
+      "unseenWronglyAccepted": 0.5944
+    },
+    {
+      "threshold": 0.5,
+      "knownAccepted": 1.0,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.919,
+      "cutoutsAcceptedAccuracy": 0.4767,
+      "unseenWronglyAccepted": 0.5444
+    },
+    {
+      "threshold": 0.55,
+      "knownAccepted": 0.9986,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.8857,
+      "cutoutsAcceptedAccuracy": 0.4892,
+      "unseenWronglyAccepted": 0.5167
+    },
+    {
+      "threshold": 0.6,
+      "knownAccepted": 0.9958,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.8476,
+      "cutoutsAcceptedAccuracy": 0.5056,
+      "unseenWronglyAccepted": 0.5
+    },
+    {
+      "threshold": 0.65,
+      "knownAccepted": 0.993,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.8238,
+      "cutoutsAcceptedAccuracy": 0.5087,
+      "unseenWronglyAccepted": 0.4778
+    },
+    {
+      "threshold": 0.7,
+      "knownAccepted": 0.9916,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.7952,
+      "cutoutsAcceptedAccuracy": 0.503,
+      "unseenWronglyAccepted": 0.4333
+    },
+    {
+      "threshold": 0.75,
+      "knownAccepted": 0.9889,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.7476,
+      "cutoutsAcceptedAccuracy": 0.5223,
+      "unseenWronglyAccepted": 0.3944
+    },
+    {
+      "threshold": 0.8,
+      "knownAccepted": 0.9889,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.681,
+      "cutoutsAcceptedAccuracy": 0.5455,
+      "unseenWronglyAccepted": 0.3611
+    },
+    {
+      "threshold": 0.85,
+      "knownAccepted": 0.9861,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.619,
+      "cutoutsAcceptedAccuracy": 0.5615,
+      "unseenWronglyAccepted": 0.3333
+    },
+    {
+      "threshold": 0.9,
+      "knownAccepted": 0.9861,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.5381,
+      "cutoutsAcceptedAccuracy": 0.5929,
+      "unseenWronglyAccepted": 0.3
+    },
+    {
+      "threshold": 0.95,
+      "knownAccepted": 0.9763,
+      "acceptedAccuracy": 0.9986,
+      "cutoutsAccepted": 0.4619,
+      "cutoutsAcceptedAccuracy": 0.5876,
+      "unseenWronglyAccepted": 0.2556
+    },
+    {
+      "threshold": 1.0,
+      "knownAccepted": 0.0724,
+      "acceptedAccuracy": 1.0,
+      "cutoutsAccepted": 0.0,
+      "cutoutsAcceptedAccuracy": null,
+      "unseenWronglyAccepted": 0.0
+    }
+  ],
+  "freshness": [
+    {
+      "threshold": 0.3,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.35,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.4,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.45,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.5,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.55,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.6,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.65,
+      "accepted": 1.0,
+      "acceptedAccuracy": 0.9917
+    },
+    {
+      "threshold": 0.7,
+      "accepted": 0.9958,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 0.75,
+      "accepted": 0.9917,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 0.8,
+      "accepted": 0.9917,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 0.85,
+      "accepted": 0.9917,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 0.9,
+      "accepted": 0.9917,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 0.95,
+      "accepted": 0.9875,
+      "acceptedAccuracy": 0.9916
+    },
+    {
+      "threshold": 1.0,
+      "accepted": 0.3,
+      "acceptedAccuracy": 1.0
+    }
+  ],
+  "inUse": {
+    "confidentIdentity": 0.9,
+    "unsureIdentity": 0.6,
+    "unsureFreshness": 0.65
+  },
+  "note": "Measured on photos held out from training. 'unseenWronglyAccepted' counts photos of foods the model was never trained on that still got a confident food name."
+}
