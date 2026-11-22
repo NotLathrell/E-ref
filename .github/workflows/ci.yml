@@ -1,14 +1,11 @@
-# CI/CD: every push to main runs the tests, then redeploys the API on AWS EC2.
-name: Test and deploy to AWS
+# CI: every push to main runs the backend and mobile tests on GitHub's servers (free for public repos).
+name: Tests
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
-
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
 
 jobs:
   test-backend:
@@ -41,18 +38,3 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
       - run: npm test
-
-  deploy:
-    needs: [test-backend, test-mobile]
-    # Skipped until the repository variable EC2_HOST (the instance's Elastic IP) is set.
-    if: ${{ vars.EC2_HOST != '' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Pull and rebuild on EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          command_timeout: 30m
-          script: bash ~/E-ref/deploy/deploy.sh

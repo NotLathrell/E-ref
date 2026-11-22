@@ -1,5 +1,0 @@
-# HTTPS reverse proxy. Caddy gets a free Let's Encrypt certificate for EREF_DOMAIN.
-{$EREF_DOMAIN} {
-	encode gzip
-	reverse_proxy api:8000
-}

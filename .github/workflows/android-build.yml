@@ -5,8 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       api_url:
-        description: "Public API address baked into the app, e.g. https://3-0-12-34.sslip.io"
-        required: true
+        description: "Optional default server address (the Cloudflare tunnel URL changes each run; users can also set it in Profile -> Model Server)"
+        required: false
+        default: ""
 
 jobs:
   eas-build:
@@ -27,6 +28,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - run: npm ci
       - name: Bake the API address into the preview profile
+        if: ${{ inputs.api_url != '' }}
         env:
           API_URL: ${{ inputs.api_url }}
         run: |
