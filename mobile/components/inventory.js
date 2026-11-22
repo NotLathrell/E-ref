@@ -14,6 +14,7 @@ import { STORAGE_LOCATIONS, getFoodById } from '../data/foodCatalog';
 import { formatLabelDate } from '../services/ocr';
 import { draftFromManual, parseTypedDate } from '../services/manual';
 import { LIGHT_COLORS as C } from '../src/theme/ThemeContext';
+import { ResponsiveStage } from '../src/theme/responsive';
 
 const inputStyle = {
   backgroundColor: C.card,
@@ -64,13 +65,14 @@ export function ManualAddModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <ResponsiveStage>
       <ScrollView
         style={{ flex: 1, backgroundColor: C.background }}
         contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 60 }}
         keyboardShouldPersistTaps="handled"
       >
         <ScreenHeader
-          title="Add food by hand"
+          title="Add Food Manually"
           subtitle="For food without a photo. Its shelf life is worked out from its type, where you keep it and the date, if you know it."
           onBack={onClose}
         />
@@ -81,7 +83,7 @@ export function ManualAddModal({ visible, onClose, onSave }) {
           <Text style={{ fontSize: 13, fontWeight: '800', color: C.primary }}>{food ? 'Change' : 'Choose'}</Text>
         </TouchableOpacity>
 
-        <Text style={labelStyle}>Where you keep it</Text>
+        <Text style={labelStyle}>Storage</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {STORAGE_LOCATIONS.map((place) => (
             <Chip key={place.id} label={place.label.split(' (')[0]} selected={storage === place.id} onPress={() => setStorageId(place.id)} />
@@ -103,6 +105,7 @@ export function ManualAddModal({ visible, onClose, onSave }) {
         </View>
         <PillButton label={busy ? 'Saving…' : 'Add to Shelf'} icon="add-circle-outline" onPress={save} disabled={busy} />
       </ScrollView>
+      </ResponsiveStage>
 
       <FoodPickerModal
         visible={picking}

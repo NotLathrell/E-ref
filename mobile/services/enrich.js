@@ -9,10 +9,16 @@ import { generateRecommendations } from './recommend';
 import { freshnessTierFromPercent, TIER_LABELS } from './cnn';
 
 export function enrichItem(raw, now = new Date()) {
+  // "Coldest Part (Bottom Shelf)" no longer exists as its own zone; anything stored
+  // there is the freezer now, the same as if Freeze Now had been used on it.
+  const wasColdestPart = raw.storageId === 'fridge_bottom';
+  const storageId = wasColdestPart ? 'freezer' : raw.storageId;
+  const frozen = wasColdestPart ? true : Boolean(raw.frozen);
+
   const food = getFoodById(raw.foodId);
-  const storage = getStorageById(raw.storageId);
+  const storage = getStorageById(storageId);
   const best = getStorageById(food.bestStorageId);
-  const storageMismatch = storage.id !== best.id && !(raw.frozen && storage.id === 'freezer');
+  const storageMismatch = storage.id !== best.id && !(frozen && storage.id === 'freezer');
 
   const tti = computeTTI({
     nominalShelfDays: food.nominalShelfDays,
@@ -21,7 +27,7 @@ export function enrichItem(raw, now = new Date()) {
     q10: food.q10,
     storedSince: raw.scannedAt || raw.createdAt,
     now,
-    frozen: Boolean(raw.frozen)
+    frozen
   });
 
   const shelf = estimateShelfLife({
@@ -35,11 +41,13 @@ export function enrichItem(raw, now = new Date()) {
     ttiFreshnessRatio: tti.freshnessRatio,
     cnnSpoilageScore: raw.cnnSpoilageScore ?? 0.1,
     storageMismatch,
-    frozen: Boolean(raw.frozen)
+    frozen
   });
 
   const item = {
     ...raw,
+    storageId,
+    frozen,
     title: raw.title || food.name,
     category: raw.category || food.category,
     subtitle: storage.label,
@@ -49,7 +57,7 @@ export function enrichItem(raw, now = new Date()) {
     tti,
     estimatedDaysLeft: shelf.estimatedDaysLeft,
     daysToPrintedExpiry: shelf.daysToPrintedExpiry,
-    freezeByDate: raw.frozen ? null : shelf.freezeByDate,
+    freezeByDate: frozen ? null : shelf.freezeByDate,
     riskScore: risk.riskScore,
     freshnessPercent: risk.freshnessPercent,
     urgency: risk.urgency,
@@ -57,7 +65,7 @@ export function enrichItem(raw, now = new Date()) {
     daysLabel: formatDaysLabel(shelf.estimatedDaysLeft),
     freshnessLabel: `Freshness ${risk.freshnessPercent}%`,
     // The CNN's own reading, kept separate from the computed risk score.
-    // Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%).
+    // Fresh (70-100%), Sub-Fresh (30-69%), Putrid (0-29%).
     modelFreshness: raw.modelFreshness || null,
     modelFreshnessConfidence: raw.modelFreshnessConfidence ?? null,
     modelFreshnessPercent: raw.modelFreshnessPercent ?? null,
@@ -70,7 +78,7 @@ export function enrichItem(raw, now = new Date()) {
             (raw.modelFreshnessPercent != null
               ? freshnessTierFromPercent(raw.modelFreshnessPercent)
               : raw.modelFreshness === 'spoiled'
-                ? 'rotten'
+                ? 'putrid'
                 : 'fresh')
         ]
       : null,

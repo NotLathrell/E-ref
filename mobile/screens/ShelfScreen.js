@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Alert } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { CATEGORIES, STORAGE_LOCATIONS } from "../data/foodCatalog";
+import { ResponsiveStage } from "../src/theme/responsive";
 import { useInventory } from "../context/InventoryContext";
 import { EditDateModal } from "../components/inventory";
-import { FlatList, Image, Ionicons, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "../components/themed";
+import { useToast } from "../components/toast";
+import { FlatList, Image, Ionicons, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "../components/themed";
 
 const COLORS = {
   background: "#FFF7ED",
@@ -42,14 +44,14 @@ function freshnessPalette(percent) {
   return { bg: "#FBE3E1", fg: "#A63B33" };
 }
 
-/** Colour for the CNN's Fresh / Sub Fresh / Rotten tier. */
+/** Colour for the CNN's Fresh / Sub-Fresh / Putrid tier. */
 function tierColor(tier) {
   if (tier === "fresh") return COLORS.success;
   if (tier === "subfresh") return COLORS.warning;
   return COLORS.danger;
 }
 
-/** Badge background/foreground for the CNN's Fresh / Sub Fresh / Rotten tier. */
+/** Badge background/foreground for the CNN's Fresh / Sub-Fresh / Putrid tier. */
 function tierPalette(tier) {
   if (tier === "fresh") return { bg: "#E3F1E4", fg: "#2F6B34" };
   if (tier === "subfresh") return { bg: "#FBEFD8", fg: "#8A5D14" };
@@ -290,7 +292,8 @@ function ShelfItemCard({ item, onPress }) {
 
 export function ShelfScreen() {
   const route = useRoute();
-  const { items, freezeItem, discardItem, consumeItem, updateItem } = useInventory();
+  const { showToast } = useToast();
+  const { items, freezeItem, discardItem, consumeItem, updateItem, syncStatus, refresh } = useInventory();
   // Set from route.params on first mount so a category tile or the Soon to Spoil card
   // lands here already filtered/opened, with no flash of the unfiltered list first.
   const [activeTab, setActiveTab] = useState(() => {
@@ -303,6 +306,17 @@ export function ShelfScreen() {
   const [editingDate, setEditingDate] = useState(false);
 
   const listRef = useRef(null);
+  const categoryScrollRef = useRef(null);
+  const categoryTabPositions = useRef({});
+
+  // The category row scrolls horizontally, so a tab near the end (e.g. Pantry) can
+  // start off-screen. Whenever the active tab changes, bring it into view.
+  useEffect(() => {
+    const x = categoryTabPositions.current[activeTab];
+    if (x != null) {
+      categoryScrollRef.current?.scrollTo({ x: Math.max(0, x - 20), animated: true });
+    }
+  }, [activeTab]);
 
   // The Shelf tab stays mounted while the user visits other tabs, so a second tap on a
   // category tile (or the Soon to Spoil card) needs these to re-apply, not just the
@@ -325,7 +339,7 @@ export function ShelfScreen() {
     return items.filter((item) => {
       if (activeTab !== "All" && item.category !== activeTab) return false;
       if (!needle) return true;
-      return [item.title, item.category, item.storageLabel, item.modelLabel]
+      return [item.title, item.category, item.modelLabel]
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(needle));
     });
@@ -340,7 +354,7 @@ export function ShelfScreen() {
   const onFreeze = async () => {
     if (!selected) return;
     await freezeItem(selected.id);
-    Alert.alert("Frozen", `${selected.title} countdown paused (TTI reduced).`);
+    showToast(`${selected.title} is frozen — its countdown is paused.`, { type: "success" });
   };
 
   const onMoveStorage = async (storageId) => {
@@ -359,8 +373,10 @@ export function ShelfScreen() {
       {
         text: "Used it",
         onPress: async () => {
+          const title = selected.title;
           await consumeItem(selected.id);
           setSelectedId(null);
+          showToast(`${title} marked as used.`, { type: "success" });
         },
       },
     ]);
@@ -374,8 +390,10 @@ export function ShelfScreen() {
         text: "Discard",
         style: "destructive",
         onPress: async () => {
+          const title = selected.title;
           await discardItem(selected.id);
           setSelectedId(null);
+          showToast(`${title} discarded.`, { type: "success" });
         },
       },
     ]);
@@ -386,6 +404,7 @@ export function ShelfScreen() {
   };
 
   return (
+    <ResponsiveStage>
     <View
       style={{
         paddingHorizontal: 24,
@@ -452,7 +471,7 @@ export function ShelfScreen() {
             value={query}
             onChangeText={setQuery}
             autoFocus
-            placeholder="Search by name, storage, or category"
+            placeholder="Search by name or category"
             placeholderTextColor={COLORS.muted}
             style={{
               flex: 1,
@@ -471,6 +490,7 @@ export function ShelfScreen() {
 
       {/* Category Tabs */}
       <ScrollView
+        ref={categoryScrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         directionalLockEnabled
@@ -498,6 +518,9 @@ export function ShelfScreen() {
               <TouchableOpacity
                 key={category}
                 onPress={() => setActiveTab(category)}
+                onLayout={(event) => {
+                  categoryTabPositions.current[category] = event.nativeEvent.layout.x;
+                }}
                 activeOpacity={0.8}
                 style={{
                   marginRight: 10,
@@ -533,6 +556,9 @@ export function ShelfScreen() {
         data={filteredItems}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={COLORS.primary} />
+        }
         contentContainerStyle={{
           paddingBottom: 120,
           paddingTop: 4,
@@ -1102,11 +1128,15 @@ export function ShelfScreen() {
               visible={editingDate}
               item={selected}
               onClose={() => setEditingDate(false)}
-              onSave={(iso) => updateItem(selected.id, { expiryDate: iso })}
+              onSave={(iso) => {
+                updateItem(selected.id, { expiryDate: iso });
+                showToast("Date updated.", { type: "success" });
+              }}
             />
           </View>
         </View>
       </Modal>
     </View>
+    </ResponsiveStage>
   );
 }

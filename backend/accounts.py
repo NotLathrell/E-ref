@@ -3,6 +3,7 @@
     POST   /auth/register          create an account
     POST   /auth/login             sign in
     GET    /auth/me                the signed-in user
+    PATCH  /auth/me                change the signed-in user's name
     POST   /auth/forgot            email a 6-digit reset code
     POST   /auth/verify-code       exchange a valid code for a short-lived reset token
     POST   /auth/reset-password    set a new password with a reset token
@@ -80,6 +81,10 @@ class ResetIn(BaseModel):
 class ChangeIn(BaseModel):
     currentPassword: str = Field(max_length=auth.MAX_PASSWORD_LENGTH)
     newPassword: str = Field(max_length=auth.MAX_PASSWORD_LENGTH)
+
+
+class UpdateProfileIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
 
 
 class SyncIn(BaseModel):
@@ -222,6 +227,22 @@ def login(body: LoginIn, request: Request, db: Database = Depends(get_db)) -> di
 
 @router.get("/auth/me")
 def me(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
+    return {"user": _public(user)}
+
+
+@router.patch("/auth/me")
+def update_me(
+    body: UpdateProfileIn,
+    request: Request,
+    user: dict[str, Any] = Depends(current_user),
+    db: Database = Depends(get_db),
+) -> dict[str, Any]:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Enter a name.")
+    db.update_user(user["id"], name=name)
+    user["name"] = name
+    db.log("auth.profile_updated", actor=user, target=user["email"], ip=client_ip(request))
     return {"user": _public(user)}
 
 

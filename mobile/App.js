@@ -15,6 +15,7 @@ import { RecipesScreen } from "./screens/RecipesScreen.js";
 import { AdminScreen } from "./screens/AdminScreen.js";
 import AppNavigator from "./navigation/AppNavigator";
 import { ActivityIndicator, View } from "./components/themed";
+import { ToastProvider } from "./components/toast";
 import { LIGHT_COLORS, ThemeProvider, useTheme } from "./src/theme/ThemeContext";
 
 const Stack = createNativeStackNavigator();
@@ -92,17 +93,20 @@ function ThemedShell() {
   );
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <RootNavigator />
-    </NavigationContainer>
+    <ToastProvider>
+      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <RootNavigator />
+      </NavigationContainer>
+    </ToastProvider>
   );
 }
 
 function ThemedApp() {
-  const { settings } = useInventory();
+  // Dark mode is no longer offered: the app always renders the light theme,
+  // regardless of the phone's own setting or any value saved from before.
   return (
-    <ThemeProvider preference={settings?.themeMode}>
+    <ThemeProvider preference="light">
       <ThemedShell />
     </ThemeProvider>
   );

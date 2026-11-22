@@ -24,6 +24,9 @@ const callLog = [];
 const notificationLog = { shown: [], scheduled: [], permission: 'undetermined' };
 const secureStore = {};
 
+/** Every toast a screen asked useToast() to show, in order: [message, options]. */
+const toastLog = [];
+
 /** Forget everything a fake phone would keep between runs. */
 function resetDeviceState() {
   for (const key of Object.keys(asyncStore)) delete asyncStore[key];
@@ -31,6 +34,7 @@ function resetDeviceState() {
   notificationLog.shown.length = 0;
   notificationLog.scheduled.length = 0;
   notificationLog.permission = 'undetermined';
+  toastLog.length = 0;
 }
 
 function named(name) {
@@ -50,6 +54,7 @@ function makeReactNative() {
     AppState: { addEventListener: () => ({ remove() {} }) },
     Platform: { OS: 'android', select: (o) => (o.android !== undefined ? o.android : o.default) },
     Dimensions: { get: () => ({ width: 400, height: 800 }) },
+    useWindowDimensions: () => windowSize,
     StyleSheet: {
       create: (s) => s,
       flatten: function flatten(style) {
@@ -233,6 +238,7 @@ function setModalMode(mode) {
 
 let contextValue = null;
 let routeParams = {};
+let windowSize = { width: 400, height: 800, scale: 2, fontScale: 1 };
 let themeMode = 'light';
 const providerStack = [];
 let stateOverrides = {};
@@ -242,6 +248,11 @@ let nodeCount = 0;
 /** Supply the value every `useContext` call sees (i.e. the inventory context). */
 function setContext(value) {
   contextValue = value;
+}
+
+/** Supply what `useWindowDimensions()` returns, e.g. a tablet-wide screen. */
+function setWindowSize(size) {
+  windowSize = { width: 400, height: 800, scale: 2, fontScale: 1, ...size };
 }
 
 /** Supply what `useRoute().params` returns, e.g. the category a Home tile passed along. */
@@ -257,12 +268,16 @@ function setThemeMode(mode) {
 const REACT_CONTEXT = Symbol.for('react.context');
 const isProvider = (type) => type && typeof type === 'object' && type.$$typeof === REACT_CONTEXT;
 
+const REACT_FORWARD_REF = Symbol.for('react.forward_ref');
+const isForwardRef = (type) => type && typeof type === 'object' && type.$$typeof === REACT_FORWARD_REF;
+
 function readContext(ctx) {
   for (let i = providerStack.length - 1; i >= 0; i -= 1) {
     if (providerStack[i][0] === ctx) return providerStack[i][1];
   }
   if (ctx && ctx.displayName === 'ThemeContext') return load('src/theme/ThemeContext.js').makeTheme(themeMode);
   if (ctx && ctx.displayName === 'InTextContext') return false;
+  if (ctx && ctx.displayName === 'ToastContext') return { showToast: (message, opts) => toastLog.push([message, opts || {}]), hideToast: () => {} };
   return contextValue;
 }
 
@@ -337,6 +352,10 @@ function walk(element, depth, isRoot) {
     walk(withHooks(() => type(props), isRoot), depth + 1, false);
     return;
   }
+  if (isForwardRef(type)) {
+    walk(withHooks(() => type.render(props, element.ref ?? null), isRoot), depth + 1, false);
+    return;
+  }
   if (props.children != null) {
     [].concat(props.children).forEach((child) => walk(child, depth + 1, false));
   }
@@ -359,6 +378,7 @@ function buildNode(element, depth, isRoot) {
     }
   }
   if (typeof type === 'function') return buildNode(withHooks(() => type(props), isRoot), depth + 1, false);
+  if (isForwardRef(type)) return buildNode(withHooks(() => type.render(props, element.ref ?? null), isRoot), depth + 1, false);
   const kids = props.children != null
     ? [].concat(props.children).map((c) => buildNode(c, depth + 1, false)).filter(Boolean)
     : [];
@@ -388,5 +408,5 @@ function render(Component, overrides = {}, props = {}) {
 }
 
 module.exports = {
-  setModalMode, load, render, renderTree, setContext, setRouteParams, setThemeMode, callLog, notificationLog, resetDeviceState, asyncStore, MOBILE_ROOT,
+  setModalMode, load, render, renderTree, setContext, setRouteParams, setWindowSize, setThemeMode, callLog, notificationLog, toastLog, resetDeviceState, asyncStore, MOBILE_ROOT,
 };

@@ -13,7 +13,7 @@
  */
 
 const path = require('path');
-const { load, render, setContext, setModalMode, setRouteParams } = require('./harness');
+const { load, render, renderTree, setContext, setModalMode, setRouteParams } = require('./harness');
 
 // Only what is actually on screen counts: a closed sheet's buttons must not satisfy a check.
 setModalMode('open');
@@ -200,6 +200,17 @@ section('A. Food database (administrator changes)');
   check('an added food can be tracked like any other', enrichItem(raw('b', 'beetroot')).estimatedDaysLeft > 0);
   check('the unknown-food fallback is still last', catalog.getFoods().at(-1).id === 'unknown');
 
+  // "Coldest Part (Bottom Shelf)" was merged into the Freezer: it is no longer an
+  // option, but an item still carrying that id from before the merge is treated as
+  // frozen, the same as if Freeze Now had been used on it.
+  check('Coldest Part is no longer a choice', !catalog.STORAGE_LOCATIONS.some((s) => s.id === 'fridge_bottom'));
+  check('the top fridge drawer is now called Chiller', catalog.getStorageById('fridge_top').label === 'Chiller');
+  const legacyColdest = enrichItem(raw('legacy', 'milk', { storage: 'fridge_bottom', expiresIn: 5 }));
+  check('an item still carrying the old id becomes frozen, in the freezer',
+    legacyColdest.storageId === 'freezer' && legacyColdest.frozen === true);
+  check('foods that used to recommend Coldest Part now recommend the Freezer',
+    catalog.getFoodById('milk').bestStorageId === 'freezer');
+
   catalog.setRemoteFoods([{ id: 'unknown', name: 'Hacked' }, { name: 'no id' }, null, 'junk']);
   check('the fallback food cannot be replaced', catalog.getFoodById('nope').name === 'Food Item');
   check('malformed entries are ignored', catalog.getRemoteFoods().length === 0);
@@ -352,14 +363,14 @@ section('B/C. Scan results: low confidence and several foods in one photo');
     id, source: 'detector', box: [10 + id * 100, 20, 90 + id * 100, 200], detectorLabel: label, detectorConfidence: 0.9,
     foodId: catalog.findFoodByName(label).id, foodName: label === 'okra' ? null : label[0].toUpperCase() + label.slice(1), confidence: 0.9, topK: [],
     isSpoiled: spoiled, freshnessConfidence: 0.95, freshnessPercent: spoiled ? 10 : 95,
-    freshnessTier: spoiled ? 'rotten' : 'fresh', freshnessTierLabel: spoiled ? 'Rotten' : 'Fresh',
+    freshnessTier: spoiled ? 'putrid' : 'fresh', freshnessTierLabel: spoiled ? 'Putrid' : 'Fresh',
     spoilageScore: spoiled ? 0.9 : 0.05, agreement: 'agrees',
     review: { level, needsConfirmation: level !== 'high', reasons: level === 'high' ? [] : ['not sure'] },
   });
   const several = [box(0, 'tomato', 'high'), box(1, 'mango', 'high', true), box(2, 'banana', 'medium')];
   const multi = result(cnnFor({ level: 'high', needsConfirmation: false, reasons: [] }, { objects: several }));
   check('a photo of several foods lists each one', /3\s+foods found/.test(multi.text) && /Tomato/.test(multi.text) && /Mango/.test(multi.text) && /Banana/.test(multi.text));
-  check('each food shows its own fresh or rotten reading', /Rotten/.test(multi.text) && /Fresh/.test(multi.text));
+  check('each food shows its own fresh or rotten reading', /Putrid/.test(multi.text) && /Fresh/.test(multi.text));
   check('the user can add all of them at once', /Add 3 to Shelf/.test(multi.text));
   check('each detected food can be changed', (multi.text.match(/Change/g) || []).length === 3);
   const oneOff = result(cnnFor({ level: 'high', needsConfirmation: false, reasons: [] }, { objects: several }), { 16: { 1: true } });
@@ -387,7 +398,7 @@ section('G. Screens');
     loading: false, user: { id: 1, name: 'Tester', email: 't@example.com', role: 'admin' },
     items: kitchen, settings: { alertsEnabled: true }, taste: content.DEFAULT_TASTE, updateTaste: async () => {}, logRecipe: async () => {},
     prioritized: prioritizeByGreedy(kitchen), soonToSpoil: getSoonToSpoil(kitchen, 3), alerts: [], syncStatus: 'idle', pendingChanges: 0,
-    consumeItem: async () => {}, restoreItem: async () => {}, refreshFoodDatabase: async () => {}, foodsVersion: 0,
+    consumeItem: async () => {}, restoreItem: async () => {}, refreshFoodDatabase: async () => {}, foodsVersion: 0, refresh: async () => {},
     archive: [
       { id: 'a1', foodId: 'milk', title: 'Milk', outcome: 'used', resolvedAt: at(1) },
       { id: 'a2', foodId: 'tomato', title: 'Tomato', outcome: 'discarded', resolvedAt: at(2) },
@@ -401,6 +412,25 @@ section('G. Screens');
   };
   setContext(base);
 
+  function findNode(node, type) {
+    if (!node) return null;
+    if (node.type === type) return node;
+    for (const kid of node.kids || []) {
+      const hit = findNode(kid, type);
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  // Pull-to-refresh: dragging the list down calls the same resync used elsewhere.
+  for (const [name, type] of [['HomeScreen', 'ScrollView'], ['ShelfScreen', 'FlatList'], ['AlertsScreen', 'ScrollView']]) {
+    const tree = renderTree(load(`screens/${name}.js`)[name]);
+    const scrollable = findNode(tree, type);
+    const refreshControl = scrollable?.props?.refreshControl;
+    check(`${name} offers pull-to-refresh`,
+      Boolean(refreshControl) && refreshControl.props.refreshing === false && typeof refreshControl.props.onRefresh === 'function');
+  }
+
   const home = render(load('screens/HomeScreen.js').HomeScreen).text;
   check('Home ranks what to use first', /Let's Use this!/.test(home) && /Tomato/.test(home));
   check('Home gives a reason for each ranked item', /Not in its best storage|day/.test(home));
@@ -413,15 +443,29 @@ section('G. Screens');
   const recipes = render(load('screens/RecipesScreen.js').RecipesScreen).text;
   check('Recipes recommends for the shelf, with reasons', /Recommended for your shelf/.test(recipes) && /Uses your/.test(recipes));
   check('Recipes shows the match score', /Match\s+\d+\s*%/.test(recipes));
-  check('Recipes lets the user set their taste', /Your taste/.test(recipes) && /Vegetarian/.test(recipes) && /Foods I like/.test(recipes) && /Foods to avoid/.test(recipes));
+  check('Recipes no longer carries the taste editor (it lives in Profile now)', !/Your [Tt]aste/.test(recipes));
   setContext({ ...base, items: [] });
   const emptyRecipes = render(load('screens/RecipesScreen.js').RecipesScreen).text;
   check('Recipes explains an empty shelf and offers to scan', /Nothing on your shelf/.test(emptyRecipes) && /Scan food/.test(emptyRecipes));
   setContext({ ...base, items: shelf(raw('e', 'eggplant')), taste: { ...content.DEFAULT_TASTE, avoided: ['eggplant'] } });
   check('Recipes explains a no-match caused by preferences', /No matching recipe/.test(render(load('screens/RecipesScreen.js').RecipesScreen).text));
-  setContext({ ...base, taste: { ...content.DEFAULT_TASTE, log: [{ recipeId: 'omelette', action: 'cooked', at: at(1) }] } });
-  check('Recipes offers to forget the cooking history', /Forget my cooking history/.test(render(load('screens/RecipesScreen.js').RecipesScreen).text));
   setContext(base);
+
+  // Taste preferences moved from Recipes to Profile: collapsed to a summary until
+  // the user taps Edit, so a bare "Foods I like" picker never clutters the profile.
+  const TasteBox = load('components/taste.js').TasteBox;
+  const noPrefs = { diet: 'none', liked: [], avoided: [], log: [] };
+  const collapsed = render(TasteBox, {}, { taste: noPrefs, updateTaste: async () => {}, foodsVersion: 0 }).text;
+  check('with nothing set, the taste box says so and offers to edit', /Your Taste/.test(collapsed) && /Edit/.test(collapsed) && /No preferences set/.test(collapsed));
+  check('the picker stays hidden until Edit is tapped', !/Foods I like/.test(collapsed));
+
+  const somePrefs = { diet: 'vegetarian', liked: ['tomato'], avoided: ['meat'], log: [{ recipeId: 'omelette', action: 'cooked', at: at(1) }] };
+  const summary = render(TasteBox, {}, { taste: somePrefs, updateTaste: async () => {}, foodsVersion: 0 }).text;
+  check('collapsed, only the selected preferences show', /Vegetarian/.test(summary) && /Tomato/.test(summary) && /Meat/.test(summary));
+
+  const editing = render(TasteBox, { 0: true }, { taste: somePrefs, updateTaste: async () => {}, foodsVersion: 0 }).text;
+  check('editing opens the full picker', /Foods I like/.test(editing) && /Foods to avoid/.test(editing) && /Done/.test(editing));
+  check('editing offers to forget the cooking history', /Forget my cooking history/.test(editing));
 
   const history = render(load('screens/HistoryScreen.js').HistoryScreen).text;
   check('History lists every recorded event', /Scanned \(Shelf\)/.test(history) && /Used up/.test(history) && /Discarded/.test(history));
@@ -442,6 +486,7 @@ section('G. Screens');
 
   const profile = render(load('screens/ProfileScreen.js').ProfileScreen).text;
   check('Profile links to Recipes, History and (for admins) Admin', /Recipes & Taste/.test(profile) && /History/.test(profile) && /Manage the food database/.test(profile));
+  check('Profile carries the taste editor below the email', /Your Taste/.test(profile));
   setContext({ ...base, user: { ...base.user, role: 'employee' } });
   check('Profile hides Admin from regular users', !/Manage the food database/.test(render(load('screens/ProfileScreen.js').ProfileScreen).text));
   setContext(base);
@@ -488,9 +533,9 @@ section('Registering and editing food by hand');
   const plainUser = { id: 1, name: 'T', email: 't@example.com' };
   setContext({ loading: false, user: plainUser, items: [], settings: {}, taste: content.DEFAULT_TASTE, addItem: async () => {}, prioritized: [], soonToSpoil: [], alerts: [], syncStatus: 'idle' });
   const capture = render(CameraScreen).text;
-  check('the capture step offers to add food by hand', /Add food by hand/.test(capture) && !/Where you keep it/.test(capture));
+  check('the capture step offers to add food manually', /Add Food Manually/.test(capture) && !/Storage/.test(capture));
   const form = render(CameraScreen, { 17: true }).text;
-  check('the add-by-hand form asks for food, storage and date', /Where you keep it/.test(form) && /Expiry date \(optional\)/.test(form) && /Choose a food/.test(form));
+  check('the add-manually form asks for food, storage and date', /Storage/.test(form) && /Expiry date \(optional\)/.test(form) && /Choose a food/.test(form));
 
   const kitchen = shelf(raw('tomato', 'tomato', { title: 'Tomato' }));
   setContext({ loading: false, user: plainUser, items: kitchen, settings: {}, taste: content.DEFAULT_TASTE, freezeItem: async () => {}, discardItem: async () => {}, consumeItem: async () => {}, updateItem: async () => {}, prioritized: [], soonToSpoil: [], alerts: [], syncStatus: 'idle' });

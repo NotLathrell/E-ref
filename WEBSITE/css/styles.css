@@ -1,35 +1,35 @@
 /*
  * E-REF Super Admin console.
  *
- * The palette is the mobile app's (mobile/src/theme/ThemeContext.js): warm cream surfaces,
- * espresso-brown brand, terracotta accent, and the same green / amber / red status
- * colours. Dark values are the ones the app derives in mobile/src/theme/darkMode.js.
+ * The palette is the mobile app's (mobile/src/theme/ThemeContext.js): soft pastel-orange
+ * surfaces, a burnt-orange brand colour, a deeper orange accent, and the same green /
+ * amber / red status colours. The console is light-only, matching the app.
  */
 
 :root {
-  --background: #fff9f0;
-  --card: #f8f0e3;
+  --background: #fff7ed;
+  --card: #ffedd5;
   --surface: #ffffff;
-  --border: #e6d8c8;
-  --text: #2f241f;
-  --muted: #7a6a60;
-  --primary: #5c4033;
+  --border: #fed7aa;
+  --text: #431407;
+  --muted: #8a6d56;
+  --primary: #c2410c;
   --on-primary: #ffffff;
-  --accent: #b86b4b;
-  --gold: #d6a85f;
+  --accent: #9a3412;
+  --gold: #fbbf24;
   --success: #6f9b72;
   --warning: #d89b3d;
   --danger: #c95c54;
 
   /* Soft fills behind badges and chips, as the app's tinted cards use. */
-  --tint-primary: #efe4d6;
+  --tint-primary: #fbe0c8;
   --tint-success: #e8f0e6;
   --tint-warning: #f7e6d2;
   --tint-danger: #f6e0dd;
-  --tint-accent: #f3e7da;
+  --tint-accent: #f8d6be;
 
-  --shadow: 0 1px 2px rgba(47, 36, 31, 0.06), 0 8px 24px rgba(47, 36, 31, 0.06);
-  --shadow-lg: 0 20px 60px rgba(47, 36, 31, 0.22);
+  --shadow: 0 1px 2px rgba(67, 20, 7, 0.06), 0 8px 24px rgba(67, 20, 7, 0.06);
+  --shadow-lg: 0 20px 60px rgba(67, 20, 7, 0.22);
   --radius-card: 18px;
   --radius-control: 14px;
   --radius-pill: 999px;
@@ -39,56 +39,6 @@
   --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme='system'] {
-    --background: #16110e;
-    --card: #211a16;
-    --surface: #241c17;
-    --border: #3a2e26;
-    --text: #f2e8dc;
-    --muted: #b3a394;
-    --primary: #d9ae85;
-    --on-primary: #160f0b;
-    --accent: #c17a5c;
-    --gold: #ac8546;
-    --success: #6e9570;
-    --warning: #b6812f;
-    --danger: #d36e65;
-    --tint-primary: #2f281e;
-    --tint-success: #20251f;
-    --tint-warning: #2f2518;
-    --tint-danger: #342624;
-    --tint-accent: #2d261d;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --background: #16110e;
-  --card: #211a16;
-  --surface: #241c17;
-  --border: #3a2e26;
-  --text: #f2e8dc;
-  --muted: #b3a394;
-  --primary: #d9ae85;
-  --on-primary: #160f0b;
-  --accent: #c17a5c;
-  --gold: #ac8546;
-  --success: #6e9570;
-  --warning: #b6812f;
-  --danger: #d36e65;
-  --tint-primary: #2f281e;
-  --tint-success: #20251f;
-  --tint-warning: #2f2518;
-  --tint-danger: #342624;
-  --tint-accent: #2d261d;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-  color-scheme: dark;
 }
 
 /* ------------------------------------------------------------------ base */
@@ -393,42 +343,6 @@ textarea {
   opacity: 0.75;
 }
 
-/* Segmented control, used for the appearance setting. */
-.segmented {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: 12px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  width: 100%;
-}
-
-.segmented button {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 4px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.segmented button[aria-pressed='true'] {
-  background: var(--primary);
-  color: var(--on-primary);
-}
-
-.segmented .icon {
-  width: 14px;
-  height: 14px;
-}
-
 /* ---------------------------------------------------------------- badges */
 .badge {
   display: inline-flex;
@@ -558,13 +472,6 @@ textarea {
 
 .login details .field {
   margin-top: 12px;
-}
-
-.login-foot {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .alert {
@@ -1208,104 +1115,6 @@ table.table {
 .empty strong {
   color: var(--text);
   font-size: 16px;
-}
-
-/* ------------------------------------------------------------- categories */
-.category-grid {
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-}
-
-.category {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.category::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 5px;
-  background: var(--swatch);
-}
-
-.category-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.swatch {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--swatch) 20%, var(--surface));
-  color: var(--swatch);
-}
-
-.category-head h3 {
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.category-head .grow {
-  flex: 1;
-  min-width: 0;
-}
-
-.food-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.food-chip {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--background);
-  border: 1px solid var(--border);
-}
-
-.food-chip.added {
-  border-style: dashed;
-  border-color: var(--accent);
-}
-
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.swatches button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 1px var(--border);
-  cursor: pointer;
-}
-
-.swatches button[aria-pressed='true'] {
-  box-shadow: 0 0 0 2px var(--text);
-}
-
-.swatches input[type='color'] {
-  width: 36px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: none;
-  cursor: pointer;
 }
 
 /* ---------------------------------------------------------------- recipes */

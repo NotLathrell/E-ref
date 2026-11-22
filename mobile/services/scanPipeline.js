@@ -55,7 +55,14 @@ export async function analyzeScan({
     cnn,
     draftItem: {
       foodId: food.id,
-      title: food.id === 'unknown' ? cnn.identity.foodName || food.name : food.name,
+      title:
+        food.id === 'unknown'
+          ? cnn.identity.foodName || food.name
+          : cnn.identity.varietyLabel
+            ? `${cnn.identity.varietyLabel} ${food.name}`
+            : food.name,
+      variety: cnn.identity.variety,
+      varietyLabel: cnn.identity.varietyLabel,
       category: food.category,
       storageId: storageId || food.bestStorageId,
       imageUri: imageUri || null,
@@ -67,7 +74,7 @@ export async function analyzeScan({
       // Freshness verdict from the CNN, carried into risk scoring and the shelf.
       modelFreshness: cnn.freshness.verdict,
       modelFreshnessConfidence: cnn.freshness.confidence,
-      // The more specific Fresh / Sub Fresh / Rotten reading (0-100%).
+      // The more specific Fresh / Sub-Fresh / Putrid reading (0-100%).
       modelFreshnessPercent: cnn.freshness.percent,
       modelFreshnessTier: cnn.freshness.tier,
       modelLabel: cnn.identity.modelLabel,

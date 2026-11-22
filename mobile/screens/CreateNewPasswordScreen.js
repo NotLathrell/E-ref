@@ -7,6 +7,8 @@ import {
   ErrorText,
   PrimaryButton,
 } from "../components/auth";
+import { Ionicons, Text, TouchableOpacity } from "../components/themed";
+import { LIGHT_COLORS as C } from "../src/theme/ThemeContext";
 
 export function CreateNewPasswordScreen({ navigation, route }) {
   // Arriving from the emailed-code flow carries a reset token; arriving from the
@@ -57,6 +59,20 @@ export function CreateNewPasswordScreen({ navigation, route }) {
 
   return (
     <AuthLayout tagline={null}>
+      {resetToken ? null : (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          hitSlop={10}
+          accessibilityLabel="Go back"
+          style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}
+        >
+          <Ionicons name="chevron-back" size={22} color={C.primary} />
+          <Text style={{ color: C.primary, fontSize: 15, fontWeight: "700", marginLeft: 2 }}>
+            Back
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <AuthHeading
         title="Create New Password"
         subtitle="Choose a strong password for your E-REF account."

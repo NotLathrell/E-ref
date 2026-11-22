@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Modal, StyleSheet } from "react-native";
+import { Alert, Modal, StyleSheet } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import { getLocalIpAddress } from "../utils/network";
 import {
@@ -8,11 +9,13 @@ import {
   onApiUrlChange,
 } from "../services/apiConfig";
 import { fetchHealth } from "../services/metrics";
+import { loadAvatar, saveAvatar } from "../services/storage";
 import { useInventory } from "../context/InventoryContext";
-import { sendTestNotification } from "../services/notifications";
 import { LIGHT_COLORS } from "../src/theme/ThemeContext";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { Ionicons, Pressable, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "../components/themed";
+import { Image, Ionicons, Pressable, RefreshControl, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "../components/themed";
+import { TasteBox } from "../components/taste";
+import { useToast } from "../components/toast";
 
 const LIGHT_THEME = {
   background: LIGHT_COLORS.background,
@@ -57,7 +60,7 @@ const createStyles = (theme) => ({
     backgroundColor: theme.profileIconBackground,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    overflow: "hidden",
   },
 
   profileName: {
@@ -125,7 +128,7 @@ const createStyles = (theme) => ({
   },
 
   settingButton: {
-    minHeight: 58,
+    minHeight: 64,
     borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 18,
@@ -142,7 +145,7 @@ const createStyles = (theme) => ({
   },
 
   logoutButton: {
-    minHeight: 58,
+    minHeight: 64,
     borderWidth: 1,
     borderColor: theme.danger,
     borderRadius: 18,
@@ -206,6 +209,7 @@ const createStyles = (theme) => ({
 
   modalContent: {
     width: "100%",
+    maxWidth: 480,
     maxHeight: "75%",
     minHeight: 460,
     backgroundColor: theme.modalBackground,
@@ -318,15 +322,12 @@ const createStyles = (theme) => ({
   },
 });
 
-const THEME_OPTIONS = [
-  ["system", "System"],
-  ["light", "Light"],
-  ["dark", "Dark"],
-];
-
 export function ProfileScreen() {
   const navigation = useNavigation();
-  const { user, signOut, settings, updateSettings } = useInventory();
+  const { showToast } = useToast();
+  const { user, signOut, settings, updateSettings, taste, updateTaste, foodsVersion, syncStatus, refresh } = useInventory();
+
+  const [avatarUri, setAvatarUri] = useState(null);
 
   const [deviceIp, setDeviceIp] = useState("Detecting...");
   const [override, setOverride] = useState("");
@@ -337,7 +338,6 @@ export function ProfileScreen() {
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-  const [testStatus, setTestStatus] = useState("");
 
   const theme = LIGHT_THEME;
   const baseStyles = createStyles(theme);
@@ -398,6 +398,20 @@ export function ProfileScreen() {
   // Keep the displayed URL in step with whatever apiConfig currently holds.
   useEffect(() => onApiUrlChange(setApiUrl), []);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setAvatarUri(null);
+      return;
+    }
+    let mounted = true;
+    loadAvatar(user.id).then((uri) => {
+      if (mounted) setAvatarUri(uri);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
+
   const checkServer = useCallback(async () => {
     setServerStatus("checking");
     setServerError(null);
@@ -429,6 +443,25 @@ export function ProfileScreen() {
     setOverride("");
   }, []);
 
+  const pickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Allow photo access to set a profile picture.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
+      mediaTypes: ["images"],
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    const uri = result.assets[0].uri;
+    setAvatarUri(uri);
+    if (user?.id) await saveAvatar(user.id, uri);
+    showToast("Profile picture updated.", { type: "success" });
+  };
+
   const handleLogout = () => {
     setLogoutVisible(true);
   };
@@ -437,20 +470,6 @@ export function ProfileScreen() {
     setLogoutVisible(false);
     // The navigator returns to the sign-in screen as soon as the session ends.
     await signOut();
-  };
-
-  const handleTestAlert = async () => {
-    setTestStatus("");
-    try {
-      const sent = await sendTestNotification();
-      setTestStatus(
-        sent
-          ? "Test alert sent."
-          : "Notifications are turned off for E-REF. Enable them in your phone's settings.",
-      );
-    } catch {
-      setTestStatus("Could not send a test alert on this device.");
-    }
   };
 
   return (
@@ -465,25 +484,56 @@ export function ProfileScreen() {
           paddingTop: 52,
           paddingBottom: 120,
         }}
+        refreshControl={
+          <RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={theme.primary} />
+        }
       >
         {/* Profile Header */}
         <Text style={styles.profileTitle}>Profile</Text>
 
         <View style={styles.profileCardStyle}>
-          {/* Profile Icon */}
-          <View style={styles.profileIconStyle}>
-            <Ionicons name="person" size={48} color={theme.text} />
-          </View>
+          {/* Profile Icon: tap to change it from the camera or gallery */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={pickAvatar}
+            accessibilityLabel="Change your profile picture"
+            style={{ marginBottom: 10 }}
+          >
+            <View style={styles.profileIconStyle}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={{ width: "100%", height: "100%", borderRadius: 41 }} />
+              ) : (
+                <Ionicons name="person" size={48} color={theme.text} />
+              )}
+            </View>
+            <View
+              style={{
+                position: "absolute",
+                right: -2,
+                bottom: -2,
+                width: 26,
+                height: 26,
+                borderRadius: 13,
+                backgroundColor: theme.primary,
+                borderWidth: 2,
+                borderColor: theme.card,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="camera" size={13} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
 
           {/* Name */}
-          <Text style={styles.profileNameStyle}>
-            {user?.name || "Guest"}
-          </Text>
+          <Text style={styles.profileNameStyle}>{user?.name || "Guest"}</Text>
 
           {/* Email */}
           <Text style={styles.profileEmailStyle}>
             {user?.email || ""}
           </Text>
+
+          <TasteBox taste={taste} updateTaste={updateTaste} foodsVersion={foodsVersion} />
         </View>
 
         {/* Spoilage Alerts */}
@@ -523,7 +573,7 @@ export function ProfileScreen() {
           </View>
 
           <View style={styles.settingLabelContainerStyle}>
-            <Text style={styles.settingTitleStyle}>Warn me before expiry</Text>
+            <Text style={styles.settingTitleStyle}>Alert before a food is under:</Text>
 
             <View style={{ flexDirection: "row", marginTop: 8 }}>
               {[12, 24, 48, 72].map((hours) => {
@@ -557,72 +607,6 @@ export function ProfileScreen() {
           </View>
         </View>
 
-        {/* Test alert */}
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={handleTestAlert}
-          style={settingButtonStyle}
-        >
-          <View style={settingIconContainerStyle}>
-            <Ionicons name="paper-plane-outline" size={20} color={BRAND} />
-          </View>
-
-          <View style={settingButtonTextContainerStyle}>
-            <Text style={settingTitleStyle}>Send a test alert</Text>
-
-            <Text style={settingDescStyle}>
-              {testStatus || "Check that spoilage alerts reach this phone."}
-            </Text>
-          </View>
-
-          <Ionicons name="chevron-forward" size={20} color={theme.muted} />
-        </TouchableOpacity>
-
-        {/* Appearance */}
-        <View style={styles.settingRowStyle}>
-          <View style={styles.settingIconContainerStyle}>
-            <Ionicons name="moon-outline" size={20} color={BRAND} />
-          </View>
-
-          <View style={styles.settingLabelContainerStyle}>
-            <Text style={styles.settingTitleStyle}>Appearance</Text>
-
-            <Text style={styles.settingDescStyle}>
-              Light, dark, or follow your phone.
-            </Text>
-
-            <View style={{ flexDirection: "row", marginTop: 8 }}>
-              {THEME_OPTIONS.map(([mode, label]) => {
-                const active = (settings.themeMode || "system") === mode;
-                return (
-                  <TouchableOpacity
-                    key={mode}
-                    activeOpacity={0.8}
-                    onPress={() => updateSettings({ themeMode: mode })}
-                    style={{
-                      paddingVertical: 6,
-                      paddingHorizontal: 14,
-                      borderRadius: 14,
-                      marginRight: 8,
-                      backgroundColor: active ? theme.primary : theme.iconBackground,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "700",
-                        color: active ? "#FFFFFF" : theme.text,
-                      }}
-                    >
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-
         {/* Change Password */}
         <TouchableOpacity
           activeOpacity={1}
@@ -640,27 +624,6 @@ export function ProfileScreen() {
           </View>
 
           <Ionicons name="chevron-forward" size={20} color={theme.muted} />
-        </TouchableOpacity>
-
-        {/* Privacy & Terms */}
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setPrivacyVisible(true)}
-          style={settingButtonStyle}
-        >
-          <View style={settingIconContainerStyle}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={BRAND} />
-          </View>
-
-          <View style={settingButtonTextContainerStyle}>
-            <Text style={settingTitleStyle}>Privacy & Terms</Text>
-
-            <Text style={settingDescStyle}>
-              Review privacy information and terms of use.
-            </Text>
-          </View>
-
-          <Ionicons name="chevron-forward" size={20} color={MUTED} />
         </TouchableOpacity>
 
         {/* Recipes, history and administration */}
@@ -729,22 +692,21 @@ export function ProfileScreen() {
           </>
         ) : null}
 
-        {/* Model Performance */}
+        {/* Privacy & Terms */}
         <TouchableOpacity
           activeOpacity={1}
-          onPress={() => navigation.navigate("Metrics")}
+          onPress={() => setPrivacyVisible(true)}
           style={settingButtonStyle}
         >
           <View style={settingIconContainerStyle}>
-            <Ionicons name="stats-chart-outline" size={20} color={BRAND} />
+            <Ionicons name="document-text-outline" size={20} color={BRAND} />
           </View>
 
           <View style={settingButtonTextContainerStyle}>
-            <Text style={settingTitleStyle}>Model Performance</Text>
+            <Text style={settingTitleStyle}>Privacy & Terms</Text>
 
             <Text style={settingDescStyle}>
-              Accuracy, precision, recall and F1 for the detection and
-              classification models.
+              Review privacy information and terms of use.
             </Text>
           </View>
 

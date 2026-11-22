@@ -1,0 +1,387 @@
+{
+  "trainedAt": "2026-10-04T13:42:56Z",
+  "method": "Gaussian Mixture Model (diagonal covariance), fit directly from labelled per-food statistics; zero EM iterations (measured to reduce accuracy, see module docstring)",
+  "featureNames": [
+    "mean_hue",
+    "mean_saturation",
+    "mean_value",
+    "std_hue",
+    "std_saturation",
+    "std_value",
+    "brown_ratio",
+    "dark_ratio",
+    "patch_max_brown",
+    "patch_max_dark",
+    "patch_std_brown",
+    "patch_std_dark"
+  ],
+  "foodsWithDedicatedMixtures": [
+    "apple",
+    "banana",
+    "bitter gourd",
+    "capsicum",
+    "cucumber",
+    "eggplant",
+    "mango",
+    "okra",
+    "orange",
+    "papaya",
+    "potato",
+    "tomato"
+  ],
+  "foodsUsingDefaultMixture": [],
+  "valAccuracy": {
+    "perFood": {
+      "apple": {
+        "accuracy": 0.8168,
+        "precision": 0.9235,
+        "recall": 0.7511,
+        "f1": 0.8284,
+        "support": 382,
+        "confusion": {
+          "truePositive": 169,
+          "falsePositive": 14,
+          "falseNegative": 56,
+          "trueNegative": 143
+        }
+      },
+      "banana": {
+        "accuracy": 0.939,
+        "precision": 0.9396,
+        "recall": 0.9614,
+        "f1": 0.9504,
+        "support": 426,
+        "confusion": {
+          "truePositive": 249,
+          "falsePositive": 16,
+          "falseNegative": 10,
+          "trueNegative": 151
+        }
+      },
+      "bitter gourd": {
+        "accuracy": 0.7447,
+        "precision": 0.8333,
+        "recall": 0.7143,
+        "f1": 0.7692,
+        "support": 47,
+        "confusion": {
+          "truePositive": 20,
+          "falsePositive": 4,
+          "falseNegative": 8,
+          "trueNegative": 15
+        }
+      },
+      "capsicum": {
+        "accuracy": 0.8552,
+        "precision": 0.8571,
+        "recall": 0.8976,
+        "f1": 0.8769,
+        "support": 221,
+        "confusion": {
+          "truePositive": 114,
+          "falsePositive": 19,
+          "falseNegative": 13,
+          "trueNegative": 75
+        }
+      },
+      "cucumber": {
+        "accuracy": 0.8435,
+        "precision": 0.8511,
+        "recall": 0.7843,
+        "f1": 0.8163,
+        "support": 115,
+        "confusion": {
+          "truePositive": 40,
+          "falsePositive": 7,
+          "falseNegative": 11,
+          "trueNegative": 57
+        }
+      },
+      "eggplant": {
+        "accuracy": 0.6618,
+        "precision": 0.8649,
+        "recall": 0.64,
+        "f1": 0.7356,
+        "support": 136,
+        "confusion": {
+          "truePositive": 64,
+          "falsePositive": 10,
+          "falseNegative": 36,
+          "trueNegative": 26
+        }
+      },
+      "mango": {
+        "accuracy": 0.8227,
+        "precision": 0.7595,
+        "recall": 0.9091,
+        "f1": 0.8276,
+        "support": 141,
+        "confusion": {
+          "truePositive": 60,
+          "falsePositive": 19,
+          "falseNegative": 6,
+          "trueNegative": 56
+        }
+      },
+      "okra": {
+        "accuracy": 0.7273,
+        "precision": 0.6818,
+        "recall": 0.4688,
+        "f1": 0.5556,
+        "support": 88,
+        "confusion": {
+          "truePositive": 15,
+          "falsePositive": 7,
+          "falseNegative": 17,
+          "trueNegative": 49
+        }
+      },
+      "orange": {
+        "accuracy": 0.8339,
+        "precision": 0.8841,
+        "recall": 0.7922,
+        "f1": 0.8356,
+        "support": 289,
+        "confusion": {
+          "truePositive": 122,
+          "falsePositive": 16,
+          "falseNegative": 32,
+          "trueNegative": 119
+        }
+      },
+      "papaya": {
+        "accuracy": 0.7402,
+        "precision": 0.6901,
+        "recall": 0.8167,
+        "f1": 0.7481,
+        "support": 127,
+        "confusion": {
+          "truePositive": 49,
+          "falsePositive": 22,
+          "falseNegative": 11,
+          "trueNegative": 45
+        }
+      },
+      "potato": {
+        "accuracy": 0.6698,
+        "precision": 0.9714,
+        "recall": 0.5,
+        "f1": 0.6602,
+        "support": 106,
+        "confusion": {
+          "truePositive": 34,
+          "falsePositive": 1,
+          "falseNegative": 34,
+          "trueNegative": 37
+        }
+      },
+      "tomato": {
+        "accuracy": 0.6474,
+        "precision": 0.6434,
+        "recall": 0.7908,
+        "f1": 0.7095,
+        "support": 641,
+        "confusion": {
+          "truePositive": 276,
+          "falsePositive": 153,
+          "falseNegative": 73,
+          "trueNegative": 139
+        }
+      }
+    },
+    "overallAccuracy": 0.7812,
+    "overallPrecision": 0.808,
+    "overallRecall": 0.7979,
+    "overallF1": 0.8029,
+    "overallConfusion": {
+      "truePositive": 1212,
+      "falsePositive": 288,
+      "falseNegative": 307,
+      "trueNegative": 912
+    },
+    "macroAcrossFoods": {
+      "accuracy": 0.7752,
+      "precision": 0.825,
+      "recall": 0.7522,
+      "f1": 0.7761
+    },
+    "photos": 2719
+  },
+  "testAccuracy": {
+    "perFood": {
+      "apple": {
+        "accuracy": 0.7994,
+        "precision": 0.9444,
+        "recall": 0.7217,
+        "f1": 0.8182,
+        "support": 339,
+        "confusion": {
+          "truePositive": 153,
+          "falsePositive": 9,
+          "falseNegative": 59,
+          "trueNegative": 118
+        }
+      },
+      "banana": {
+        "accuracy": 0.9603,
+        "precision": 0.9586,
+        "recall": 0.9808,
+        "f1": 0.9696,
+        "support": 403,
+        "confusion": {
+          "truePositive": 255,
+          "falsePositive": 11,
+          "falseNegative": 5,
+          "trueNegative": 132
+        }
+      },
+      "bitter gourd": {
+        "accuracy": 0.7586,
+        "precision": 0.8947,
+        "recall": 0.5862,
+        "f1": 0.7083,
+        "support": 58,
+        "confusion": {
+          "truePositive": 17,
+          "falsePositive": 2,
+          "falseNegative": 12,
+          "trueNegative": 27
+        }
+      },
+      "capsicum": {
+        "accuracy": 0.85,
+        "precision": 0.911,
+        "recall": 0.8526,
+        "f1": 0.8808,
+        "support": 240,
+        "confusion": {
+          "truePositive": 133,
+          "falsePositive": 13,
+          "falseNegative": 23,
+          "trueNegative": 71
+        }
+      },
+      "cucumber": {
+        "accuracy": 0.8132,
+        "precision": 0.8065,
+        "recall": 0.6944,
+        "f1": 0.7463,
+        "support": 91,
+        "confusion": {
+          "truePositive": 25,
+          "falsePositive": 6,
+          "falseNegative": 11,
+          "trueNegative": 49
+        }
+      },
+      "eggplant": {
+        "accuracy": 0.6803,
+        "precision": 0.78,
+        "recall": 0.7573,
+        "f1": 0.7685,
+        "support": 147,
+        "confusion": {
+          "truePositive": 78,
+          "falsePositive": 22,
+          "falseNegative": 25,
+          "trueNegative": 22
+        }
+      },
+      "mango": {
+        "accuracy": 0.8772,
+        "precision": 0.8387,
+        "recall": 0.9286,
+        "f1": 0.8814,
+        "support": 114,
+        "confusion": {
+          "truePositive": 52,
+          "falsePositive": 10,
+          "falseNegative": 4,
+          "trueNegative": 48
+        }
+      },
+      "okra": {
+        "accuracy": 0.7108,
+        "precision": 0.6875,
+        "recall": 0.3667,
+        "f1": 0.4783,
+        "support": 83,
+        "confusion": {
+          "truePositive": 11,
+          "falsePositive": 5,
+          "falseNegative": 19,
+          "trueNegative": 48
+        }
+      },
+      "orange": {
+        "accuracy": 0.8429,
+        "precision": 0.8897,
+        "recall": 0.8067,
+        "f1": 0.8462,
+        "support": 280,
+        "confusion": {
+          "truePositive": 121,
+          "falsePositive": 15,
+          "falseNegative": 29,
+          "trueNegative": 115
+        }
+      },
+      "papaya": {
+        "accuracy": 0.7248,
+        "precision": 0.6912,
+        "recall": 0.8393,
+        "f1": 0.7581,
+        "support": 109,
+        "confusion": {
+          "truePositive": 47,
+          "falsePositive": 21,
+          "falseNegative": 9,
+          "trueNegative": 32
+        }
+      },
+      "potato": {
+        "accuracy": 0.7313,
+        "precision": 0.9302,
+        "recall": 0.5479,
+        "f1": 0.6897,
+        "support": 134,
+        "confusion": {
+          "truePositive": 40,
+          "falsePositive": 3,
+          "falseNegative": 33,
+          "trueNegative": 58
+        }
+      },
+      "tomato": {
+        "accuracy": 0.6834,
+        "precision": 0.7217,
+        "recall": 0.778,
+        "f1": 0.7488,
+        "support": 676,
+        "confusion": {
+          "truePositive": 319,
+          "falsePositive": 123,
+          "falseNegative": 91,
+          "trueNegative": 143
+        }
+      }
+    },
+    "overallAccuracy": 0.7906,
+    "overallPrecision": 0.839,
+    "overallRecall": 0.7963,
+    "overallF1": 0.8171,
+    "overallConfusion": {
+      "truePositive": 1251,
+      "falsePositive": 240,
+      "falseNegative": 320,
+      "trueNegative": 863
+    },
+    "macroAcrossFoods": {
+      "accuracy": 0.786,
+      "precision": 0.8378,
+      "recall": 0.7384,
+      "f1": 0.7745
+    },
+    "photos": 2674
+  }
+}

@@ -3,6 +3,7 @@ numpy
 opencv-python
 pillow
 python-multipart
+joblib
 rapidocr-onnxruntime
 ultralytics
 uvicorn[standard]

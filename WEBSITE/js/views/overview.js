@@ -70,7 +70,7 @@ export default {
   subtitle: 'Everything happening across E-REF: accounts in each tier, the datasets the app uses, and recent activity.',
 
   async render(container, ctx) {
-    mount(container, html`<div class="grid stats">${[1, 2, 3, 4].map(() => html`<div class="skeleton"></div>`)}</div><div class="skeleton" style="min-height:260px"></div>`);
+    mount(container, html`<div class="grid stats">${[1, 2, 3].map(() => html`<div class="skeleton"></div>`)}</div><div class="skeleton" style="min-height:260px"></div>`);
     mount(ctx.actions, html`<button class="btn" type="button" id="refresh">${icon('refresh')} Refresh</button>`);
     ctx.actions.querySelector('#refresh').addEventListener('click', () => this.render(container, ctx));
 
@@ -85,7 +85,6 @@ export default {
       container,
       html`<div class="grid stats">
           ${stat({ label: 'Accounts', value: users.total, sub: `${users.activeThisWeek} signed in this week${users.disabled ? ` · ${users.disabled} disabled` : ''}`, iconName: 'users', href: '#/users' })}
-          ${stat({ label: 'Food categories', value: data.categories, sub: `${plural(data.customFoods, 'food')} added or corrected by admins`, iconName: 'tag', href: '#/categories' })}
           ${stat({ label: 'Recipes', value: data.recipes, sub: 'Used by content-based recommendation', iconName: 'book', href: '#/recipes' })}
           ${stat({ label: 'Inventory items', value: data.items, sub: 'Saved across all accounts', iconName: 'box', href: '#/users' })}
         </div>

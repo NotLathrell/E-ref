@@ -1,42 +1,42 @@
 {
   "predict": {
     "runs": 20,
-    "meanMs": 71.3,
-    "p50Ms": 71.0,
-    "p95Ms": 75.3,
-    "maxMs": 78.2,
+    "meanMs": 101.2,
+    "p50Ms": 100.6,
+    "p95Ms": 105.7,
+    "maxMs": 108.6,
     "targetP95Ms": 3000.0
   },
   "ocr": {
     "runs": 10,
-    "meanMs": 466.3,
-    "p50Ms": 456.3,
-    "p95Ms": 567.0,
-    "maxMs": 567.0,
+    "meanMs": 641.5,
+    "p50Ms": 635.9,
+    "p95Ms": 718.6,
+    "maxMs": 718.6,
     "targetP95Ms": 4000.0
   },
   "login": {
     "runs": 8,
-    "meanMs": 77.3,
-    "p50Ms": 76.9,
-    "p95Ms": 82.9,
-    "maxMs": 82.9,
+    "meanMs": 153.4,
+    "p50Ms": 153.3,
+    "p95Ms": 167.1,
+    "maxMs": 167.1,
     "targetP95Ms": 1000.0
   },
   "inventoryList": {
     "runs": 30,
-    "meanMs": 7.3,
-    "p50Ms": 7.2,
-    "p95Ms": 9.5,
-    "maxMs": 10.1,
+    "meanMs": 14.2,
+    "p50Ms": 13.9,
+    "p95Ms": 16.2,
+    "maxMs": 16.3,
     "targetP95Ms": 250.0
   },
   "inventorySave": {
     "runs": 30,
-    "meanMs": 16.8,
-    "p50Ms": 16.2,
-    "p95Ms": 20.5,
-    "maxMs": 22.1,
+    "meanMs": 26.9,
+    "p50Ms": 26.6,
+    "p95Ms": 30.6,
+    "maxMs": 33.6,
     "targetP95Ms": 250.0
   },
   "reliability": {
@@ -48,5 +48,5 @@
     "requestsPerUser": 16,
     "errors": 0
   },
-  "generatedAt": "2026-10-01T15:58:39+0800"
+  "generatedAt": "2026-11-22T13:43:42+0800"
 }

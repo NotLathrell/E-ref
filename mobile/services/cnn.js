@@ -50,7 +50,12 @@ export async function runCnnAnalysis({
     model: payload.identity?.model || 'yolov8n-cls',
     modelLabel: payload.modelLabel || null,
     topK: payload.identity?.topK || [],
-    inCatalog: food.id !== 'unknown'
+    inCatalog: food.id !== 'unknown',
+    // A second, independent reading (e.g. "Fuji" for an apple) — null for every
+    // food without a variety classifier, which is most of them today.
+    variety: payload.variety || null,
+    varietyLabel: payload.varietyLabel || null,
+    varietyConfidence: payload.varietyConfidence ?? null
   };
 
   const detection = normalizeDetection(payload.detection, payload.boxes);
@@ -140,6 +145,9 @@ export function normalizeObjects(objects) {
       freshnessTier: tier,
       freshnessTierLabel: object.freshnessTierLabel ?? TIER_LABELS[tier],
       spoilageScore: object.spoilageScore ?? 0,
+      variety: object.variety || null,
+      varietyLabel: object.varietyLabel || null,
+      varietyConfidence: object.varietyConfidence ?? null,
       agreement: object.agreement || null,
       review: normalizeReview(object.review, { confidence: object.confidence, inCatalog: food.id !== 'unknown' })
     };
@@ -246,7 +254,7 @@ function normalizeFreshness(payload) {
     confidence: payload.freshnessConfidence ?? detail.confidence ?? 0,
     probRotten: detail.probRotten ?? payload.spoilageScore ?? 0,
     probFresh,
-    // The more specific 0-100% reading: Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%).
+    // The more specific 0-100% reading: Fresh (70-100%), Sub-Fresh (30-69%), Putrid (0-29%).
     percent,
     tier,
     tierLabel,
@@ -256,14 +264,14 @@ function normalizeFreshness(payload) {
   };
 }
 
-/** Fresh (70-100%), Sub Fresh (30-69%), Rotten (0-29%) — matches the backend's tiers. */
+/** Fresh (70-100%), Sub-Fresh (30-69%), Putrid (0-29%) — matches the backend's tiers. */
 export function freshnessTierFromPercent(percent) {
   if (percent >= 70) return 'fresh';
   if (percent >= 30) return 'subfresh';
-  return 'rotten';
+  return 'putrid';
 }
 
-export const TIER_LABELS = { fresh: 'Fresh', subfresh: 'Sub Fresh', rotten: 'Rotten' };
+export const TIER_LABELS = { fresh: 'Fresh', subfresh: 'Sub-Fresh', putrid: 'Putrid' };
 
 function titleCase(value) {
   if (!value) return null;

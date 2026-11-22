@@ -12,6 +12,7 @@ const KEYS = {
 const inventoryKey = (userId) => `@eref/inventory/${userId}`;
 const queueKey = (userId) => `@eref/queue/${userId}`;
 const tasteKey = (userId) => `@eref/taste/${userId}`;
+const avatarKey = (userId) => `@eref/avatar/${userId}`;
 
 export const DEFAULT_SETTINGS = {
   alertsEnabled: true,
@@ -119,4 +120,20 @@ export async function loadTaste(userId) {
 
 export async function saveTaste(userId, taste) {
   await AsyncStorage.setItem(tasteKey(userId), JSON.stringify(taste));
+}
+
+/**
+ * The profile picture the user chose, kept on this device only (there is no server
+ * field for it, so it does not follow the account to another phone).
+ */
+export function loadAvatar(userId) {
+  return readJson(avatarKey(userId), null);
+}
+
+export async function saveAvatar(userId, uri) {
+  if (uri) {
+    await AsyncStorage.setItem(avatarKey(userId), JSON.stringify(uri));
+  } else {
+    await AsyncStorage.removeItem(avatarKey(userId));
+  }
 }

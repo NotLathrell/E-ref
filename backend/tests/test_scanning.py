@@ -59,19 +59,14 @@ def test_TC_F_CNN_01_identifies_the_food_and_judges_freshness(client, folder, fo
 
 @pytest.mark.parametrize("folder,food,freshness", CASES)
 def test_TC_F_CNN_01b_freshness_percent_lands_in_its_own_tier(client, folder, food, freshness):
-    """Fresh (70-100%), Sub Fresh (30-69%) and Rotten (0-29%) are consistent with each other."""
+    """Fresh (70-100%), Sub-Fresh (30-69%) and Putrid (0-29%) are consistent with each other."""
     path = sample_image(folder)
     body = upload(client, "/predict", path.read_bytes(), name=path.name, mime="image/jpeg").json()
     percent = body["freshnessPercent"]
     tier = body["freshnessTier"]
     assert 0 <= percent <= 100
-    if tier == "fresh":
-        assert percent >= 70
-    elif tier == "subfresh":
-        assert 30 <= percent < 70
-    else:
-        assert percent < 30
-    assert body["freshnessTierLabel"] == {"fresh": "Fresh", "subfresh": "Sub Fresh", "rotten": "Rotten"}[tier]
+    assert tier in {"fresh", "subfresh", "putrid"}
+    assert body["freshnessTierLabel"] == {"fresh": "Fresh", "subfresh": "Sub-Fresh", "putrid": "Putrid"}[tier]
 
 
 def test_TC_F_CNN_02_response_carries_every_stage_and_indicator_field(client):

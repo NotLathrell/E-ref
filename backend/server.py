@@ -1,7 +1,7 @@
 """E-REF API: food inference, label OCR, accounts and per-user inventory.
 
     GET  /health          model load status
-    POST /predict         YOLOv8 detection + CNN identity + CNN freshness
+    POST /predict         YOLOv8 detection + CNN identity + colour-cluster freshness
     POST /ocr             read the text printed on a package label
     GET  /metrics         accuracy / precision / recall / F1 for each task
     GET  /metrics/detector   the food detector's evaluation
@@ -39,8 +39,7 @@ try:  # `uvicorn backend.server:app` from the project root
     from .superadmin import router as super_router
     from .db import Database
     from .pipeline import (
-        FRESHNESS_TFLITE_PATH,
-        FRESHNESS_YOLO_PATH,
+        FRESHNESS_CLUSTER_MODEL_PATH,
         IDENTITY_PATH,
         DETECTOR_PATH,
         FOOD_DETECTOR_PATH,
@@ -55,8 +54,7 @@ except ImportError:  # `uvicorn server:app` from inside backend/
     from superadmin import router as super_router
     from db import Database
     from pipeline import (
-        FRESHNESS_TFLITE_PATH,
-        FRESHNESS_YOLO_PATH,
+        FRESHNESS_CLUSTER_MODEL_PATH,
         IDENTITY_PATH,
         DETECTOR_PATH,
         FOOD_DETECTOR_PATH,
@@ -100,8 +98,7 @@ pipeline = FoodPipeline(
     food_detector_path=Path(os.getenv("EREF_FOOD_DETECTOR_PATH", str(FOOD_DETECTOR_PATH))),
     # FOOD_MODEL_PATH is the name the original README documented.
     identity_path=Path(os.getenv("FOOD_MODEL_PATH", os.getenv("EREF_IDENTITY_PATH", str(IDENTITY_PATH)))),
-    freshness_tflite_path=Path(os.getenv("EREF_FRESHNESS_TFLITE_PATH", str(FRESHNESS_TFLITE_PATH))),
-    freshness_yolo_path=Path(os.getenv("EREF_FRESHNESS_YOLO_PATH", str(FRESHNESS_YOLO_PATH))),
+    freshness_cluster_path=Path(os.getenv("EREF_FRESHNESS_CLUSTER_PATH", str(FRESHNESS_CLUSTER_MODEL_PATH))),
 )
 
 

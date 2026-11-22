@@ -185,11 +185,6 @@ export const api = {
   setPassword: (id, password) => request(`/super/users/${id}/password`, { method: 'POST', body: { password } }),
   deleteUser: (id) => request(`/super/users/${id}`, { method: 'DELETE' }),
 
-  categories: () => request('/super/categories'),
-  createCategory: (body) => request('/super/categories', { method: 'POST', body }),
-  updateCategory: (name, body) => request(`/super/categories/${encodeURIComponent(name)}`, { method: 'PUT', body }),
-  deleteCategory: (name) => request(`/super/categories/${encodeURIComponent(name)}`, { method: 'DELETE' }),
-
   foods: () => request('/super/foods'),
   recipes: () => request('/super/recipes'),
   createRecipe: (body) => request('/super/recipes', { method: 'POST', body }),

@@ -1,0 +1,56 @@
+{
+  "k": 5,
+  "pca": null,
+  "pcaExplainedVarianceRatio": null,
+  "photos": 3000,
+  "silhouetteScore": 0.1021,
+  "baselineRottenShare": 0.559,
+  "logLikelihood": -31590.223509479405,
+  "aic": 63428.44701895881,
+  "bic": 64173.23659734744,
+  "nParams": 124,
+  "weights": [
+    0.3749,
+    0.1387,
+    0.1846,
+    0.1719,
+    0.1299
+  ],
+  "perCluster": [
+    {
+      "cluster": 0,
+      "size": 1117,
+      "weight": 0.3749,
+      "meanSilhouette": -0.0205,
+      "rottenShare": 0.7386
+    },
+    {
+      "cluster": 1,
+      "size": 412,
+      "weight": 0.1387,
+      "meanSilhouette": 0.0809,
+      "rottenShare": 0.6942
+    },
+    {
+      "cluster": 2,
+      "size": 556,
+      "weight": 0.1846,
+      "meanSilhouette": 0.2218,
+      "rottenShare": 0.5396
+    },
+    {
+      "cluster": 3,
+      "size": 521,
+      "weight": 0.1719,
+      "meanSilhouette": -0.0111,
+      "rottenShare": 0.2092
+    },
+    {
+      "cluster": 4,
+      "size": 394,
+      "weight": 0.1299,
+      "meanSilhouette": 0.4529,
+      "rottenShare": 0.3985
+    }
+  ]
+}

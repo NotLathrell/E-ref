@@ -124,7 +124,7 @@ function recommenderTests() {
     kitchenItem('eggplant', 'eggplant', 'counter', 4, 1, 0.5),
     kitchenItem('tomato', 'tomato', 'counter', 4, 2, 0.3),
     kitchenItem('banana', 'banana', 'counter', 4, 1, 0.6),
-    kitchenItem('milk', 'milk', 'fridge_bottom', 2, 3, 0.1),
+    kitchenItem('milk', 'milk', 'fridge_top', 2, 3, 0.1),
     kitchenItem('eggs', 'eggs', 'fridge_top', 1, 20, 0.02),
   ]);
   const plan = planMeals(atRisk, { maxMeals: 3 });
@@ -380,8 +380,15 @@ async function main() {
   const profile = render(load('screens/ProfileScreen.js').ProfileScreen).text;
   check('Profile shows the signed-in account, not a placeholder',
     profile.includes('tester@example.com') && !profile.includes('lathrell@gmail.com'));
-  check('Profile lets the user choose when to be warned', profile.includes('Warn me before expiry'));
-  check('Profile can send a test alert', profile.includes('Send a test alert'));
+  check('Profile lets the user choose when to be warned', profile.includes('Alert before a food is under:'));
+
+  const storage = load('services/storage.js');
+  check('nothing is saved for an account that never set a picture', (await storage.loadAvatar('nobody')) === null);
+  await storage.saveAvatar('picture-test', 'file:///chosen-photo.jpg');
+  check('a chosen profile picture is kept for that account',
+    (await storage.loadAvatar('picture-test')) === 'file:///chosen-photo.jpg');
+  await storage.saveAvatar('picture-test', null);
+  check('clearing it removes the saved picture', (await storage.loadAvatar('picture-test')) === null);
 
   check('the verify screen no longer shows a hard-coded email',
     !render(load('screens/VerifyCodeScreen.js').VerifyCodeScreen).text.includes('thisisyourmail123'));
@@ -436,8 +443,8 @@ async function main() {
 
   section('Freshness tiers');
   check('70% and above is Fresh', cnn.freshnessTierFromPercent(70) === 'fresh' && cnn.freshnessTierFromPercent(100) === 'fresh');
-  check('30% up to 69% is Sub Fresh', cnn.freshnessTierFromPercent(30) === 'subfresh' && cnn.freshnessTierFromPercent(69) === 'subfresh');
-  check('below 30% is Rotten', cnn.freshnessTierFromPercent(29) === 'rotten' && cnn.freshnessTierFromPercent(0) === 'rotten');
+  check('30% up to 69% is Sub-Fresh', cnn.freshnessTierFromPercent(30) === 'subfresh' && cnn.freshnessTierFromPercent(69) === 'subfresh');
+  check('below 30% is Putrid', cnn.freshnessTierFromPercent(29) === 'putrid' && cnn.freshnessTierFromPercent(0) === 'putrid');
 
   // Tomato and orange are the regression cases: the COCO detector labels a
   // tomato as an apple/orange/donut, and when its crop fed the CNN, tomatoes were
@@ -480,8 +487,9 @@ async function main() {
     check(`${folder}: the freshness tier matches the freshness percent`,
       result.cnn.freshness.tier === cnn.freshnessTierFromPercent(result.cnn.freshness.percent),
       `${result.cnn.freshness.tierLabel} @ ${result.cnn.freshness.percent.toFixed(1)}%`);
-    check(`${folder}: all three pipeline stages ran`,
-      result.cnn.stages.length === 3, result.cnn.stages.map((s) => s.name).join(' > '));
+    check(`${folder}: all three core pipeline stages ran`,
+      ['detection', 'identification', 'freshness'].every((name) => result.cnn.stages.some((s) => s.name === name)),
+      result.cnn.stages.map((s) => s.name).join(' > '));
     check(`${folder}: the result says how far to trust it`,
       ['high', 'medium', 'low'].includes(result.cnn.review.level) && Array.isArray(result.cnn.review.reasons),
       `${result.cnn.review.level}${result.cnn.review.reasons.length ? ` (${result.cnn.review.reasons[0]})` : ''}`);
@@ -647,6 +655,11 @@ async function liveServerTests() {
   check('a rejected session tells the app to sign the user out', signedOut === 1);
   await session.saveToken(registered.token);
   api.setUnauthorizedHandler(null);
+
+  const renamed = await authApi.updateProfile('  Updated Name  ');
+  check('the user can change their own name', renamed.user.name === 'Updated Name');
+  check('the new name is what the server now has on file',
+    (await authApi.fetchMe()).user.name === 'Updated Name');
 
   const forgot = await authApi.forgotPassword(email);
   if (forgot.devCode) {

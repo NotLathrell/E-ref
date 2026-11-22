@@ -9,6 +9,8 @@ import { ErrorText } from "../components/auth";
 import { CATEGORIES, STORAGE_LOCATIONS, getFoods, getRemoteFoods, isBundledFood } from "../data/foodCatalog";
 import { fetchAdminStats, fetchAdminUsers, removeFood, saveFood, setUserRole } from "../services/foods";
 import { LIGHT_COLORS as C } from "../src/theme/ThemeContext";
+import { ResponsiveStage } from "../src/theme/responsive";
+import { useToast } from "../components/toast";
 
 const ROLE_LABELS = { super_admin: "SUPER ADMIN", admin: "ADMIN", employee: "EMPLOYEE" };
 
@@ -116,6 +118,7 @@ function Field({ label, value, onChangeText, keyboardType, placeholder, editable
 }
 
 function FoodEditor({ visible, initial, isNew, hasServerEntry, onClose, onSaved }) {
+  const { showToast } = useToast();
   const [form, setForm] = useState(BLANK);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -138,8 +141,10 @@ function FoodEditor({ visible, initial, isNew, hasServerEntry, onClose, onSaved 
       await saveFood(checked.food);
       await onSaved();
       onClose();
+      showToast(`${checked.food.name} saved.`, { type: "success" });
     } catch (failure) {
       setError(failure.message || "Could not save the food.");
+      showToast(failure.message || "Could not save the food.", { type: "error" });
     } finally {
       setBusy(false);
     }
@@ -151,8 +156,10 @@ function FoodEditor({ visible, initial, isNew, hasServerEntry, onClose, onSaved 
       await removeFood(form.id);
       await onSaved();
       onClose();
+      showToast("Entry removed.", { type: "success" });
     } catch (failure) {
       setError(failure.message || "Could not remove the entry.");
+      showToast(failure.message || "Could not remove the entry.", { type: "error" });
     } finally {
       setBusy(false);
     }
@@ -160,6 +167,7 @@ function FoodEditor({ visible, initial, isNew, hasServerEntry, onClose, onSaved 
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <ResponsiveStage>
       <ScrollView
         style={{ flex: 1, backgroundColor: C.background }}
         contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 60 }}
@@ -226,12 +234,14 @@ function FoodEditor({ visible, initial, isNew, hasServerEntry, onClose, onSaved 
           ) : null}
         </View>
       </ScrollView>
+      </ResponsiveStage>
     </Modal>
   );
 }
 
 export function AdminScreen() {
   const navigation = useNavigation();
+  const { showToast } = useToast();
   const { user, refreshFoodDatabase, foodsVersion } = useInventory();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
@@ -281,8 +291,13 @@ export function AdminScreen() {
             try {
               await setUserRole(target.id, next);
               await load();
+              showToast(
+                next === "admin" ? `${target.name} is now an administrator.` : `${target.name} is no longer an administrator.`,
+                { type: "success" }
+              );
             } catch (failure) {
               setError(failure.message || "Could not change the role.");
+              showToast(failure.message || "Could not change the role.", { type: "error" });
             }
           },
         },

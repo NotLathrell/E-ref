@@ -4,7 +4,7 @@ import { COLORS } from "../src/theme/colors";
 
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
 import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
-import { Ionicons, ScrollView, Text, View } from "../components/themed";
+import { Ionicons, RefreshControl, ScrollView, Text, View } from "../components/themed";
 
 const scrollContentStyle = {
   paddingHorizontal: 20,
@@ -88,7 +88,7 @@ const unreadDotStyle = {
 };
 export function AlertsScreen() {
   const navigation = useNavigation();
-  const { alerts, markAlertRead, markAllAlertsRead, getItemById } = useInventory();
+  const { alerts, markAlertRead, markAllAlertsRead, getItemById, syncStatus, refresh } = useInventory();
   const unreadCount = alerts.filter((alert) => !alert.read).length;
 
   return (
@@ -96,6 +96,9 @@ export function AlertsScreen() {
       <ScrollView
         style={{ flex: 1, backgroundColor: COLORS.background }}
         contentContainerStyle={scrollContentStyle}
+        refreshControl={
+          <RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={COLORS.primary} />
+        }
       >
         <View
           style={{
@@ -107,9 +110,13 @@ export function AlertsScreen() {
         >
           <View style={{ flex: 1 }}>
             <Text style={headerTitleStyle}>Alerts</Text>
+            <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 3, lineHeight: 17 }}>
+              This is where you'll see alerts about food that's at risk or close to
+              expiring.
+            </Text>
             {alerts.length > 0 ? (
               <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 3 }}>
-                {unreadCount} unread of {alerts.length}
+                {unreadCount} unread alert{unreadCount === 1 ? "" : "s"}
               </Text>
             ) : null}
           </View>

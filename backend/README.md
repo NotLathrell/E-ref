@@ -13,9 +13,10 @@ Each `POST /predict` runs three stages:
 | 1. Detection | YOLOv8n fine-tuned on the 12 foods (`eref-detector-v1`) | `runs/detect/eref_detector_v1/weights/best.pt` | Find and box every food in the frame |
 | 1. Detection (fallback) | YOLOv8n (COCO) | `yolov8n.pt` | Used only when the fine-tuned weights are missing: locate one food region and cross-check the CNN |
 | 2. Identification | YOLOv8n-cls (CNN) | `runs/classify/runs/classify/eref_identity_v2/weights/best.pt` | Classify the full frame into 25 classes: 12 foods x fresh/rotten, plus `other` |
-| 3. Freshness | YOLOv8n-cls (CNN) | `runs/classify/runs/classify/eref_freshness_v2/weights/best.pt` | Binary fresh vs rotten on the full frame |
+| 3. Freshness | Gaussian Mixture Model, per food | `runs/cluster/freshness_gmm.joblib` | Fresh / Sub-Fresh / Putrid, judged by the photo's colour against that food's fitted Gaussian components |
+| 4. Variety (optional) | YOLOv8n-cls (CNN), per food | `runs/classify/runs/classify/eref_apple_variety_v1/weights/best.pt` | Which cultivar, for foods that have one trained (today: apple only). Never feeds the freshness verdict |
 
-**Classification and detection answer different questions.** The CNNs (stages 2 and 3) take one
+**Classification and detection answer different questions.** Stages 2 and 3 take one
 image and say *what it is* and *whether it is fresh*: one answer per photo. The detector (stage 1)
 takes a frame and says *which foods are in it and where*: a box, a food name and a confidence for
 each. A frame with several foods is therefore handled by boxing each food, cropping each box, and
@@ -40,36 +41,95 @@ a rule of thumb.
 
 The COCO model `yolov8n.pt` is pretrained on generic objects, so it recognises apples, bananas and oranges
 but not tomato, okra, potato, cucumber, capsicum or bitter gourd; it labels a
-tomato as an apple, orange or donut. When it is the detector in use, both CNNs therefore read the
-**full frame**, never its crop. Cropping cut rotten-tomato identification from 100% to
-55% and freshness accuracy from 99.7% to 95.3% on the validation split. Identity
-always comes from the CNN, and `detection.agreement` reports whether the detector
-agreed (`agrees`), named a different food (`differs`) or named something that is
-not a food type it can identify (`outside_vocabulary`).
+tomato as an apple, orange or donut. When it is the detector in use, stages 2 and 3 therefore read the
+**full frame**, never its crop. Identity always comes from the CNN (stage 2), and
+`detection.agreement` reports whether the detector agreed (`agrees`), named a different
+food (`differs`) or named something that is not a food type it can identify
+(`outside_vocabulary`).
 
 Stage 2's 25th class, `other`, is for anything that is not one of the app's twelve
 foods — the response then reports `foodName: null` and the app tells the user
 their item is not one of the supported foods, instead of forcing a guess. `other`
-has no freshness meaning of its own, so it is left out of stage 3's identity-side
-signal (see below) and out of the food-identification metric.
+has no freshness meaning of its own, so it is left out of stage 3's lookup (no
+dedicated mixture to use) and out of the food-identification metric.
 
-This is also the input `benchmark.py` measures, so the reported metrics describe
-what the app actually runs.
+**Stage 3 was originally a dedicated freshness CNN** (fused with stage 2's own
+fresh/rotten class split). The project's adviser asked for spoilage to be judged
+by colour instead, so it was replaced with `backend/freshness_cluster.py`: a
+**Gaussian Mixture Model**, fit per food, over twelve colour statistics
+(hue/saturation/value, their spread, how much of the frame looks browned or
+darkened on average, and how bad and how uneven its worst small patch is — added
+after measuring that a whole-frame average dilutes a small rotten spot). Each food
+gets three diagonal-covariance Gaussian components — Fresh and Putrid set directly
+to the mean/variance of that food's labelled fresh/rotten training photos, and
+Sub-Fresh at their midpoint — and a new photo's tier is whichever component gives
+it the highest posterior probability.
 
-Stage 3 fuses two opinions into the final verdict: the dedicated binary CNN
-(weight 0.65) and the rotten-class probability mass from the stage 2 head
-(weight 0.35), the latter renormalised over just the fresh/rotten classes so
-`other` does not dilute it. When the item is not a supported food, stage 3 uses
-the CNN alone. When the two disagree the response sets `freshnessDetail.agreement`
-to `false` and the app tells the user to inspect the item by hand.
+Two things were tried and measured worse before arriving at that design. A fully
+unsupervised fit (no labels at all, letting the mixture discover clusters from
+colour alone) came back 44% / 49% / 58% rotten across its three components, pooled
+over every food — barely different from the 50/50 baseline, because a banana's
+yellow and a tomato's red differ far more than either food's own fresh-vs-rotten
+colour shift, so the components split by food type rather than freshness. Running
+Expectation-Maximisation past the label-derived starting point — refining all three
+components' means, variances and weights over several iterations, the way
+scikit-learn's `GaussianMixture` would — was also tried, and measured to make held-
+out accuracy *worse* the more it ran (79.1% at zero iterations down to 75.0% at ten
+iterations): the Sub-Fresh component, reachable from both labelled sides, absorbs a
+growing share of the data each iteration and starves the other two of the examples
+that anchored them. So the shipped model runs zero EM iterations — each component
+is fit directly from its labelled statistics, the EM algorithm's single M-step
+applied once, given hard assignments already known from the labels. That alone
+measures **79.1% test accuracy** overall, better than the plain nearest-centroid
+version it replaced (77.0%), because classifying by each tier's own Gaussian
+density accounts for its colour variance, where unweighted Euclidean distance did
+not. `runs/cluster/freshness_gmm.json` has the current per-food breakdown — banana
+is 96.0%, capsicum and mango are over 85%; eggplant and tomato are closer to
+65-70%, which is reported rather than hidden.
 
-If the retrained YOLOv8n-cls freshness weights are not present, stage 3 falls back
-to the older MobileNetV2 TFLite model at `Datasets/dataset/dist/model_v2/final.tflite`.
-If that is missing too, the stage 2 head supplies the verdict on its own.
+Precision, recall and F1 are measured too (`backend/metrics.py: binary_report`,
+positive class `rotten` — a missed rotten item is the costly error for food safety),
+not just accuracy: **83.9% precision, 79.6% recall, 81.7% F1** overall on the test
+split (80.8% / 79.8% / 80.3% on val). Recall is the one to watch per food: most are
+70-98%, but okra's is 36.7% (69% accuracy, 69% precision — it mislabels more rotten
+okra as fresh than it catches), the weakest result among the twelve. `backend/
+plot_gmm_metrics.py` charts all four measures per food
+(`backend/metrics/gmm_classification_metrics.png`). Papaya's own accuracy came from
+supplementing its original ~820 training photos with a second, cropped-and-
+relabelled source (see Training) — small per-food photo counts are a real lever on
+accuracy here, not just the features or the model. `backend/train_freshness_clusters.py`
+fits and evaluates it; `backend/cluster_dataset_breakdown.py` groups every photo in
+the dataset by the tier the trained model assigns it, per food.
+
+When the item is not a supported food (stage 2 returned `other`), stage 3 has no
+per-food mixture to use and falls back to the stage 2 head's own fresh/rotten
+class split instead. When neither is available at all, the response says so in
+`freshnessDetail` rather than guessing.
+
+**Stage 4 answers a different question — not "is it fresh" but "which kind".**
+Asked to add varieties like Fuji and "Washington" apples, the obvious reading
+("a Gaussian component per cultivar, like freshness") runs into the same wall
+freshness did: no public dataset labels a photo with both a cultivar and a
+fresh/rotten state, so there is nothing to fit a `fresh_fuji` / `rotten_fuji`
+component to. Variety is
+instead a second, independent CNN classifier (same tool as stage 2, different
+question), trained on AFVC — a dataset that has varieties but no freshness labels —
+and it never touches the freshness verdict. Today only apple has one (Fuji, Gala,
+Granny Smith, Red Delicious, Golden Delicious — the imported varieties sold in
+Philippine groceries; "Washington Apple" isn't itself a cultivar, it's a US
+regional label historically associated with Red Delicious, so it maps there rather
+than becoming a sixth class). See `variety.py`, `build_apple_varieties.py` and
+`train_apple_variety.py`. Every other food simply has no variety classifier yet,
+so the response reports `variety: null` for them, the same as a food with no
+freshness model would. Measures 93.1% top-1 accuracy on AFVC's own 175-photo held-out
+test split — distinguishing five cultivars is a much easier visual task than judging
+spoilage, so this is a higher number than freshness clustering gets, but on the same
+kind of clean, studio-style photos the rest of this project's accuracy figures come
+from, not real-world phone photos.
 
 After the models run, `indicators.py` measures the visible spoilage indicators
 from the study design — discoloration, mould spots, texture abnormality, excess
-moisture — using OpenCV statistics on the image, scaled by the CNN's rotten
+moisture — using OpenCV statistics on the image, scaled by stage 3's rotten
 probability so a clean image does not raise flags on a highlight or a shadow.
 
 ## Setup
@@ -101,6 +161,17 @@ checkpoint).
 ```powershell
 python backend\build_dataset.py
 python backend\train.py            # both models, GPU if available
+python backend\train_freshness_clusters.py   # the per-food GMM (stage 3) -- this is what /predict uses
+python backend\plot_gmm_overall.py           # ^ accuracy/precision/recall/F1, whole algorithm
+python backend\plot_gmm_metrics.py           # ^ the same, broken down per food
+python backend\plot_gmm_bic_overall.py       # clustering analysis (separate from /predict): AIC/BIC vs k, pooled
+python backend\plot_gmm_bic.py               # ^ the same, broken down per food
+python backend\plot_gmm_k5_result.py         # ^ the k=5 clustering result: silhouette score + diagram
+python backend\plot_gmm_k5_result.py --pca 2 # ^ the same, PCA-reduced (the better, still-honest number)
+python backend\plot_gmm_silhouette_overall.py   # ^ silhouette vs k, pooled (is some other k better?)
+python backend\plot_gmm_silhouette.py        # ^ the same, broken down per food
+python backend\build_apple_varieties.py      # the optional variety dataset (stage 4)
+python backend\train_apple_variety.py
 ```
 
 ### Training the food detector
@@ -140,7 +211,9 @@ their DOI if this project's results are reported elsewhere.
 | Beef | dataset2 (fresh/rotten beef) | course-provided | — |
 | Mango | "FruitVision: A Benchmark Dataset for Fresh, Rotten, and Formalin-mixed Fruit Detection" | Mendeley Data, [doi:10.17632/xkbjx8959c.2](https://doi.org/10.17632/xkbjx8959c.2) | CC BY-NC-ND 4.0 |
 | Papaya | "Papaya Freshness Classification Dataset" | Mendeley Data, [doi:10.17632/7mgj5bvp5h.1](https://doi.org/10.17632/7mgj5bvp5h.1) | CC BY 4.0 |
+| Papaya (2nd source) | "PAPAYA" — Ripe/Overripe/Partially Rotten/Rotten/PartiallyRipe/UnRipe, instance-segmented; only Ripe (fresh) and Overripe/Partially Rotten/Rotten (rotten) are used, see `convert_papaya_roboflow.py` | Roboflow Universe, `lathrell-delos-santos/papaya-87aps-uiito` | CC BY 4.0 |
 | Eggplant | "BrinjalFruitX: A Field-Collected Image Dataset for Machine Learning and Deep Learning-Based Disease Identification in Brinjal Fruits" | Mendeley Data, [doi:10.17632/ngc58fsxgd.1](https://doi.org/10.17632/ngc58fsxgd.1) | CC BY 4.0 |
+| Apple varieties | AFVC (Apple Fruit Varieties Collection), 85 cultivars; this project uses 5 (Fuji, Gala, Granny Smith, Red Delicious, Golden Delicious) — see `build_apple_varieties.py` | GitHub, [mustafa20999/AFVC](https://github.com/mustafa20999/AFVC) | Academic use only, cite the source paper |
 
 The mango dataset's licence is non-commercial and no-derivatives: it is used here
 only to train a model for this non-commercial academic project, the raw images are
@@ -178,13 +251,100 @@ per-class scores with support, and a confusion matrix. Definitions match
 scikit-learn's `classification_report`; `metrics.py` computes them with numpy so
 the backend stays light.
 
-Headline results, over 2,996 held-out images spanning all 12 foods:
+Headline results, over 3,022 held-out images spanning all 12 foods:
 
 | Task | Accuracy | Precision | Recall | F1 |
 | --- | --- | --- | --- | --- |
-| Food identification | 99.89% | 99.81% | 99.77% | 99.79% |
-| Freshness detection | 99.20% | 99.14% | 99.22% | 99.18% |
-| Combined (25-class) | 99.36% | 99.01% | 99.11% | 99.05% |
+| Food identification | 99.82% | 99.68% | 99.60% | 99.64% |
+| Freshness detection | 99.07% | 99.03% | 99.07% | 99.05% |
+| Combined (25-class) | 99.16% | 98.59% | 98.60% | 98.58% |
+
+**The freshness row above is retired, kept only for historical comparison.** It
+scores the dedicated freshness CNN fused with stage 2 (`benchmark.py`'s original
+design), which `/predict` no longer runs — stage 3 is now the Gaussian Mixture
+Model approach described under Pipeline.
+
+That approach's own accuracy/precision/recall/F1 were measured the same way
+(`backend/metrics.py: binary_report`, positive class `rotten`) and are still
+reproducible — `python backend\train_freshness_clusters.py`,
+`python backend\plot_gmm_overall.py` / `plot_gmm_metrics.py`,
+`runs/cluster/freshness_gmm.json` — but per the adviser's direction, classification
+metrics are not how the clustering algorithm itself is reported: a clustering
+result is reported on clustering-quality terms (silhouette score, BIC/AIC), and the
+component count is set directly, at **k=5**, one unsupervised (label-blind) mixture
+fit over every food pooled together rather than per food. `python
+backend\plot_gmm_k5_result.py` fits it and reports:
+
+| Metric | Value |
+| --- | --- |
+| Silhouette score | 0.102 |
+| Log-likelihood | −31,590.2 |
+| AIC | 63,428.4 |
+| BIC | 64,173.2 |
+
+0.102 is a weak score (0 = overlapping clusters, ~0.5+ = strong separation); two of
+the five clusters score slightly negative on their own. That is consistent with
+this project's earlier finding that an unsupervised, pooled fit tends to separate
+by food type rather than by anything else — reported honestly rather than hidden,
+and it is exactly why the app's live freshness verdict uses the separate,
+label-anchored, per-food design above instead of this pooled unsupervised one.
+Chart (the classic silhouette diagram): `backend/metrics/gmm_k5_silhouette.png`;
+full numbers: `backend/metrics/gmm_k5_silhouette.json`.
+
+**Checked directly whether some other k scores better, rather than assumed**:
+`python backend\plot_gmm_silhouette.py` sweeps k = 2…16 the same way, pooled and
+per food. Pooled, the score is *highest* at k=2 (0.234) and declines as k grows —
+k=5 scores 0.139 in that sweep, falling to 0.041 by k=16 (small differences from
+the 0.102 above come from different run settings; both land in the same weak
+band). Most individual foods show the same declining shape from k=2; a few
+(bitter gourd, capsicum, potato) peak at a higher k, but inside a visibly noisy,
+zig-zagging curve rather than a clean trend — a sign of an unstable fit on a small
+sample, not real structure. **No food and no k in the range tested reaches the
+conventional ~0.5 "reasonable structure" threshold, let alone 1**; cucumber at
+k=2 (0.487) comes closest. Charts: `backend/metrics/gmm_silhouette_overall.png`
+(pooled), `backend/metrics/gmm_silhouette.png` (per food, with `.json` for the
+full numbers).
+
+**Is there a legitimate way to raise the score, keeping k=5?** Yes, measured rather
+than assumed: the twelve raw features suppress silhouette on their own, separately
+from clustering quality, because Euclidean distance loses contrast as dimensions
+grow (the curse of dimensionality). Projecting onto the top principal components
+first (`freshness_cluster.PCA`, fit via SVD — standard practice before clustering)
+removes that noise:
+
+| Dimensions kept | Variance explained | k=5 silhouette |
+| --- | --- | --- |
+| 12 (raw) | 100% | 0.102 |
+| 3 | ~45% | 0.302 |
+| **2** | **59.2%** | **0.360** |
+
+(`python backend\plot_gmm_k5_result.py --pca 2`.) Checked, not assumed, that this
+is a real improvement and not food identity rediscovered in disguise: the five
+clusters' rotten-photo shares are 73%, 70%, 63%, 35% and 32% against this sample's
+56% baseline — a real split along freshness. The two fresher-leaning clusters are
+also the two best individually separated (mean silhouette 0.72 and 0.62); the
+rottener-leaning ones are messier (0.09-0.52), plausibly because rot looks more
+visually varied across different foods than a healthy colour does. 0.360 is still
+weak-to-moderate, not strong, and nowhere near 1 — a genuine ~3.5x improvement from
+addressing a real statistical issue, not from changing what counts as a cluster or
+discarding data. Chart: `backend/metrics/gmm_k5_silhouette_pca2.png`/`.json`.
+
+**On using this to argue clustering beats the CNN**: silhouette score and
+classification accuracy are not the same kind of measurement and cannot show one
+algorithm "beats" the other — silhouette judges how well an *unsupervised*
+grouping separates; accuracy judges whether a *labelled* prediction was correct.
+By this project's own numbers the retired freshness CNN measured ~99% accuracy,
+well above the GMM's 79.1% (label-anchored, per food) or its weak pooled
+silhouette score — a performance comparison does not favour clustering. The actual
+reasons to use a GMM here are the ones already on record: the adviser's own
+direction to judge spoilage by colour rather than a trained neural network, no
+public dataset pairing *degree* of spoilage with enough labelled stages for a CNN
+to learn from, and a colour-statistic decision that is directly inspectable in a
+way a CNN's learned weights are not — not a claim that it scores higher.
+
+`backend/pipeline.py`, `calibrate.py`, `evaluate.py` and `benchmark.py` still
+carry the retired CNN-fusion code so the classification comparison stays
+reproducible; they are not wired into the live `/predict` response.
 
 ### Food detector
 
@@ -213,44 +373,52 @@ writes `metrics/confidence_calibration.json` (`GET /metrics/confidence`). Result
 
 | Identity confidence at least | Same-collection photos accepted (accuracy) | Plain cut-outs of the app's foods accepted (accuracy) | Unseen foods wrongly given a food name |
 | --- | --- | --- | --- |
-| 0.30 (no real threshold) | 100% (99.9%) | 99.1% (45.2%) | 64.4% |
-| 0.60 (`UNSURE_IDENTITY`) | 99.6% (99.9%) | 84.8% (50.6%) | 50.0% |
-| 0.90 (`CONFIDENT_IDENTITY`) | 98.6% (99.9%) | 53.8% (59.3%) | 30.0% |
-| 0.95 | 97.6% (99.9%) | 46.2% (58.8%) | 25.6% |
+| 0.30 (no real threshold) | 100% (99.6%) | 100% (56.8%) | 52.1% |
+| 0.60 (`UNSURE_IDENTITY`) | 99.8% (99.6%) | 86.4% (58.3%) | 37.9% |
+| 0.90 (`CONFIDENT_IDENTITY`) | 98.3% (99.9%) | 58.9% (62.4%) | 23.8% |
+| 0.95 | 97.7% (99.9%) | 50.4% (64.5%) | 20.8% |
 
-Reading it honestly: on photos like the training data the model is right about 99.9% of the time
-whatever it reports, so a threshold costs little (1.4% asked to confirm at 0.90). On foods it never
-saw, the threshold cuts the confident mistakes roughly in half (64% to 30%). But on plain-background
-photos it is unsure about many answers that are right and still confident about many that are wrong
-(accuracy of what is accepted only rises from 45% to 59%), so a threshold is a weak signal
-there. That is why the app pairs it with a confirm-and-correct step instead of trusting it alone.
+Reading it honestly: on photos like the training data the model is right about 99.6-99.9% of the
+time whatever it reports, so a threshold costs little (1.7% asked to confirm at 0.90). On foods it
+never saw, the threshold cuts the confident mistakes by more than half (52% to 24%). But on
+plain-background photos it is unsure about many answers that are right and still confident about
+many that are wrong (accuracy of what is accepted only rises from 57% to 62%), so a threshold is a
+weak signal there. That is why the app pairs it with a confirm-and-correct step instead of trusting
+it alone.
 
 ### What these numbers do not cover
 
 The held-out split is the friendliest test: never-seen photos, but from the same
 collections as training. Four tougher, independent sets tell a fuller story. The
-table below tracks two retraining rounds: the 9-food model from the previous round
-(apple, banana, orange, tomato, potato, cucumber, capsicum, okra, bitter gourd)
-against the current 12-food model (adding mango, papaya and eggplant from separate
-public datasets):
+table below tracks three retraining rounds: the 9-food model from two rounds back
+(apple, banana, orange, tomato, potato, cucumber, capsicum, okra, bitter gourd),
+the 12-food model that followed it (adding mango, papaya and eggplant from
+separate public datasets), and the current retrain, which keeps the same 12 foods
+but expands papaya's own photo count (its thinnest class) with a second source —
+see `convert_papaya_roboflow.py`:
 
-| Check | 9-food model (previous round) | 12-food model (this round) |
-| --- | --- | --- |
-| Held-out split (identity / freshness) | 99.8% / 99.5% | 99.9% / 99.2% |
-| Original dataset's own unseen apple/banana/orange | 100% | 100% |
-| Fresh vs rotten beef, separate collection | 99.4% | 99.6% |
-| Foods never trained on, correctly called "unknown" | 30.7% | 34.9% |
-| Cut-out photos on a plain white background | 56.6% | 44.3% |
+| Check | 9-food model | 12-food model | 12-food, papaya expanded |
+| --- | --- | --- | --- |
+| Held-out split (identity / freshness) | 99.8% / 99.5% | 99.9% / 99.2% | 99.8% / 99.1% |
+| Original dataset's own unseen apple/banana/orange | 100% | 100% | 100% |
+| Fresh vs rotten beef, separate collection | 99.4% | 99.6% | 99.6% |
+| Foods never trained on, correctly called "unknown" | 30.7% | 34.9% | 46.1% |
+| Cut-out photos on a plain white background | 56.6% | 44.3% | 50.4% |
 
-The last two rows are real weaknesses. Sweeping a confidence threshold for
-"unknown" (`benchmark.py --tune`, then a dedicated known-vs-unknown sweep) found
-the model is frequently confident but wrong on food it has never seen — so no
-threshold is applied; `MIN_IDENTITY_CONFIDENCE` in `pipeline.py` is 0 (disabled).
-Adding mango, papaya and eggplant nudged the unknown-food score up (there are more
-labelled classes now, so a misfire is more likely to land on a class that isn't
-`unknown`, but also more training diversity to draw the line correctly some of the
-time) but pulled the white-background score down: eggplant and mango occupy more
-of the label space, so a plain-background photo of an existing food (apple,
+The last two rows are real weaknesses, though both moved in the right direction
+this round: more training photos overall (not just papaya's) plausibly firmed up
+where the model draws the line against unfamiliar foods and plain backgrounds,
+though a few points of this swing is ordinary run-to-run variance from retraining
+rather than a change attributable to papaya specifically. Sweeping a confidence
+threshold for "unknown" (`benchmark.py --tune`, then a dedicated known-vs-unknown
+sweep) found the model is frequently confident but wrong on food it has never
+seen — so no threshold is applied; `MIN_IDENTITY_CONFIDENCE` in `pipeline.py` is 0
+(disabled). Adding mango, papaya and eggplant nudged the unknown-food score up
+two rounds ago (there are more labelled classes now, so a misfire is more likely
+to land on a class that isn't `unknown`, but also more training diversity to draw
+the line correctly some of the time) but pulled the white-background score down:
+eggplant and mango occupy more of the label space, so a plain-background photo of
+an existing food (apple,
 capsicum, cucumber, potato, tomato) has more ways to be misclassified into a food
 that wasn't there before. Both numbers reflect a real gap — more training photos in
 exactly those conditions is what would close it, not a setting.
@@ -319,7 +487,7 @@ skip the detection stage and classify the full frame.
   }],
   "detection": { "model": "eref-detector-v1", "used": true, "label": "banana", "confidence": 0.93, "count": 1 },
   "identity": { "topK": [{ "label": "rotten_banana", "confidence": 0.9998 }] },
-  "freshnessDetail": { "model": "yolov8n-cls-freshness", "probRotten": 0.9999, "agreement": true },
+  "freshnessDetail": { "model": "color-gmm-freshness", "probRotten": 0.9999, "agreement": true },
   "stages": [{ "name": "detection", "ran": true, "detail": "YOLOv8 labelled the region 'banana' and the CNN agrees it is a banana" }],
   "inferenceMs": 105.5
 }
@@ -333,8 +501,7 @@ skip the detection stage and classify the full frame.
 | `EREF_DETECTOR_PATH` | `yolov8n.pt` (the COCO fallback detector) |
 | `EREF_FOOD_DETECTOR_PATH` | `runs/detect/eref_detector_v1/weights/best.pt` (the fine-tuned food detector) |
 | `EREF_ADMIN_EMAILS` | unset; comma-separated emails that are administrators regardless of their stored role |
-| `EREF_FRESHNESS_TFLITE_PATH` | the MobileNetV2 TFLite model |
-| `EREF_FRESHNESS_YOLO_PATH` | the YOLO freshness weights |
+| `EREF_FRESHNESS_CLUSTER_PATH` | `runs/cluster/freshness_gmm.joblib` (the per-food Gaussian Mixture Model) |
 | `EREF_METRICS_PATH` | `backend/metrics/model_metrics.json` |
 | `EREF_DATA_DIR` | `backend/data/` (holds the database and the signing key) |
 | `EREF_DB_PATH` | `<EREF_DATA_DIR>/eref.db` |

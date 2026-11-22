@@ -15,7 +15,7 @@ function detected(id, label, level, { spoiled = false } = {}) {
     id, source: 'detector', box: [10 + id * 120, 30, 110 + id * 120, 210], detectorLabel: label, detectorConfidence: 0.9,
     foodId: catalog.findFoodByName(label).id, foodName: label[0].toUpperCase() + label.slice(1), confidence: 0.9, topK: [],
     isSpoiled: spoiled, freshnessConfidence: 0.95, freshnessPercent: spoiled ? 10 : 95,
-    freshnessTier: spoiled ? 'rotten' : 'fresh', freshnessTierLabel: spoiled ? 'Rotten' : 'Fresh',
+    freshnessTier: spoiled ? 'putrid' : 'fresh', freshnessTierLabel: spoiled ? 'Putrid' : 'Fresh',
     spoilageScore: spoiled ? 0.9 : 0.05, agreement: 'agrees',
     review: { level, needsConfirmation: level !== 'high', reasons: level === 'high' ? [] : ['not sure'] },
   };

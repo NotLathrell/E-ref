@@ -1,0 +1,278 @@
+{
+  "apple": {
+    "train": {
+      "fresh": 1739,
+      "subfresh": 276,
+      "putrid": 1426,
+      "labelledFresh": 1409,
+      "labelledRotten": 2032
+    },
+    "val": {
+      "fresh": 192,
+      "subfresh": 33,
+      "putrid": 157,
+      "labelledFresh": 157,
+      "labelledRotten": 225
+    },
+    "test": {
+      "fresh": 166,
+      "subfresh": 28,
+      "putrid": 145,
+      "labelledFresh": 127,
+      "labelledRotten": 212
+    }
+  },
+  "banana": {
+    "train": {
+      "fresh": 1351,
+      "subfresh": 315,
+      "putrid": 1966,
+      "labelledFresh": 1450,
+      "labelledRotten": 2182
+    },
+    "val": {
+      "fresh": 149,
+      "subfresh": 33,
+      "putrid": 244,
+      "labelledFresh": 167,
+      "labelledRotten": 259
+    },
+    "test": {
+      "fresh": 131,
+      "subfresh": 25,
+      "putrid": 247,
+      "labelledFresh": 143,
+      "labelledRotten": 260
+    }
+  },
+  "bitter gourd": {
+    "train": {
+      "fresh": 260,
+      "subfresh": 100,
+      "putrid": 219,
+      "labelledFresh": 279,
+      "labelledRotten": 300
+    },
+    "val": {
+      "fresh": 17,
+      "subfresh": 8,
+      "putrid": 22,
+      "labelledFresh": 19,
+      "labelledRotten": 28
+    },
+    "test": {
+      "fresh": 33,
+      "subfresh": 9,
+      "putrid": 16,
+      "labelledFresh": 29,
+      "labelledRotten": 29
+    }
+  },
+  "capsicum": {
+    "train": {
+      "fresh": 727,
+      "subfresh": 258,
+      "putrid": 1153,
+      "labelledFresh": 860,
+      "labelledRotten": 1278
+    },
+    "val": {
+      "fresh": 72,
+      "subfresh": 37,
+      "putrid": 112,
+      "labelledFresh": 94,
+      "labelledRotten": 127
+    },
+    "test": {
+      "fresh": 71,
+      "subfresh": 34,
+      "putrid": 135,
+      "labelledFresh": 84,
+      "labelledRotten": 156
+    }
+  },
+  "cucumber": {
+    "train": {
+      "fresh": 539,
+      "subfresh": 210,
+      "putrid": 328,
+      "labelledFresh": 627,
+      "labelledRotten": 450
+    },
+    "val": {
+      "fresh": 60,
+      "subfresh": 19,
+      "putrid": 36,
+      "labelledFresh": 64,
+      "labelledRotten": 51
+    },
+    "test": {
+      "fresh": 45,
+      "subfresh": 17,
+      "putrid": 29,
+      "labelledFresh": 55,
+      "labelledRotten": 36
+    }
+  },
+  "eggplant": {
+    "train": {
+      "fresh": 432,
+      "subfresh": 332,
+      "putrid": 680,
+      "labelledFresh": 434,
+      "labelledRotten": 1010
+    },
+    "val": {
+      "fresh": 46,
+      "subfresh": 30,
+      "putrid": 60,
+      "labelledFresh": 36,
+      "labelledRotten": 100
+    },
+    "test": {
+      "fresh": 34,
+      "subfresh": 42,
+      "putrid": 71,
+      "labelledFresh": 44,
+      "labelledRotten": 103
+    }
+  },
+  "mango": {
+    "train": {
+      "fresh": 462,
+      "subfresh": 184,
+      "putrid": 492,
+      "labelledFresh": 630,
+      "labelledRotten": 508
+    },
+    "val": {
+      "fresh": 53,
+      "subfresh": 20,
+      "putrid": 68,
+      "labelledFresh": 75,
+      "labelledRotten": 66
+    },
+    "test": {
+      "fresh": 46,
+      "subfresh": 13,
+      "putrid": 55,
+      "labelledFresh": 58,
+      "labelledRotten": 56
+    }
+  },
+  "okra": {
+    "train": {
+      "fresh": 589,
+      "subfresh": 71,
+      "putrid": 142,
+      "labelledFresh": 526,
+      "labelledRotten": 276
+    },
+    "val": {
+      "fresh": 62,
+      "subfresh": 9,
+      "putrid": 17,
+      "labelledFresh": 56,
+      "labelledRotten": 32
+    },
+    "test": {
+      "fresh": 60,
+      "subfresh": 13,
+      "putrid": 10,
+      "labelledFresh": 53,
+      "labelledRotten": 30
+    }
+  },
+  "orange": {
+    "train": {
+      "fresh": 1277,
+      "subfresh": 227,
+      "putrid": 988,
+      "labelledFresh": 1201,
+      "labelledRotten": 1291
+    },
+    "val": {
+      "fresh": 142,
+      "subfresh": 34,
+      "putrid": 113,
+      "labelledFresh": 135,
+      "labelledRotten": 154
+    },
+    "test": {
+      "fresh": 135,
+      "subfresh": 25,
+      "putrid": 120,
+      "labelledFresh": 130,
+      "labelledRotten": 150
+    }
+  },
+  "papaya": {
+    "train": {
+      "fresh": 349,
+      "subfresh": 215,
+      "putrid": 477,
+      "labelledFresh": 522,
+      "labelledRotten": 519
+    },
+    "val": {
+      "fresh": 44,
+      "subfresh": 29,
+      "putrid": 54,
+      "labelledFresh": 67,
+      "labelledRotten": 60
+    },
+    "test": {
+      "fresh": 31,
+      "subfresh": 25,
+      "putrid": 53,
+      "labelledFresh": 53,
+      "labelledRotten": 56
+    }
+  },
+  "potato": {
+    "train": {
+      "fresh": 697,
+      "subfresh": 39,
+      "putrid": 362,
+      "labelledFresh": 437,
+      "labelledRotten": 661
+    },
+    "val": {
+      "fresh": 69,
+      "subfresh": 6,
+      "putrid": 31,
+      "labelledFresh": 38,
+      "labelledRotten": 68
+    },
+    "test": {
+      "fresh": 90,
+      "subfresh": 8,
+      "putrid": 36,
+      "labelledFresh": 61,
+      "labelledRotten": 73
+    }
+  },
+  "tomato": {
+    "train": {
+      "fresh": 882,
+      "subfresh": 2931,
+      "putrid": 2069,
+      "labelledFresh": 2468,
+      "labelledRotten": 3414
+    },
+    "val": {
+      "fresh": 95,
+      "subfresh": 328,
+      "putrid": 218,
+      "labelledFresh": 292,
+      "labelledRotten": 349
+    },
+    "test": {
+      "fresh": 98,
+      "subfresh": 333,
+      "putrid": 245,
+      "labelledFresh": 266,
+      "labelledRotten": 410
+    }
+  }
+}

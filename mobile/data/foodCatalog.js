@@ -1,12 +1,16 @@
 /** Food knowledge base for CNN labels, TTI params, and content-based recommendations. */
 
 export const STORAGE_LOCATIONS = [
-  { id: 'fridge_top', label: 'Drawer - Top Shelf', tempC: 4 },
-  { id: 'fridge_bottom', label: 'Coldest Part (Bottom Shelf)', tempC: 2 },
+  { id: 'fridge_top', label: 'Chiller', tempC: 4 },
   { id: 'freezer', label: 'Freezer', tempC: -18 },
   { id: 'pantry', label: 'Pantry', tempC: 22 },
   { id: 'counter', label: 'Counter / Room Temp', tempC: 25 }
 ];
+
+// "Coldest Part (Bottom Shelf)" was merged into the Freezer and is no longer a choice,
+// but old saved items and catalog data may still name it; this keeps them resolving
+// sensibly instead of silently falling back to the first storage location.
+const STORAGE_ID_ALIASES = { fridge_bottom: 'freezer' };
 
 export const FOOD_CATALOG = [
   {
@@ -18,7 +22,7 @@ export const FOOD_CATALOG = [
     nominalShelfDays: 14,
     q10: 2.5,
     freezeable: true,
-    bestStorageId: 'fridge_bottom',
+    bestStorageId: 'freezer',
     usageIdeas: ['Smoothies', 'Parfait with fruit', 'Baking substitute'],
     storageTips: ['Keep sealed', 'Store in coldest fridge zone', 'Do not refreeze after thawing']
   },
@@ -31,7 +35,7 @@ export const FOOD_CATALOG = [
     nominalShelfDays: 7,
     q10: 2.8,
     freezeable: true,
-    bestStorageId: 'fridge_bottom',
+    bestStorageId: 'freezer',
     usageIdeas: ['Cook with sauces', 'Bake', 'Freeze for later cooking'],
     storageTips: ['Keep refrigerated below 4°C', 'Close tightly after opening']
   },
@@ -57,7 +61,7 @@ export const FOOD_CATALOG = [
     nominalShelfDays: 3,
     q10: 3.0,
     freezeable: true,
-    bestStorageId: 'fridge_bottom',
+    bestStorageId: 'freezer',
     usageIdeas: ['Cook thoroughly today', 'Marinate and freeze', 'Make stew or soup'],
     storageTips: ['Store on bottom shelf to avoid drip', 'Freeze if not cooking within 2 days']
   },
@@ -70,7 +74,7 @@ export const FOOD_CATALOG = [
     nominalShelfDays: 2,
     q10: 3.2,
     freezeable: true,
-    bestStorageId: 'fridge_bottom',
+    bestStorageId: 'freezer',
     usageIdeas: ['Grill today', 'Cook and freeze portions', 'Make fish soup'],
     storageTips: ['Use ice packs when possible', 'Freeze promptly if not cooking same day']
   },
@@ -388,7 +392,8 @@ export function getFoodById(id) {
 }
 
 export function getStorageById(id) {
-  return STORAGE_LOCATIONS.find((s) => s.id === id) || STORAGE_LOCATIONS[0];
+  const resolved = STORAGE_ID_ALIASES[id] || id;
+  return STORAGE_LOCATIONS.find((s) => s.id === resolved) || STORAGE_LOCATIONS[0];
 }
 
 export function findFoodByName(name = '') {

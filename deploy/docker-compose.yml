@@ -1,0 +1,36 @@
+# Runs on the EC2 instance. deploy.sh sets EREF_DOMAIN (the instance's <ip>.sslip.io name).
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: eref-api:latest
+    restart: unless-stopped
+    environment:
+      - EREF_SMTP_HOST
+      - EREF_SMTP_PORT
+      - EREF_SMTP_USER
+      - EREF_SMTP_PASSWORD
+      - EREF_SMTP_FROM
+    volumes:
+      - eref-data:/data          # SQLite database + signing key survive redeploys
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - EREF_DOMAIN=${EREF_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data         # Let's Encrypt certificates
+
+volumes:
+  eref-data:
+  caddy-data:

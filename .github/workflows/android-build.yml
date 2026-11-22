@@ -1,0 +1,35 @@
+# Builds the Android APK in Expo's cloud (EAS Build). Run it from the Actions tab.
+name: Build Android APK (EAS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Public API address baked into the app, e.g. https://3-0-12-34.sslip.io"
+        required: true
+
+jobs:
+  eas-build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: Bake the API address into the preview profile
+        env:
+          API_URL: ${{ inputs.api_url }}
+        run: |
+          jq --arg url "$API_URL" '.build.preview.env.EXPO_PUBLIC_API_URL = $url' eas.json > eas.tmp && mv eas.tmp eas.json
+      - name: Start the cloud build
+        run: eas build --platform android --profile preview --non-interactive --no-wait

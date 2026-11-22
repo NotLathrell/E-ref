@@ -18,10 +18,14 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.notlathrell.erefmobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -43,6 +47,12 @@
           "color": "#16567b"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6ad89b6e-3032-465b-bdee-40cc68013607"
+      }
+    },
+    "owner": "notlathrell"
   }
 }

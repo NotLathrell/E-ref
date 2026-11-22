@@ -38,7 +38,7 @@ except ImportError:  # `uvicorn server:app` from inside backend/
 router = APIRouter()
 
 FOOD_ID_PATTERN = re.compile(r"^[a-z0-9_]{2,40}$")
-STORAGE_IDS = ("fridge_top", "fridge_bottom", "freezer", "pantry", "counter")
+STORAGE_IDS = ("fridge_top", "freezer", "pantry", "counter")
 MAX_FOODS = 500
 
 

@@ -5,6 +5,7 @@ import {
   View,
 } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
+import { ResponsiveStage } from "../../src/theme/responsive";
 
 export function AnimatedScreen({
   children,
@@ -83,7 +84,7 @@ export function AnimatedScreen({
         ],
       }}
     >
-      {children}
+      <ResponsiveStage>{children}</ResponsiveStage>
     </Animated.View>
   );
 }

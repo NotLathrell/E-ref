@@ -18,7 +18,12 @@ licence and citation of each):
               Its "Formalin-mixed" class (chemically adulterated, not naturally
               spoiled) is not used.
   papaya      "Papaya Freshness Classification Dataset" (Mendeley, CC BY 4.0) —
-              GOOD/BAD photos.
+              GOOD/BAD photos. Supplemented by a second source (Roboflow, CC BY
+              4.0, the project's own collection) added to shore up its thin photo
+              count: six ripeness/condition classes, cropped per instance and
+              mapped onto fresh/rotten by ``convert_papaya_roboflow.py`` — Ripe
+              papaya is fresh, Overripe/Partially Rotten/Rotten are rotten, and
+              PartiallyRipe/UnRipe are excluded (a ripeness stage, not spoilage).
   eggplant    "BrinjalFruitX" (Mendeley, CC BY 4.0) — fruit photos in five
               condition classes. Only the healthy class maps to "fresh"; pest
               damage, cracking and disease all map to "rotten", since none of
@@ -70,6 +75,10 @@ OUT = DATASETS / "dataset" / ".training" / "eref_v2"
 # docstring update below and backend/README.md for the source and licence of each.
 MANGO_DIR = PH / "mango" / "Fruits Original" / "Mango"
 PAPAYA_DIR = PH / "papaya" / "Dataset"
+# A second papaya source (Roboflow, CC BY 4.0, the project's own collection), added to
+# shore up papaya's thin photo count: see backend/convert_papaya_roboflow.py for how its
+# six ripeness/condition classes were cropped and mapped onto fresh/rotten.
+PAPAYA_V2_DIR = PH / "papaya_v2"
 EGGPLANT_DIR = PH / "eggplant"
 # Only "Healty Brinjal" (their spelling) is a clean, undamaged fruit; the other four
 # folders are pest, crack and disease damage, which this app reports as "rotten"
@@ -223,6 +232,10 @@ def main() -> None:
     for quality, fresh in (("GOOD", "fresh"), ("BAD", "rotten")):
         for f in images(PAPAYA_DIR / quality):
             add(f, "pool", f"{fresh}_papaya", fresh, f"ph-papaya/{quality}")
+
+    for fresh in ("fresh", "rotten"):
+        for f in images(PAPAYA_V2_DIR / fresh):
+            add(f, "pool", f"{fresh}_papaya", fresh, f"ph-papaya-v2/{fresh}")
 
     for f in images(EGGPLANT_DIR / "Healty Brinjal"):
         add(f, "pool", "fresh_eggplant", "fresh", "ph-eggplant/Healty Brinjal")

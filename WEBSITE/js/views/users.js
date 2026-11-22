@@ -19,7 +19,7 @@ import {
 } from '../ui.js';
 
 const TIERS = [
-  { id: 'super_admin', label: 'Super Admin', help: 'Uses this web console: accounts, categories, recipes, logs.' },
+  { id: 'super_admin', label: 'Super Admin', help: 'Uses this web console: accounts, recipes, logs.' },
   { id: 'admin', label: 'Admin', help: 'Edits the food database from the app’s Admin screen.' },
   { id: 'employee', label: 'Employee', help: 'Uses the app: scanning, shelf, alerts and recipes.' },
 ];

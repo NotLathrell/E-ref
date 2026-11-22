@@ -21,6 +21,7 @@ const ACTIONS = {
   'auth.reset_requested': { label: 'Requested a reset code', icon: 'key', tone: 'warning' },
   'auth.password_reset': { label: 'Reset their password', icon: 'key', tone: 'warning' },
   'auth.password_changed': { label: 'Changed their password', icon: 'key', tone: 'primary' },
+  'auth.profile_updated': { label: 'Changed their profile', icon: 'edit', tone: 'primary' },
   'user.created': { label: 'Created an account', icon: 'plus', tone: 'accent' },
   'user.updated': { label: 'Edited an account', icon: 'edit', tone: 'accent' },
   'user.role_changed': { label: 'Changed a tier', icon: 'shield', tone: 'accent' },
@@ -102,7 +103,7 @@ const PAGE_SIZE = 50;
 
 export default {
   title: 'Activity Logs',
-  subtitle: 'A system-wide record of sign-ins, account changes, inventory changes and edits to the food database, categories and recipes.',
+  subtitle: 'A system-wide record of sign-ins, account and profile changes, inventory changes and edits to the food database and recipes.',
 
   async render(container, ctx) {
     const state = { group: '', action: '', actor: '', q: '', from: '', to: '', page: 0, total: 0, entries: [], actions: [] };

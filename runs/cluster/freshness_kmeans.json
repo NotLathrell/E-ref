@@ -1,0 +1,164 @@
+{
+  "trainedAt": "2026-10-03T16:03:53Z",
+  "featureNames": [
+    "mean_hue",
+    "mean_saturation",
+    "mean_value",
+    "std_hue",
+    "std_saturation",
+    "std_value",
+    "brown_ratio",
+    "dark_ratio",
+    "patch_max_brown",
+    "patch_max_dark",
+    "patch_std_brown",
+    "patch_std_dark"
+  ],
+  "foodsWithDedicatedCentroids": [
+    "apple",
+    "banana",
+    "bitter gourd",
+    "capsicum",
+    "cucumber",
+    "eggplant",
+    "mango",
+    "okra",
+    "orange",
+    "papaya",
+    "potato",
+    "tomato"
+  ],
+  "foodsUsingDefaultCentroids": [],
+  "valAccuracy": {
+    "perFood": {
+      "apple": {
+        "correct": 307,
+        "count": 382,
+        "accuracy": 0.8037
+      },
+      "banana": {
+        "correct": 392,
+        "count": 426,
+        "accuracy": 0.9202
+      },
+      "bitter gourd": {
+        "correct": 29,
+        "count": 47,
+        "accuracy": 0.617
+      },
+      "capsicum": {
+        "correct": 194,
+        "count": 221,
+        "accuracy": 0.8778
+      },
+      "cucumber": {
+        "correct": 80,
+        "count": 115,
+        "accuracy": 0.6957
+      },
+      "eggplant": {
+        "correct": 87,
+        "count": 136,
+        "accuracy": 0.6397
+      },
+      "mango": {
+        "correct": 116,
+        "count": 141,
+        "accuracy": 0.8227
+      },
+      "okra": {
+        "correct": 68,
+        "count": 88,
+        "accuracy": 0.7727
+      },
+      "orange": {
+        "correct": 234,
+        "count": 289,
+        "accuracy": 0.8097
+      },
+      "papaya": {
+        "correct": 91,
+        "count": 127,
+        "accuracy": 0.7165
+      },
+      "potato": {
+        "correct": 78,
+        "count": 106,
+        "accuracy": 0.7358
+      },
+      "tomato": {
+        "correct": 394,
+        "count": 641,
+        "accuracy": 0.6147
+      }
+    },
+    "overallAccuracy": 0.7613,
+    "photos": 2719
+  },
+  "testAccuracy": {
+    "perFood": {
+      "apple": {
+        "correct": 264,
+        "count": 339,
+        "accuracy": 0.7788
+      },
+      "banana": {
+        "correct": 383,
+        "count": 403,
+        "accuracy": 0.9504
+      },
+      "bitter gourd": {
+        "correct": 42,
+        "count": 58,
+        "accuracy": 0.7241
+      },
+      "capsicum": {
+        "correct": 209,
+        "count": 240,
+        "accuracy": 0.8708
+      },
+      "cucumber": {
+        "correct": 68,
+        "count": 91,
+        "accuracy": 0.7473
+      },
+      "eggplant": {
+        "correct": 97,
+        "count": 147,
+        "accuracy": 0.6599
+      },
+      "mango": {
+        "correct": 93,
+        "count": 114,
+        "accuracy": 0.8158
+      },
+      "okra": {
+        "correct": 69,
+        "count": 83,
+        "accuracy": 0.8313
+      },
+      "orange": {
+        "correct": 236,
+        "count": 280,
+        "accuracy": 0.8429
+      },
+      "papaya": {
+        "correct": 74,
+        "count": 109,
+        "accuracy": 0.6789
+      },
+      "potato": {
+        "correct": 94,
+        "count": 134,
+        "accuracy": 0.7015
+      },
+      "tomato": {
+        "correct": 429,
+        "count": 676,
+        "accuracy": 0.6346
+      }
+    },
+    "overallAccuracy": 0.7696,
+    "photos": 2674
+  }
+}

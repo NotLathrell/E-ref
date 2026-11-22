@@ -1,0 +1,16 @@
+# EAS Build archives the whole monorepo (this is the git root, mobile/ is a
+# subdirectory), but the Android app only needs mobile/ plus the root config
+# files Expo looks for. Everything below is backend/ML project content that
+# has nothing to do with the app build — excluding it cuts the upload from
+# ~94MB to a few MB, which also makes the upload far less likely to drop on a
+# flaky connection.
+Datasets/
+runs/
+backend/
+docs/
+WEBSITE/
+.venv/
+.venv-train/
+*.pt
+*.joblib
+.git/

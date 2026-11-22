@@ -7,15 +7,25 @@ Stage 1  YOLOv8 detection finds every food in the frame and draws a box around i
 Stage 2  A CNN classifier (YOLOv8n-cls, 25 classes) reads the image and returns the
          food identity: twelve foods x fresh/rotten, plus ``other`` for anything the
          app does not know, which the app reports as an unknown food.
-Stage 3  A dedicated freshness CNN reads the image and returns fresh/rotten. The
-         retrained YOLOv8n-cls freshness model is preferred; the older MobileNetV2
-         (TFLite) model is the fallback when it is not present.
+Stage 3  Freshness is judged by colour, not a trained CNN: a per-food Gaussian Mixture
+         Model (fit offline by ``train_freshness_clusters.py``) groups a photo's
+         hue/saturation/value statistics into Fresh, Sub-Fresh or Putrid, the three
+         visual tells of produce ageing and decay. See ``freshness_cluster.py``. Falls
+         back to the identity model's own fresh/rotten class split when no mixture
+         model is loaded.
+Stage 4  Optional: a second, independent CNN answers "which variety" for foods that
+         have one trained (today: apple — Fuji/Gala/Granny Smith/Red Delicious/Golden
+         Delicious, see ``variety.py``). It never feeds the freshness verdict, since no
+         public dataset pairs a cultivar label with a freshness label on the same
+         photo; it is purely an extra, independent reading, absent for every other
+         food. A low-confidence or off-catalog photo reports no variety rather than
+         guessing.
 
-Classification (stages 2-3) answers "what is this photo, and is it fresh?" for one
-image. Detection (stage 1) answers "which foods are in the frame, and where?". So a
-frame with several foods is handled by cropping each detected box and running stages
-2-3 on the crop: the response lists one entry per food in ``objects``, next to the
-whole-frame result the single-item flow uses.
+Classification (stages 2-4) answers "what is this photo, is it fresh, and (sometimes)
+which variety?" for one image. Detection (stage 1) answers "which foods are in the
+frame, and where?". So a frame with several foods is handled by cropping each detected
+box and running stages 2-4 on the crop: the response lists one entry per food in
+``objects``, next to the whole-frame result the single-item flow uses.
 
 The COCO detector only knows apple, orange and banana among the dataset's foods, so it
 labels a tomato as an apple, orange or donut, and feeding its crop to the CNNs made
@@ -45,9 +55,13 @@ from PIL import Image
 try:  # `uvicorn backend.server:app` from the project root
     from .indicators import analyze_visual_indicators
     from .labels import FOOD_ALIASES, OTHER_LABEL, food_name_from_label, freshness_from_label
+    from .freshness_cluster import FreshnessClusterer
+    from .variety import VARIETY_MODEL_NAME, VarietyClassifier, load_variety_classifiers
 except ImportError:  # `python evaluate.py` from inside backend/
     from indicators import analyze_visual_indicators
     from labels import FOOD_ALIASES, OTHER_LABEL, food_name_from_label, freshness_from_label
+    from freshness_cluster import FreshnessClusterer
+    from variety import VARIETY_MODEL_NAME, VarietyClassifier, load_variety_classifiers
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -58,11 +72,13 @@ IDENTITY_V2_PATH = RUNS_DIR / "eref_identity_v2" / "weights" / "best.pt"
 IDENTITY_V1_PATH = RUNS_DIR / "food_multiclass" / "weights" / "best.pt"
 FRESHNESS_V2_PATH = RUNS_DIR / "eref_freshness_v2" / "weights" / "best.pt"
 FRESHNESS_TFLITE_PATH = PROJECT_ROOT / "Datasets" / "dataset" / "dist" / "model_v2" / "final.tflite"
+FRESHNESS_CLUSTER_MODEL_PATH = PROJECT_ROOT / "runs" / "cluster" / "freshness_gmm.joblib"
 
 # The retrained models are used when present; the originals keep the app working
 # from a checkout that predates the retraining.
 IDENTITY_PATH = IDENTITY_V2_PATH if IDENTITY_V2_PATH.exists() else IDENTITY_V1_PATH
 FRESHNESS_YOLO_PATH = FRESHNESS_V2_PATH
+FRESHNESS_MODEL_NAME = "color-gmm-freshness"
 
 # COCO classes treated as a food region. yolov8n is COCO-pretrained, so it only
 # names a few of the dataset's foods; the rest come back as a nearby COCO class.
@@ -119,18 +135,22 @@ UNSURE_FRESHNESS = 0.65  # a fresh/rotten call below this confidence is borderli
 # rotten) and split into three tiers so the app can be more specific than a plain
 # fresh/rotten call.
 FRESH_TIER_MIN = 0.70  # freshness at or above this is "Fresh"
-SUBFRESH_TIER_MIN = 0.30  # freshness from here up to FRESH_TIER_MIN is "Sub Fresh"; below is "Rotten"
+SUBFRESH_TIER_MIN = 0.30  # freshness from here up to FRESH_TIER_MIN is "Sub-Fresh"; below is "Putrid"
 
-TIER_LABELS = {"fresh": "Fresh", "subfresh": "Sub Fresh", "rotten": "Rotten"}
+TIER_LABELS = {"fresh": "Fresh", "subfresh": "Sub-Fresh", "putrid": "Putrid"}
 
 
 def freshness_tier(prob_fresh: float) -> str:
-    """Which of the three freshness tiers a 0-1 "probably fresh" score falls into."""
+    """Which of the three freshness tiers a 0-1 "probably fresh" score falls into.
+
+    Used as a fallback when no colour-cluster model is loaded; the cluster model
+    itself (``freshness_cluster.FreshnessClusterer``) names its own tier directly.
+    """
     if prob_fresh >= FRESH_TIER_MIN:
         return "fresh"
     if prob_fresh >= SUBFRESH_TIER_MIN:
         return "subfresh"
-    return "rotten"
+    return "putrid"
 
 
 @dataclass
@@ -155,22 +175,20 @@ class FoodPipeline:
         self,
         detector_path: Path = DETECTOR_PATH,
         identity_path: Path = IDENTITY_PATH,
-        freshness_tflite_path: Path = FRESHNESS_TFLITE_PATH,
-        freshness_yolo_path: Path = FRESHNESS_YOLO_PATH,
+        freshness_cluster_path: Path = FRESHNESS_CLUSTER_MODEL_PATH,
         food_detector_path: Path = FOOD_DETECTOR_PATH,
     ) -> None:
         self.food_detector_path = Path(food_detector_path)
         self.detector_path = Path(detector_path)
         self.identity_path = Path(identity_path)
-        self.freshness_tflite_path = Path(freshness_tflite_path)
-        self.freshness_yolo_path = Path(freshness_yolo_path)
+        self.freshness_cluster_path = Path(freshness_cluster_path)
 
         self._lock = threading.Lock()
         self._detector = None
         self._food_detector = None
         self._identity = None
-        self._freshness_tflite = None
-        self._freshness_yolo = None
+        self._freshness_clusterer = None
+        self._variety_classifiers: dict[str, VarietyClassifier] = {}
         self._loaded = False
         self._load_errors: dict[str, str] = {}
 
@@ -210,19 +228,20 @@ class FoodPipeline:
             else:
                 self._load_errors["identity"] = f"Weights not found: {self.identity_path}"
 
-            if self.freshness_yolo_path.exists():
+            if self.freshness_cluster_path.exists():
                 try:
-                    from ultralytics import YOLO
+                    self._freshness_clusterer = FreshnessClusterer(self.freshness_cluster_path)
+                except Exception as error:  # pragma: no cover - environment dependent
+                    self._load_errors["freshness_cluster"] = str(error)
+            else:
+                self._load_errors["freshness_cluster"] = f"Model not found: {self.freshness_cluster_path}"
 
-                    self._freshness_yolo = YOLO(str(self.freshness_yolo_path))
-                except Exception as error:  # pragma: no cover
-                    self._load_errors["freshness_yolo"] = str(error)
-
-            if self._freshness_yolo is None and self.freshness_tflite_path.exists():
-                try:
-                    self._freshness_tflite = _TFLiteFreshness(self.freshness_tflite_path)
-                except Exception as error:
-                    self._load_errors["freshness_tflite"] = str(error)
+            # Optional: a per-food variety classifier (today just apple). Missing
+            # weights are normal for every food without one, so this is silent.
+            try:
+                self._variety_classifiers = load_variety_classifiers()
+            except Exception as error:  # pragma: no cover - environment dependent
+                self._load_errors["variety"] = str(error)
 
             self._loaded = True
 
@@ -237,11 +256,7 @@ class FoodPipeline:
 
     def status(self) -> dict[str, Any]:
         self.load()
-        freshness_model = None
-        if self._freshness_yolo is not None:
-            freshness_model = "yolov8n-cls-freshness"
-        elif self._freshness_tflite is not None:
-            freshness_model = "mobilenetv2-tflite"
+        freshness_model = FRESHNESS_MODEL_NAME if self._freshness_clusterer is not None else None
 
         return {
             "ready": self._identity is not None,
@@ -266,11 +281,12 @@ class FoodPipeline:
                 "freshness": {
                     "name": freshness_model,
                     "loaded": freshness_model is not None,
-                    "path": str(
-                        self.freshness_yolo_path
-                        if self._freshness_yolo is not None
-                        else self.freshness_tflite_path
-                    ),
+                    "path": str(self.freshness_cluster_path),
+                },
+                "variety": {
+                    "name": VARIETY_MODEL_NAME if self._variety_classifiers else None,
+                    "loaded": bool(self._variety_classifiers),
+                    "foods": sorted(self._variety_classifiers),
                 },
             },
             "loadErrors": self._load_errors,
@@ -296,8 +312,9 @@ class FoodPipeline:
 
         label = identity["label"]
         food_name = food_name_from_label(label)
+        variety = self._classify_variety(image, food_name, stages)
         spoilage_score = round(freshness["probRotten"], 4)
-        objects = self._objects(image, boxes, detection, identity, freshness)
+        objects = self._objects(image, boxes, detection, identity, freshness, variety)
 
         return {
             # Flat fields consumed directly by the mobile client.
@@ -311,6 +328,11 @@ class FoodPipeline:
             "freshnessTier": freshness["tier"],
             "freshnessTierLabel": freshness["tierLabel"],
             "spoilageScore": spoilage_score,
+            # A second, independent opinion (e.g. "Fuji" for an apple) — None for
+            # every food without a variety classifier, which is most of them today.
+            "variety": variety["variety"] if variety else None,
+            "varietyLabel": variety["varietyLabel"] if variety else None,
+            "varietyConfidence": variety["varietyConfidence"] if variety else None,
             "detectedIndicators": indicators["detected"],
             "indicatorScores": indicators["scores"],
             "boxes": boxes,
@@ -326,6 +348,7 @@ class FoodPipeline:
             "detection": detection,
             "identity": identity,
             "freshnessDetail": freshness,
+            "varietyDetail": variety,
             "stages": [stage.as_dict() for stage in stages],
             "inferenceMs": round((time.perf_counter() - started) * 1000, 1),
         }
@@ -339,6 +362,7 @@ class FoodPipeline:
         detection: dict[str, Any],
         identity: dict[str, Any],
         freshness: dict[str, Any],
+        variety: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """One entry per food in the frame.
 
@@ -354,14 +378,21 @@ class FoodPipeline:
                 sink: list[StageResult] = []
                 crop_identity = self._identify(crop, sink)
                 crop_freshness = self._assess_freshness(crop, crop_identity, sink)
+                crop_variety = self._classify_variety(crop, crop_identity["foodName"], sink)
                 objects.append(
-                    _object_entry(len(objects), found["box"], found["label"], found["confidence"], crop_identity, crop_freshness)
+                    _object_entry(
+                        len(objects), found["box"], found["label"], found["confidence"],
+                        crop_identity, crop_freshness, variety=crop_variety,
+                    )
                 )
 
         if not objects:
             box = detection["box"] or [0.0, 0.0, float(image.width), float(image.height)]
             objects.append(
-                _object_entry(0, box, detection["label"], detection["confidence"], identity, freshness, source="full-frame")
+                _object_entry(
+                    0, box, detection["label"], detection["confidence"],
+                    identity, freshness, source="full-frame", variety=variety,
+                )
             )
         return objects
 
@@ -593,43 +624,40 @@ class FoodPipeline:
         self, image: Image.Image, identity: dict[str, Any], stages: list[StageResult]
     ) -> dict[str, Any]:
         # The identity model separates fresh_* from rotten_*, so its rotten share is
-        # a food-aware second opinion. It says nothing when the item is not a
-        # supported food, so it is left out then.
+        # a food-aware second opinion, kept here only to report agreement/diagnostics.
+        # It says nothing when the item is not a supported food, so it is left out then.
         identity_prob_rotten = identity["rottenProbabilityMass"] if identity["foodName"] else None
         classifier_label = freshness_from_label(identity["label"])
 
-        cnn_prob_rotten: float | None = None
-        cnn_model: str | None = None
-
-        if self._freshness_yolo is not None:
-            cnn_prob_rotten = yolo_prob_rotten(self._freshness_yolo.predict(image, verbose=False)[0])
-            cnn_model = "yolov8n-cls-freshness"
-        elif self._freshness_tflite is not None:
-            cnn_prob_rotten = self._freshness_tflite.prob_rotten(image)
-            cnn_model = "mobilenetv2-tflite"
-
-        prob_rotten = fuse_freshness(cnn_prob_rotten, identity_prob_rotten)
-        agreement = None
-        if cnn_prob_rotten is None:
-            model_name = identity["model"]
-            detail = "derived from the identity model; no dedicated freshness CNN loaded"
-        else:
-            model_name = cnn_model
-            if identity_prob_rotten is not None:
-                agreement = (cnn_prob_rotten >= 0.5) == (identity_prob_rotten >= 0.5)
-                model_used = f"{cnn_model} + {identity['model']}"
-            else:
-                model_used = cnn_model
-            detail = (
-                f"{'rotten' if prob_rotten >= 0.5 else 'fresh'} at "
-                f"{max(prob_rotten, 1 - prob_rotten) * 100:.1f}% confidence"
+        if self._freshness_clusterer is not None:
+            assessment = self._freshness_clusterer.assess(image, identity["foodName"])
+            tier = assessment["tier"]
+            percent = assessment["freshnessPercent"]
+            prob_fresh = percent / 100.0
+            prob_rotten = 1 - prob_fresh
+            model_name = FRESHNESS_MODEL_NAME
+            agreement = (
+                None
+                if identity_prob_rotten is None
+                else (prob_rotten >= 0.5) == (identity_prob_rotten >= 0.5)
             )
-            model_name = model_used
+            detail = f"{assessment['tierLabel']} at {percent:.1f}% freshness (Gaussian Mixture Model)"
+            component_posteriors: dict[str, float] | None = assessment["componentPosteriors"]
+        else:
+            # No GMM loaded yet (e.g. before train_freshness_clusters.py has been run):
+            # fall back to the identity model's own fresh/rotten split.
+            prob_rotten = identity_prob_rotten if identity_prob_rotten is not None else 0.5
+            prob_fresh = 1 - prob_rotten
+            percent = round(prob_fresh * 100, 1)
+            tier = freshness_tier(prob_fresh)
+            model_name = identity["model"]
+            agreement = None
+            detail = "derived from the identity model; no GMM freshness model loaded"
+            component_posteriors = None
+
         stages.append(StageResult("freshness", model_name, True, detail))
 
         is_rotten = prob_rotten >= 0.5
-        prob_fresh = 1 - prob_rotten
-        tier = freshness_tier(prob_fresh)
         return {
             "model": model_name,
             "freshness": "spoiled" if is_rotten else "fresh",
@@ -638,18 +666,40 @@ class FoodPipeline:
             "probRotten": round(prob_rotten, 4),
             "probFresh": round(prob_fresh, 4),
             # A more specific read than the plain fresh/rotten call above: a 0-100%
-            # freshness score split into Fresh (70-100%), Sub Fresh (30-69%) and
-            # Rotten (0-29%).
-            "freshnessPercent": round(prob_fresh * 100, 1),
+            # freshness score split into Fresh (70-100%), Sub-Fresh (30-69%) and
+            # Putrid (0-29%), judged by colour clustering.
+            "freshnessPercent": round(percent, 1),
             "tier": tier,
             "tierLabel": TIER_LABELS[tier],
             "sources": {
-                "freshnessCnn": None if cnn_prob_rotten is None else round(cnn_prob_rotten, 4),
+                "colorGmmPosteriors": component_posteriors,
                 "identityClassifier": None if identity_prob_rotten is None else round(identity_prob_rotten, 4),
                 "identityLabel": classifier_label,
             },
             "agreement": agreement,
         }
+
+    # ------------------------------------------------------ optional: variety
+
+    def _classify_variety(
+        self, image: Image.Image, food_name: str | None, stages: list[StageResult]
+    ) -> dict[str, Any] | None:
+        """The food's variety (e.g. which apple cultivar) if a classifier for this
+        food exists. Returns None for every food without one — most of them, today —
+        and never affects the freshness verdict (see freshness_cluster.py's docstring
+        for why variety and freshness are decided independently).
+        """
+        classifier = self._variety_classifiers.get(food_name) if food_name else None
+        if classifier is None:
+            return None
+        result = classifier.classify(image)
+        if result["varietyLabel"]:
+            detail = f"{result['varietyLabel']} at {result['varietyConfidence'] * 100:.1f}% confidence"
+        else:
+            best = result["topK"][0]
+            detail = f"not confidently a known variety (best guess {best['label']} at {best['confidence'] * 100:.1f}%)"
+        stages.append(StageResult("variety", VARIETY_MODEL_NAME, True, detail))
+        return result
 
 
 # Weight of the dedicated freshness CNN when it is fused with the identity model's
@@ -782,6 +832,7 @@ def _object_entry(
     identity: dict[str, Any],
     freshness: dict[str, Any],
     source: str = "detector",
+    variety: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """One food in the frame: where it is, what it is, and whether it is fresh."""
     food = identity["foodName"]
@@ -805,6 +856,11 @@ def _object_entry(
         "freshnessTier": freshness.get("tier", freshness_tier(1 - freshness["probRotten"])),
         "freshnessTierLabel": freshness.get("tierLabel", TIER_LABELS[freshness_tier(1 - freshness["probRotten"])]),
         "spoilageScore": freshness["probRotten"],
+        # A second, independent opinion (e.g. "Fuji" for an apple) — None for
+        # every food without a variety classifier, which is most of them today.
+        "variety": variety["variety"] if variety else None,
+        "varietyLabel": variety["varietyLabel"] if variety else None,
+        "varietyConfidence": variety["varietyConfidence"] if variety else None,
         "agreement": agreement,
         "review": assess_review(identity["confidence"], food, freshness["confidence"], agreement),
     }

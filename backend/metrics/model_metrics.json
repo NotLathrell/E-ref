@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-24T11:33:58.997837+00:00",
+  "generatedAt": "2026-10-04T05:24:44.288790+00:00",
   "dataset": {
     "split": "eref_v2 held-out split",
-    "images": 2996,
+    "images": 3022,
     "imagesByClass": {
       "apple": 339,
       "banana": 403,
@@ -13,7 +13,7 @@
       "mango": 114,
       "okra": 83,
       "orange": 280,
-      "papaya": 83,
+      "papaya": 109,
       "potato": 134,
       "tomato": 676,
       "unknown": 172
@@ -25,16 +25,16 @@
       "title": "Food Identification",
       "description": "Which food the CNN sees: one of 9 food types, or unknown.",
       "model": "yolov8n-cls (identity)",
-      "accuracy": 0.9989,
+      "accuracy": 0.9982,
       "macro": {
-        "precision": 0.9981,
-        "recall": 0.9977,
-        "f1": 0.9979
+        "precision": 0.9968,
+        "recall": 0.996,
+        "f1": 0.9964
       },
       "weighted": {
-        "precision": 0.9989,
-        "recall": 0.9989,
-        "f1": 0.9989
+        "precision": 0.9982,
+        "recall": 0.9982,
+        "f1": 0.9982
       },
       "perClass": [
         {
@@ -67,9 +67,9 @@
         },
         {
           "label": "cucumber",
-          "precision": 0.989,
+          "precision": 0.9783,
           "recall": 0.989,
-          "f1": 0.989,
+          "f1": 0.9836,
           "support": 91
         },
         {
@@ -88,9 +88,9 @@
         },
         {
           "label": "okra",
-          "precision": 0.988,
-          "recall": 0.988,
-          "f1": 0.988,
+          "precision": 0.9878,
+          "recall": 0.9759,
+          "f1": 0.9818,
           "support": 83
         },
         {
@@ -103,9 +103,9 @@
         {
           "label": "papaya",
           "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "support": 83
+          "recall": 0.9908,
+          "f1": 0.9954,
+          "support": 109
         },
         {
           "label": "potato",
@@ -123,9 +123,9 @@
         },
         {
           "label": "unknown",
-          "precision": 1.0,
+          "precision": 0.9942,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.9971,
           "support": 172
         }
       ],
@@ -240,10 +240,10 @@
           0,
           0,
           0,
-          1,
+          2,
           0,
           0,
-          82,
+          81,
           0,
           0,
           0,
@@ -275,10 +275,10 @@
           0,
           0,
           0,
-          83,
+          108,
           0,
           0,
-          0
+          1
         ],
         [
           0,
@@ -341,81 +341,81 @@
         "tomato",
         "unknown"
       ],
-      "samples": 2820,
-      "correct": 2817
+      "samples": 2846,
+      "correct": 2841
     },
     "freshness": {
       "title": "Freshness Detection",
       "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
       "model": "yolov8n-cls-freshness",
-      "accuracy": 0.992,
+      "accuracy": 0.9907,
       "macro": {
-        "precision": 0.9914,
-        "recall": 0.9922,
-        "f1": 0.9918
+        "precision": 0.9903,
+        "recall": 0.9907,
+        "f1": 0.9905
       },
       "weighted": {
-        "precision": 0.992,
-        "recall": 0.992,
-        "f1": 0.992
+        "precision": 0.9907,
+        "recall": 0.9907,
+        "f1": 0.9907
       },
       "perClass": [
         {
           "label": "fresh",
-          "precision": 0.9874,
-          "recall": 0.9937,
-          "f1": 0.9905,
-          "support": 1263
+          "precision": 0.9875,
+          "recall": 0.9906,
+          "f1": 0.989,
+          "support": 1276
         },
         {
           "label": "rotten",
-          "precision": 0.9954,
+          "precision": 0.9931,
           "recall": 0.9908,
-          "f1": 0.9931,
-          "support": 1733
+          "f1": 0.992,
+          "support": 1746
         }
       ],
       "confusionMatrix": [
         [
-          1255,
-          8
+          1264,
+          12
         ],
         [
           16,
-          1717
+          1730
         ]
       ],
       "classNames": [
         "fresh",
         "rotten"
       ],
-      "samples": 2996,
-      "correct": 2972,
+      "samples": 3022,
+      "correct": 2994,
       "binary": {
         "positiveClass": "rotten",
-        "precision": 0.9954,
+        "precision": 0.9931,
         "recall": 0.9908,
-        "f1": 0.9931,
-        "truePositive": 1717,
-        "falsePositive": 8,
+        "f1": 0.992,
+        "truePositive": 1730,
+        "falsePositive": 12,
         "falseNegative": 16,
-        "trueNegative": 1255
+        "trueNegative": 1264
       }
     },
     "combined": {
       "title": "Combined Identity + Freshness",
       "description": "The raw identity head, food and freshness in one label.",
       "model": "yolov8n-cls (identity)",
-      "accuracy": 0.9936,
+      "accuracy": 0.9916,
       "macro": {
-        "precision": 0.9901,
-        "recall": 0.9911,
-        "f1": 0.9905
+        "precision": 0.9859,
+        "recall": 0.986,
+        "f1": 0.9858
       },
       "weighted": {
-        "precision": 0.9938,
-        "recall": 0.9936,
-        "f1": 0.9936
+        "precision": 0.9917,
+        "recall": 0.9916,
+        "f1": 0.9916
       },
       "perClass": [
         {
@@ -455,16 +455,16 @@
         },
         {
           "label": "fresh_eggplant",
-          "precision": 0.8958,
-          "recall": 0.9773,
-          "f1": 0.9348,
+          "precision": 0.875,
+          "recall": 0.9545,
+          "f1": 0.913,
           "support": 44
         },
         {
           "label": "fresh_mango",
           "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
+          "recall": 0.9828,
+          "f1": 0.9913,
           "support": 58
         },
         {
@@ -483,30 +483,30 @@
         },
         {
           "label": "fresh_papaya",
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "support": 40
+          "precision": 0.9808,
+          "recall": 0.9623,
+          "f1": 0.9714,
+          "support": 53
         },
         {
           "label": "fresh_potato",
-          "precision": 0.9516,
+          "precision": 0.9833,
           "recall": 0.9672,
-          "f1": 0.9593,
+          "f1": 0.9752,
           "support": 61
         },
         {
           "label": "fresh_tomato",
-          "precision": 0.9888,
-          "recall": 0.9925,
-          "f1": 0.9906,
+          "precision": 0.9851,
+          "recall": 0.9962,
+          "f1": 0.9907,
           "support": 266
         },
         {
           "label": "other",
-          "precision": 1.0,
+          "precision": 0.9942,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.9971,
           "support": 172
         },
         {
@@ -539,30 +539,30 @@
         },
         {
           "label": "rotten_cucumber",
-          "precision": 1.0,
+          "precision": 0.9722,
           "recall": 0.9722,
-          "f1": 0.9859,
+          "f1": 0.9722,
           "support": 36
         },
         {
           "label": "rotten_eggplant",
-          "precision": 0.9899,
-          "recall": 0.9515,
-          "f1": 0.9703,
+          "precision": 0.9798,
+          "recall": 0.9417,
+          "f1": 0.9604,
           "support": 103
         },
         {
           "label": "rotten_mango",
-          "precision": 1.0,
+          "precision": 0.9825,
           "recall": 1.0,
-          "f1": 1.0,
+          "f1": 0.9912,
           "support": 56
         },
         {
           "label": "rotten_okra",
           "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
+          "recall": 0.9667,
+          "f1": 0.9831,
           "support": 30
         },
         {
@@ -574,22 +574,22 @@
         },
         {
           "label": "rotten_papaya",
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0,
-          "support": 43
+          "precision": 0.9643,
+          "recall": 0.9643,
+          "f1": 0.9643,
+          "support": 56
         },
         {
           "label": "rotten_potato",
-          "precision": 0.9859,
-          "recall": 0.9589,
-          "f1": 0.9722,
+          "precision": 0.9863,
+          "recall": 0.9863,
+          "f1": 0.9863,
           "support": 73
         },
         {
           "label": "rotten_tomato",
-          "precision": 0.9951,
-          "recall": 0.9951,
+          "precision": 0.9975,
+          "recall": 0.9927,
           "f1": 0.9951,
           "support": 410
         }
@@ -736,7 +736,7 @@
           0,
           0,
           0,
-          43,
+          42,
           0,
           0,
           0,
@@ -749,7 +749,7 @@
           0,
           0,
           0,
-          1,
+          2,
           0,
           0,
           0,
@@ -764,7 +764,7 @@
           0,
           0,
           0,
-          58,
+          57,
           0,
           0,
           0,
@@ -777,7 +777,7 @@
           0,
           0,
           0,
-          0,
+          1,
           0,
           0,
           0,
@@ -848,7 +848,7 @@
           0,
           0,
           0,
-          40,
+          51,
           0,
           0,
           0,
@@ -861,7 +861,7 @@
           0,
           0,
           0,
-          0,
+          2,
           0,
           0
         ],
@@ -904,7 +904,7 @@
           0,
           0,
           0,
-          264,
+          265,
           0,
           0,
           0,
@@ -917,7 +917,7 @@
           0,
           0,
           0,
-          2
+          1
         ],
         [
           0,
@@ -1087,7 +1087,7 @@
           0,
           0,
           0,
-          5,
+          6,
           0,
           0,
           0,
@@ -1100,7 +1100,7 @@
           0,
           0,
           0,
-          98,
+          97,
           0,
           0,
           0,
@@ -1153,10 +1153,10 @@
           0,
           0,
           0,
+          1,
           0,
           0,
-          0,
-          30,
+          29,
           0,
           0,
           0,
@@ -1199,6 +1199,10 @@
           0,
           0,
           0,
+          1,
+          0,
+          0,
+          1,
           0,
           0,
           0,
@@ -1208,15 +1212,39 @@
           0,
           0,
           0,
-          0,
-          0,
-          0,
-          0,
-          43,
+          54,
           0,
           0
         ],
         [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          72,
+          0
+        ],
+        [
+          0,
           0,
           0,
           0,
@@ -1240,35 +1268,7 @@
           0,
           0,
           0,
-          70,
-          0
-        ],
-        [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          2,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          408
+          407
         ]
       ],
       "classNames": [
@@ -1298,8 +1298,8 @@
         "rotten_potato",
         "rotten_tomato"
       ],
-      "samples": 2820,
-      "correct": 2802
+      "samples": 2846,
+      "correct": 2822
     }
   },
   "benchmarks": [
@@ -1308,7 +1308,7 @@
       "title": "Held-out split",
       "description": "Images set aside from the training collection. Same photographers and scenes as training, so this is the easiest of the tests.",
       "dataset": {
-        "images": 2996,
+        "images": 3022,
         "imagesByFood": {
           "apple": 339,
           "banana": 403,
@@ -1319,7 +1319,7 @@
           "mango": 114,
           "okra": 83,
           "orange": 280,
-          "papaya": 83,
+          "papaya": 109,
           "potato": 134,
           "tomato": 676,
           "unknown": 172
@@ -1330,16 +1330,16 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.9989,
+          "accuracy": 0.9982,
           "macro": {
-            "precision": 0.9981,
-            "recall": 0.9977,
-            "f1": 0.9979
+            "precision": 0.9968,
+            "recall": 0.996,
+            "f1": 0.9964
           },
           "weighted": {
-            "precision": 0.9989,
-            "recall": 0.9989,
-            "f1": 0.9989
+            "precision": 0.9982,
+            "recall": 0.9982,
+            "f1": 0.9982
           },
           "perClass": [
             {
@@ -1372,9 +1372,9 @@
             },
             {
               "label": "cucumber",
-              "precision": 0.989,
+              "precision": 0.9783,
               "recall": 0.989,
-              "f1": 0.989,
+              "f1": 0.9836,
               "support": 91
             },
             {
@@ -1393,9 +1393,9 @@
             },
             {
               "label": "okra",
-              "precision": 0.988,
-              "recall": 0.988,
-              "f1": 0.988,
+              "precision": 0.9878,
+              "recall": 0.9759,
+              "f1": 0.9818,
               "support": 83
             },
             {
@@ -1408,9 +1408,9 @@
             {
               "label": "papaya",
               "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
-              "support": 83
+              "recall": 0.9908,
+              "f1": 0.9954,
+              "support": 109
             },
             {
               "label": "potato",
@@ -1428,9 +1428,9 @@
             },
             {
               "label": "unknown",
-              "precision": 1.0,
+              "precision": 0.9942,
               "recall": 1.0,
-              "f1": 1.0,
+              "f1": 0.9971,
               "support": 172
             }
           ],
@@ -1545,10 +1545,10 @@
               0,
               0,
               0,
-              1,
+              2,
               0,
               0,
-              82,
+              81,
               0,
               0,
               0,
@@ -1580,10 +1580,10 @@
               0,
               0,
               0,
-              83,
+              108,
               0,
               0,
-              0
+              1
             ],
             [
               0,
@@ -1646,81 +1646,81 @@
             "tomato",
             "unknown"
           ],
-          "samples": 2820,
-          "correct": 2817
+          "samples": 2846,
+          "correct": 2841
         },
         "freshness": {
           "title": "Freshness Detection",
           "description": "Fresh vs rotten. Recall on rotten is the safety-critical score.",
           "model": "yolov8n-cls-freshness",
-          "accuracy": 0.992,
+          "accuracy": 0.9907,
           "macro": {
-            "precision": 0.9914,
-            "recall": 0.9922,
-            "f1": 0.9918
+            "precision": 0.9903,
+            "recall": 0.9907,
+            "f1": 0.9905
           },
           "weighted": {
-            "precision": 0.992,
-            "recall": 0.992,
-            "f1": 0.992
+            "precision": 0.9907,
+            "recall": 0.9907,
+            "f1": 0.9907
           },
           "perClass": [
             {
               "label": "fresh",
-              "precision": 0.9874,
-              "recall": 0.9937,
-              "f1": 0.9905,
-              "support": 1263
+              "precision": 0.9875,
+              "recall": 0.9906,
+              "f1": 0.989,
+              "support": 1276
             },
             {
               "label": "rotten",
-              "precision": 0.9954,
+              "precision": 0.9931,
               "recall": 0.9908,
-              "f1": 0.9931,
-              "support": 1733
+              "f1": 0.992,
+              "support": 1746
             }
           ],
           "confusionMatrix": [
             [
-              1255,
-              8
+              1264,
+              12
             ],
             [
               16,
-              1717
+              1730
             ]
           ],
           "classNames": [
             "fresh",
             "rotten"
           ],
-          "samples": 2996,
-          "correct": 2972,
+          "samples": 3022,
+          "correct": 2994,
           "binary": {
             "positiveClass": "rotten",
-            "precision": 0.9954,
+            "precision": 0.9931,
             "recall": 0.9908,
-            "f1": 0.9931,
-            "truePositive": 1717,
-            "falsePositive": 8,
+            "f1": 0.992,
+            "truePositive": 1730,
+            "falsePositive": 12,
             "falseNegative": 16,
-            "trueNegative": 1255
+            "trueNegative": 1264
           }
         },
         "combined": {
           "title": "Combined Identity + Freshness",
           "description": "The raw identity head, food and freshness in one label.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.9936,
+          "accuracy": 0.9916,
           "macro": {
-            "precision": 0.9901,
-            "recall": 0.9911,
-            "f1": 0.9905
+            "precision": 0.9859,
+            "recall": 0.986,
+            "f1": 0.9858
           },
           "weighted": {
-            "precision": 0.9938,
-            "recall": 0.9936,
-            "f1": 0.9936
+            "precision": 0.9917,
+            "recall": 0.9916,
+            "f1": 0.9916
           },
           "perClass": [
             {
@@ -1760,16 +1760,16 @@
             },
             {
               "label": "fresh_eggplant",
-              "precision": 0.8958,
-              "recall": 0.9773,
-              "f1": 0.9348,
+              "precision": 0.875,
+              "recall": 0.9545,
+              "f1": 0.913,
               "support": 44
             },
             {
               "label": "fresh_mango",
               "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
+              "recall": 0.9828,
+              "f1": 0.9913,
               "support": 58
             },
             {
@@ -1788,30 +1788,30 @@
             },
             {
               "label": "fresh_papaya",
-              "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
-              "support": 40
+              "precision": 0.9808,
+              "recall": 0.9623,
+              "f1": 0.9714,
+              "support": 53
             },
             {
               "label": "fresh_potato",
-              "precision": 0.9516,
+              "precision": 0.9833,
               "recall": 0.9672,
-              "f1": 0.9593,
+              "f1": 0.9752,
               "support": 61
             },
             {
               "label": "fresh_tomato",
-              "precision": 0.9888,
-              "recall": 0.9925,
-              "f1": 0.9906,
+              "precision": 0.9851,
+              "recall": 0.9962,
+              "f1": 0.9907,
               "support": 266
             },
             {
               "label": "other",
-              "precision": 1.0,
+              "precision": 0.9942,
               "recall": 1.0,
-              "f1": 1.0,
+              "f1": 0.9971,
               "support": 172
             },
             {
@@ -1844,30 +1844,30 @@
             },
             {
               "label": "rotten_cucumber",
-              "precision": 1.0,
+              "precision": 0.9722,
               "recall": 0.9722,
-              "f1": 0.9859,
+              "f1": 0.9722,
               "support": 36
             },
             {
               "label": "rotten_eggplant",
-              "precision": 0.9899,
-              "recall": 0.9515,
-              "f1": 0.9703,
+              "precision": 0.9798,
+              "recall": 0.9417,
+              "f1": 0.9604,
               "support": 103
             },
             {
               "label": "rotten_mango",
-              "precision": 1.0,
+              "precision": 0.9825,
               "recall": 1.0,
-              "f1": 1.0,
+              "f1": 0.9912,
               "support": 56
             },
             {
               "label": "rotten_okra",
               "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
+              "recall": 0.9667,
+              "f1": 0.9831,
               "support": 30
             },
             {
@@ -1879,22 +1879,22 @@
             },
             {
               "label": "rotten_papaya",
-              "precision": 1.0,
-              "recall": 1.0,
-              "f1": 1.0,
-              "support": 43
+              "precision": 0.9643,
+              "recall": 0.9643,
+              "f1": 0.9643,
+              "support": 56
             },
             {
               "label": "rotten_potato",
-              "precision": 0.9859,
-              "recall": 0.9589,
-              "f1": 0.9722,
+              "precision": 0.9863,
+              "recall": 0.9863,
+              "f1": 0.9863,
               "support": 73
             },
             {
               "label": "rotten_tomato",
-              "precision": 0.9951,
-              "recall": 0.9951,
+              "precision": 0.9975,
+              "recall": 0.9927,
               "f1": 0.9951,
               "support": 410
             }
@@ -2041,7 +2041,7 @@
               0,
               0,
               0,
-              43,
+              42,
               0,
               0,
               0,
@@ -2054,7 +2054,7 @@
               0,
               0,
               0,
-              1,
+              2,
               0,
               0,
               0,
@@ -2069,7 +2069,7 @@
               0,
               0,
               0,
-              58,
+              57,
               0,
               0,
               0,
@@ -2082,7 +2082,7 @@
               0,
               0,
               0,
-              0,
+              1,
               0,
               0,
               0,
@@ -2153,7 +2153,7 @@
               0,
               0,
               0,
-              40,
+              51,
               0,
               0,
               0,
@@ -2166,7 +2166,7 @@
               0,
               0,
               0,
-              0,
+              2,
               0,
               0
             ],
@@ -2209,7 +2209,7 @@
               0,
               0,
               0,
-              264,
+              265,
               0,
               0,
               0,
@@ -2222,7 +2222,7 @@
               0,
               0,
               0,
-              2
+              1
             ],
             [
               0,
@@ -2392,7 +2392,7 @@
               0,
               0,
               0,
-              5,
+              6,
               0,
               0,
               0,
@@ -2405,7 +2405,7 @@
               0,
               0,
               0,
-              98,
+              97,
               0,
               0,
               0,
@@ -2458,10 +2458,10 @@
               0,
               0,
               0,
+              1,
               0,
               0,
-              0,
-              30,
+              29,
               0,
               0,
               0,
@@ -2504,6 +2504,10 @@
               0,
               0,
               0,
+              1,
+              0,
+              0,
+              1,
               0,
               0,
               0,
@@ -2513,15 +2517,39 @@
               0,
               0,
               0,
-              0,
-              0,
-              0,
-              0,
-              43,
+              54,
               0,
               0
             ],
             [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              0
+            ],
+            [
+              0,
               0,
               0,
               0,
@@ -2545,35 +2573,7 @@
               0,
               0,
               0,
-              70,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              2,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              408
+              407
             ]
           ],
           "classNames": [
@@ -2603,8 +2603,8 @@
             "rotten_potato",
             "rotten_tomato"
           ],
-          "samples": 2820,
-          "correct": 2802
+          "samples": 2846,
+          "correct": 2822
         }
       }
     },
@@ -3987,16 +3987,16 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.3491,
+          "accuracy": 0.4605,
           "macro": {
             "precision": 1.0,
-            "recall": 0.3491,
-            "f1": 0.5176
+            "recall": 0.4605,
+            "f1": 0.6306
           },
           "weighted": {
             "precision": 1.0,
-            "recall": 0.3491,
-            "f1": 0.5176
+            "recall": 0.4605,
+            "f1": 0.6306
           },
           "perClass": [
             {
@@ -4086,8 +4086,8 @@
             {
               "label": "unknown",
               "precision": 1.0,
-              "recall": 0.3491,
-              "f1": 0.5176,
+              "recall": 0.4605,
+              "f1": 0.6306,
               "support": 1140
             }
           ],
@@ -4273,19 +4273,19 @@
               0
             ],
             [
-              193,
-              13,
+              152,
+              19,
+              0,
+              0,
+              19,
+              16,
               1,
-              0,
-              17,
-              23,
-              2,
-              4,
-              221,
-              0,
-              8,
-              260,
-              398
+              5,
+              97,
+              45,
+              9,
+              252,
+              525
             ]
           ],
           "classNames": [
@@ -4304,7 +4304,7 @@
             "unknown"
           ],
           "samples": 1140,
-          "correct": 398
+          "correct": 525
         }
       }
     },
@@ -4329,30 +4329,30 @@
           "title": "Food Identification",
           "description": "Which food the CNN sees: one of 9 food types, or unknown.",
           "model": "yolov8n-cls (identity)",
-          "accuracy": 0.4429,
+          "accuracy": 0.5043,
           "macro": {
-            "precision": 0.7302,
-            "recall": 0.4429,
-            "f1": 0.4844
+            "precision": 0.7743,
+            "recall": 0.5043,
+            "f1": 0.5437
           },
           "weighted": {
-            "precision": 0.7302,
-            "recall": 0.4429,
-            "f1": 0.4844
+            "precision": 0.7743,
+            "recall": 0.5043,
+            "f1": 0.5437
           },
           "perClass": [
             {
               "label": "apple",
-              "precision": 0.4737,
-              "recall": 0.63,
-              "f1": 0.5408,
+              "precision": 0.5814,
+              "recall": 0.75,
+              "f1": 0.655,
               "support": 100
             },
             {
               "label": "banana",
-              "precision": 0.9492,
-              "recall": 0.56,
-              "f1": 0.7044,
+              "precision": 0.9483,
+              "recall": 0.55,
+              "f1": 0.6962,
               "support": 100
             },
             {
@@ -4365,15 +4365,15 @@
             {
               "label": "capsicum",
               "precision": 1.0,
-              "recall": 0.15,
-              "f1": 0.2609,
+              "recall": 0.17,
+              "f1": 0.2906,
               "support": 100
             },
             {
               "label": "cucumber",
-              "precision": 0.7727,
-              "recall": 0.34,
-              "f1": 0.4722,
+              "precision": 0.875,
+              "recall": 0.49,
+              "f1": 0.6282,
               "support": 100
             },
             {
@@ -4399,9 +4399,9 @@
             },
             {
               "label": "orange",
-              "precision": 0.73,
+              "precision": 0.8295,
               "recall": 0.73,
-              "f1": 0.73,
+              "f1": 0.7766,
               "support": 100
             },
             {
@@ -4413,16 +4413,16 @@
             },
             {
               "label": "potato",
-              "precision": 1.0,
-              "recall": 0.27,
-              "f1": 0.4252,
+              "precision": 0.9667,
+              "recall": 0.29,
+              "f1": 0.4462,
               "support": 100
             },
             {
               "label": "tomato",
-              "precision": 0.1858,
-              "recall": 0.42,
-              "f1": 0.2577,
+              "precision": 0.2191,
+              "recall": 0.55,
+              "f1": 0.3134,
               "support": 100
             },
             {
@@ -4435,63 +4435,63 @@
           ],
           "confusionMatrix": [
             [
-              63,
+              75,
+              0,
+              0,
+              0,
+              0,
               1,
               0,
+              0,
+              1,
+              2,
+              1,
+              20,
+              0
+            ],
+            [
+              2,
+              55,
+              0,
+              0,
+              6,
+              7,
+              0,
+              3,
+              3,
+              0,
+              0,
+              24,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              6,
+              0,
+              0,
+              17,
+              0,
+              10,
               0,
               0,
               4,
               0,
               0,
-              1,
-              1,
-              0,
-              30,
-              0
-            ],
-            [
-              1,
-              56,
-              0,
-              0,
-              5,
-              10,
-              0,
-              2,
-              1,
-              0,
-              0,
-              25,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            [
-              9,
-              0,
-              0,
-              15,
-              1,
-              16,
-              0,
-              0,
-              16,
-              0,
-              0,
-              43,
+              63,
               0
             ],
             [
@@ -4499,8 +4499,8 @@
               0,
               0,
               0,
-              34,
-              34,
+              49,
+              19,
               0,
               0,
               0,
@@ -4559,14 +4559,14 @@
               0,
               0,
               0,
-              3,
-              8,
+              1,
+              5,
               0,
               0,
               73,
               0,
               0,
-              10,
+              15,
               6
             ],
             [
@@ -4585,22 +4585,22 @@
               0
             ],
             [
-              14,
+              13,
+              3,
+              0,
+              0,
+              0,
+              0,
+              3,
+              0,
+              0,
               2,
-              0,
-              0,
-              1,
-              2,
-              0,
-              0,
-              2,
-              0,
-              27,
-              52,
+              29,
+              50,
               0
             ],
             [
-              38,
+              25,
               0,
               0,
               0,
@@ -4611,7 +4611,7 @@
               7,
               0,
               0,
-              42,
+              55,
               0
             ],
             [
@@ -4646,7 +4646,7 @@
             "unknown"
           ],
           "samples": 700,
-          "correct": 310
+          "correct": 353
         }
       }
     }

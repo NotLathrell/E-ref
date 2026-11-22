@@ -135,3 +135,17 @@ def test_TC_F_AUTH_13_change_password_requires_the_current_password(client):
     )
     assert changed.status_code == 200
     assert client.post("/auth/login", json={"email": "ana@example.com", "password": "a brand new password"}).status_code == 200
+
+
+def test_TC_F_AUTH_14_a_signed_in_user_can_change_their_own_name(client):
+    session = register(client)
+    response = client.patch("/auth/me", headers=session["headers"], json={"name": "  Ana Updated  "})
+    assert response.status_code == 200
+    assert response.json()["user"]["name"] == "Ana Updated"
+    assert client.get("/auth/me", headers=session["headers"]).json()["user"]["name"] == "Ana Updated"
+
+
+def test_TC_F_AUTH_15_an_empty_name_is_refused(client):
+    session = register(client)
+    response = client.patch("/auth/me", headers=session["headers"], json={"name": "   "})
+    assert response.status_code == 422

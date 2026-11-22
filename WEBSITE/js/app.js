@@ -10,60 +10,19 @@ import { ApiError, api, clearSession, getApiUrl, getSession, saveSession, setApi
 import { html, icon, initials, mount, openModal, roleLabel, toast } from './ui.js';
 import overview from './views/overview.js';
 import users from './views/users.js';
-import categories from './views/categories.js';
 import recipes from './views/recipes.js';
 import activity from './views/activity.js';
 
-const ROUTES = { overview, users, categories, recipes, activity };
+const ROUTES = { overview, users, recipes, activity };
 const NAV = [
   { route: 'overview', label: 'Overview', icon: 'dashboard' },
   { route: 'users', label: 'User Accounts', icon: 'users' },
-  { route: 'categories', label: 'Food Categories', icon: 'tag' },
   { route: 'recipes', label: 'Recipe Dataset', icon: 'book' },
   { route: 'activity', label: 'Activity Logs', icon: 'activity' },
 ];
 
 const root = document.getElementById('app');
 const state = { user: null, cleanup: null };
-
-// ---------------------------------------------------------------- appearance
-const THEMES = [
-  { id: 'system', label: 'Auto', icon: 'monitor' },
-  { id: 'light', label: 'Light', icon: 'sun' },
-  { id: 'dark', label: 'Dark', icon: 'moon' },
-];
-
-function currentTheme() {
-  return document.documentElement.dataset.theme || 'system';
-}
-
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem('eref.theme', theme);
-  } catch {
-    // Remembering the choice is a convenience.
-  }
-}
-
-function themeControl() {
-  return html`<div class="segmented" role="group" aria-label="Appearance">
-    ${THEMES.map(
-      (t) => html`<button type="button" data-theme-choice="${t.id}" aria-pressed="${currentTheme() === t.id}" title="${t.label} appearance">
-        ${icon(t.icon)}<span>${t.label}</span>
-      </button>`
-    )}
-  </div>`;
-}
-
-function wireTheme(scope) {
-  scope.querySelectorAll('[data-theme-choice]').forEach((button) =>
-    button.addEventListener('click', () => {
-      setTheme(button.dataset.themeChoice);
-      scope.querySelectorAll('[data-theme-choice]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
-    })
-  );
-}
 
 // -------------------------------------------------------------------- sign in
 function showLogin(message) {
@@ -76,7 +35,7 @@ function showLogin(message) {
       <section class="login-card" aria-labelledby="login-title">
         <img class="login-logo" src="img/logo.png" alt="E-REF logo" width="116" height="116" />
         <h1 id="login-title">Super Admin Console</h1>
-        <p class="lede">Manage accounts, food categories, recipes and activity for every E-REF user.</p>
+        <p class="lede">Manage accounts, recipes and activity for every E-REF user.</p>
         <form id="login-form" novalidate>
           ${message ? html`<div class="alert ${message.info ? 'info' : ''}" role="alert">${icon(message.info ? 'shield' : 'alert')}<span>${message.text}</span></div>` : ''}
           <div class="field">
@@ -103,11 +62,9 @@ function showLogin(message) {
             </div>
           </details>
         </form>
-        <div class="login-foot">${themeControl()}</div>
       </section>
     </main>`
   );
-  wireTheme(root);
 
   const form = root.querySelector('#login-form');
   const password = form.querySelector('#password');
@@ -194,7 +151,6 @@ function showShell() {
               <span>${user.email}</span>
             </div>
           </div>
-          ${themeControl()}
           <div style="display:flex;gap:8px">
             <button class="btn btn-sm" type="button" id="change-password" style="flex:1">${icon('key')} Password</button>
             <button class="btn btn-sm" type="button" id="sign-out" style="flex:1">${icon('logout')} Sign out</button>
@@ -224,7 +180,6 @@ function showShell() {
   root.querySelectorAll('.nav a').forEach((link) => link.addEventListener('click', () => toggleNav(false)));
   root.querySelector('#sign-out').addEventListener('click', () => signOut({ text: 'You have signed out.', info: true }));
   root.querySelector('#change-password').addEventListener('click', changeOwnPassword);
-  wireTheme(root.querySelector('.sidebar-foot'));
 
   renderRoute();
 }

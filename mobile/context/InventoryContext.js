@@ -195,6 +195,14 @@ export function InventoryProvider({ children }) {
     [establishSession]
   );
 
+  const updateProfileName = useCallback(async (name) => {
+    const { user: fresh } = await authApi.updateProfile(name);
+    userRef.current = fresh;
+    setUser(fresh);
+    await saveUser(fresh);
+    return fresh;
+  }, []);
+
   useEffect(() => {
     setUnauthorizedHandler(() => {
       signOut();
@@ -551,6 +559,7 @@ export function InventoryProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    updateProfileName,
     markAlertRead,
     markAllAlertsRead,
     // IMPORTANT: convenient export for backups or debugging

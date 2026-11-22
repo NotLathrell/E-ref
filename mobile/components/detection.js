@@ -11,13 +11,14 @@ import { Modal } from 'react-native';
 import { Image, Ionicons, ScrollView, Text, TextInput, TouchableOpacity, View } from './themed';
 import { getFoods } from '../data/foodCatalog';
 import { LIGHT_COLORS as C } from '../src/theme/ThemeContext';
+import { ResponsiveStage } from '../src/theme/responsive';
 
 const FRESH = '#22a55b';
 const SUBFRESH = '#d89b3d';
 const ROTTEN = '#dc4a43';
 const UNSURE = '#d89b3d';
 
-/** Colour for the CNN's Fresh (70-100%) / Sub Fresh (30-69%) / Rotten (0-29%) tier. */
+/** Colour for the CNN's Fresh (70-100%) / Sub-Fresh (30-69%) / Putrid (0-29%) tier. */
 export function tierColor(tier) {
   if (tier === 'fresh') return FRESH;
   if (tier === 'subfresh') return SUBFRESH;
@@ -122,6 +123,7 @@ export function FoodPickerModal({ visible, onPick, onClose, title = 'What is it?
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <ResponsiveStage>
       <View style={{ flex: 1, backgroundColor: C.background, paddingTop: 52, paddingHorizontal: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           <Text style={{ fontSize: 22, fontWeight: '800', color: C.text, flex: 1 }}>{title}</Text>
@@ -169,6 +171,7 @@ export function FoodPickerModal({ visible, onPick, onClose, title = 'What is it?
           ) : null}
         </ScrollView>
       </View>
+      </ResponsiveStage>
     </Modal>
   );
 }

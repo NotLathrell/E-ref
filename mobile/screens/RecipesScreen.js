@@ -3,31 +3,13 @@ import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { Ionicons, ScrollView, Text, TouchableOpacity, View } from "../components/themed";
-import { Card, Chip, EmptyState, PillButton, ScreenHeader, SectionTitle } from "../components/screen";
+import { Ionicons, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "../components/themed";
+import { Card, EmptyState, PillButton, ScreenHeader, SectionTitle } from "../components/screen";
 import { getFoodById } from "../data/foodCatalog";
-import { RECIPES } from "../data/recipes";
 import { recommendForKitchen } from "../services/contentBased";
 import { LIGHT_COLORS as C } from "../src/theme/ThemeContext";
 
 const GOOD = "#3F6B43";
-
-/** Every food that appears in a recipe: the foods it makes sense to like or avoid. */
-function recipeFoods() {
-  return [...new Set(RECIPES.flatMap((recipe) => recipe.ingredients))]
-    .filter((id) => id !== "leftovers")
-    .map((id) => ({ id, name: getFoodById(id).name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-const DIETS = [
-  { value: "none", label: "Everything" },
-  { value: "vegetarian", label: "Vegetarian" },
-];
-
-function toggle(list, id) {
-  return list.includes(id) ? list.filter((entry) => entry !== id) : [...list, id];
-}
 
 function RecipeCard({ entry, open, onOpen, onCooked, onSave, onDismiss, saved }) {
   const { recipe } = entry;
@@ -94,9 +76,7 @@ function RecipeCard({ entry, open, onOpen, onCooked, onSave, onDismiss, saved })
 
 export function RecipesScreen() {
   const navigation = useNavigation();
-  const { items = [], taste, updateTaste, logRecipe, consumeItem, foodsVersion } = useInventory();
-  // The recipe dataset can change on the server; foodsVersion is bumped when it does.
-  const RECIPE_FOODS = useMemo(recipeFoods, [foodsVersion]);
+  const { items = [], taste, logRecipe, consumeItem, syncStatus, refresh } = useInventory();
   const [openId, setOpenId] = useState(null);
 
   const result = useMemo(() => recommendForKitchen(items, { taste, limit: 6 }), [items, taste]);
@@ -141,6 +121,7 @@ export function RecipesScreen() {
       <ScrollView
         style={{ flex: 1, backgroundColor: C.background }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 52, paddingBottom: 60 }}
+        refreshControl={<RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={C.primary} />}
       >
         <ScreenHeader
           title="Recipes"
@@ -192,69 +173,6 @@ export function RecipesScreen() {
             ))}
           </>
         ) : null}
-
-        <SectionTitle>Your taste</SectionTitle>
-        <Card>
-          <Text style={{ fontSize: 13, color: C.muted, lineHeight: 19, marginBottom: 12 }}>
-            Recipes with a food you avoid, or that break your diet, are never suggested. Foods you like, and recipes
-            you cook or save, pull similar recipes up the list.
-          </Text>
-
-          <Text style={{ fontSize: 13, fontWeight: "800", color: C.text, marginBottom: 8 }}>Diet</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {DIETS.map((diet) => (
-              <Chip
-                key={diet.value}
-                label={diet.label}
-                selected={taste.diet === diet.value}
-                onPress={() => updateTaste({ diet: diet.value })}
-              />
-            ))}
-          </View>
-
-          <Text style={{ fontSize: 13, fontWeight: "800", color: C.text, marginTop: 8, marginBottom: 8 }}>
-            Foods I like
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {RECIPE_FOODS.map((food) => (
-              <Chip
-                key={food.id}
-                label={food.name}
-                selected={taste.liked.includes(food.id)}
-                onPress={() =>
-                  updateTaste({ liked: toggle(taste.liked, food.id), avoided: taste.avoided.filter((id) => id !== food.id) })
-                }
-              />
-            ))}
-          </View>
-
-          <Text style={{ fontSize: 13, fontWeight: "800", color: C.text, marginTop: 8, marginBottom: 8 }}>
-            Foods to avoid
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {RECIPE_FOODS.map((food) => (
-              <Chip
-                key={food.id}
-                label={food.name}
-                tone="danger"
-                selected={taste.avoided.includes(food.id)}
-                onPress={() =>
-                  updateTaste({ avoided: toggle(taste.avoided, food.id), liked: taste.liked.filter((id) => id !== food.id) })
-                }
-              />
-            ))}
-          </View>
-
-          {taste.log.length ? (
-            <PillButton
-              label="Forget my cooking history"
-              kind="ghost"
-              icon="refresh-outline"
-              onPress={() => updateTaste({ log: [] })}
-              style={{ marginTop: 8 }}
-            />
-          ) : null}
-        </Card>
       </ScrollView>
     </AnimatedScreen>
   );

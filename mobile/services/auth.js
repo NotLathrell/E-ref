@@ -29,3 +29,7 @@ export function resetPassword(resetToken, newPassword) {
 export function changePassword(currentPassword, newPassword) {
   return request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } });
 }
+
+export function updateProfile(name) {
+  return request('/auth/me', { method: 'PATCH', body: { name } });
+}

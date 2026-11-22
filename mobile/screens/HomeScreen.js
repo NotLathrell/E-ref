@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Dimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
+import { useContentWidth } from "../src/theme/responsive";
 import { planMeals } from "../services/mealPlan";
 import { eligibleRecipes } from "../services/contentBased";
 import { RECIPES } from "../data/recipes";
 import { explainPriority } from "../services/prioritize";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { Image, Ionicons, MaterialCommunityIcons, ScrollView, Text, TouchableOpacity, View } from "../components/themed";
+import { Image, Ionicons, MaterialCommunityIcons, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "../components/themed";
 
 const COLORS = {
   background: "#FFF7ED",
@@ -36,8 +36,6 @@ const DASHBOARD_TIPS = [
   "Don't wash berries until you're ready to eat them — moisture speeds up mold growth.",
   "Store onions and potatoes apart; kept together, they spoil each other faster.",
 ];
-
-const TIP_WIDTH = Dimensions.get("window").width - 40;
 
 const scrollContentStyle = {
   paddingHorizontal: 20,
@@ -71,13 +69,13 @@ const heroImageStyle = {
   opacity: 0.35,
 };
 
-const heroTipPageStyle = {
-  width: TIP_WIDTH,
+const heroTipPageStyle = (width) => ({
+  width,
   height: 120,
   backgroundColor: "rgba(0,0,0,0.15)",
   justifyContent: "center",
   padding: 22,
-};
+});
 
 const heroDotsRowStyle = {
   position: "absolute",
@@ -109,6 +107,8 @@ const mealCardStyle = {
   borderRadius: 18,
   padding: 16,
   marginBottom: 12,
+  borderWidth: 1,
+  borderColor: COLORS.border,
 };
 
 const mealHeaderRowStyle = {
@@ -164,6 +164,8 @@ const overviewCardStyle = {
   borderRadius: 22,
   padding: 18,
   marginBottom: 28,
+  borderWidth: 1,
+  borderColor: COLORS.border,
 };
 
 const overviewTopRowStyle = {
@@ -266,6 +268,8 @@ const categoryCardStyle = {
   padding: 18,
   minHeight: 135,
   justifyContent: "space-between",
+  borderWidth: 1,
+  borderColor: COLORS.border,
 };
 
 const categoryIconContainerStyle = {
@@ -329,6 +333,8 @@ const priorityRowStyle = {
   borderRadius: 16,
   padding: 12,
   marginBottom: 8,
+  borderWidth: 1,
+  borderColor: COLORS.border,
 };
 
 const priorityRankStyle = {
@@ -380,6 +386,8 @@ const linkButtonStyle = {
   backgroundColor: COLORS.card,
   borderRadius: 14,
   paddingVertical: 13,
+  borderWidth: 1,
+  borderColor: COLORS.border,
 };
 
 const linkTextStyle = {
@@ -441,6 +449,9 @@ const CATEGORY_ICONS = {
 
 export function HomeScreen() {
   const navigation = useNavigation();
+  // Matches the actual width available to the screen's content, not the raw window
+  // width, since a tablet narrows that content to ResponsiveStage's centred column.
+  const tipWidth = useContentWidth() - 40;
   const [tipIndex, setTipIndex] = useState(0);
   const tipScrollRef = useRef(null);
 
@@ -450,12 +461,12 @@ export function HomeScreen() {
     const id = setInterval(() => {
       setTipIndex((prev) => {
         const next = (prev + 1) % DASHBOARD_TIPS.length;
-        tipScrollRef.current?.scrollTo({ x: next * TIP_WIDTH, animated: true });
+        tipScrollRef.current?.scrollTo({ x: next * tipWidth, animated: true });
         return next;
       });
     }, 10000);
     return () => clearInterval(id);
-  }, []);
+  }, [tipWidth]);
 
   const {
     soonToSpoil = [],
@@ -465,9 +476,10 @@ export function HomeScreen() {
     syncStatus,
     pendingChanges = 0,
     taste,
+    refresh,
   } = useInventory();
 
-  const displayName = user?.name || "Food Saver";
+  const displayName = (user?.name || "Food Saver").trim().split(/\s+/)[0];
 
   const topRisk = soonToSpoil[0] || null;
 
@@ -501,6 +513,9 @@ export function HomeScreen() {
         }}
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={COLORS.primary} />
+        }
       >
         {/* Greeting */}
         <View style={greetingContainerStyle}>
@@ -532,12 +547,12 @@ export function HomeScreen() {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
-              const index = Math.round(event.nativeEvent.contentOffset.x / TIP_WIDTH);
+              const index = Math.round(event.nativeEvent.contentOffset.x / tipWidth);
               setTipIndex(Math.max(0, Math.min(DASHBOARD_TIPS.length - 1, index)));
             }}
           >
             {DASHBOARD_TIPS.map((tip, index) => (
-              <View key={index} style={heroTipPageStyle}>
+              <View key={index} style={heroTipPageStyle(tipWidth)}>
                 <Text themed={false} style={heroQuoteStyle}>
                   {tip}
                 </Text>
@@ -564,7 +579,7 @@ export function HomeScreen() {
               ? navigation.navigate("Shelf", { itemId: topRisk.id, at: Date.now() })
               : navigation.navigate("Camera")
           }
-          style={[overviewCardStyle, { borderWidth: 1, borderColor: COLORS.border }]}
+          style={overviewCardStyle}
         >
           <View style={overviewTopRowStyle}>
             <View style={overviewTitleContainerStyle}>
@@ -619,7 +634,7 @@ export function HomeScreen() {
           >
             <Text style={riskFooterStyle}>
               {soonToSpoil.length} item
-              {soonToSpoil.length === 1 ? "" : "s"} within 72 hours
+              {soonToSpoil.length === 1 ? "" : "s"} need{soonToSpoil.length === 1 ? "s" : ""} attention soon
             </Text>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -670,7 +685,7 @@ export function HomeScreen() {
               <TouchableOpacity
                 key={item.id}
                 activeOpacity={0.8}
-                onPress={() => navigation.navigate("Shelf")}
+                onPress={() => navigation.navigate("Shelf", { itemId: item.id, at: Date.now() })}
                 style={priorityRowStyle}
               >
                 <View style={priorityRankStyle}>
@@ -685,6 +700,7 @@ export function HomeScreen() {
                 <Text style={priorityScoreStyle}>
                   {Math.round((Number(item.riskScore) || 0) * 100)}%
                 </Text>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.muted} style={{ marginLeft: 2 }} />
               </TouchableOpacity>
             ))}
           </View>
@@ -711,11 +727,17 @@ export function HomeScreen() {
             >
               <View style={mealHeaderRowStyle}>
                 <Text style={mealNameStyle}>{meal.recipe.name}</Text>
-                <Text style={mealMinutesStyle}>{meal.recipe.minutes} min</Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text style={mealMinutesStyle}>{meal.recipe.minutes} min</Text>
+                  <Ionicons name="chevron-forward" size={16} color={COLORS.muted} style={{ marginLeft: 4 }} />
+                </View>
               </View>
 
               <Text style={mealUsesStyle}>
-                Main Ingredient: {meal.covers.map((item) => item.title).join(", ")}
+                Main Ingredient:{" "}
+                <Text style={{ color: COLORS.text, fontWeight: "700" }}>
+                  {meal.covers.map((item) => item.title).join(", ")}
+                </Text>
               </Text>
 
               <Text style={mealSummaryStyle}>{meal.recipe.summary}</Text>

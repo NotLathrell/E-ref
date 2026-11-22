@@ -49,13 +49,13 @@ verify that it works.
 | --- | --- | --- | --- |
 | 3.1 | Camera permission is requested; denying it shows a usable message, not a crash | Manual | ☐ |
 | 3.2 | Take a photo of a fresh food from the supported list: the correct food and **Fresh** (70-100%) are returned | Manual | ☐ |
-| 3.3 | Same for a visibly rotten food: **Rotten** (0-29%) is returned | Manual | ☐ |
-| 3.3b | A partly spoiled or ageing food lands in the **Sub Fresh** (30-69%) middle band, not forced to Fresh or Rotten | Manual | ☐ |
+| 3.3 | Same for a visibly rotten food: **Putrid** (0-29%) is returned | Manual | ☐ |
+| 3.3b | A partly spoiled or ageing food lands in the **Sub-Fresh** (30-69%) middle band, not forced to Fresh or Putrid | Manual | ☐ |
 | 3.4 | A photo picked from the gallery works the same as a camera photo | Manual | ☐ |
-| 3.5 | A photo with several foods gives one box and result per food, each with its own Fresh / Sub Fresh / Rotten reading | Manual | ☐ |
+| 3.5 | A photo with several foods gives one box and result per food, each with its own Fresh / Sub-Fresh / Putrid reading | Manual | ☐ |
 | 3.6 | A photo of a non-food object or an unsupported food is not confidently named; the app asks for confirmation | Manual | ☐ |
 | 3.7 | Low-confidence results (identity under 60%, or freshness under 65%) show the "please confirm" step | Auto | ☐ |
-| 3.7b | The freshness tier shown always matches the freshness percent (≥70% Fresh, 30-69% Sub Fresh, <30% Rotten) | Auto | ☐ |
+| 3.7b | The freshness tier shown always matches the freshness percent (≥70% Fresh, 30-69% Sub-Fresh, <30% Putrid) | Auto | ☐ |
 | 3.8 | A rotated phone photo is analysed upright (EXIF handling) | Auto | ☐ |
 | 3.9 | Corrupt, empty, or wrong-type upload returns a clear error, not a crash | Auto | ☐ |
 | 3.10 | With the server off, the app says it could not reach the server and shows the address it tried | Manual | ☐ |

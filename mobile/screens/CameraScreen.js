@@ -13,8 +13,9 @@ import { useInventory } from "../context/InventoryContext";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
 import { DetectionImage, FoodPickerModal, ObjectRow, ReviewBanner, tierColor } from "../components/detection";
 import { ManualAddModal } from "../components/inventory";
+import { useToast } from "../components/toast";
 import { AnimatedTouchableOpacity } from "../components/animations/AnimatedTouchableOpacity";
-import { ActivityIndicator, Image, Ionicons, ScrollView, Text, TextInput, View } from "../components/themed";
+import { ActivityIndicator, Image, Ionicons, MaterialCommunityIcons, ScrollView, Text, TextInput, View } from "../components/themed";
 
 const COLORS = {
   background: "#FFF7ED",
@@ -61,15 +62,27 @@ const FLAG_LABELS = {
   excess_moisture: "Excess moisture",
 };
 
+// Most are Ionicons; texture and mold have closer matches in MaterialCommunityIcons
+// (a texture swatch, a bacteria icon) than Ionicons' more generic set.
 const FLAG_ICONS = {
-  discoloration: "color-palette-outline",
-  texture_abnormality: "flask-outline",
-  packaging_damage: "bandage-outline",
-  mold_spots: "leaf-outline",
-  excess_moisture: "water-outline",
+  discoloration: { set: "ionicons", name: "color-palette-outline" },
+  texture_abnormality: { set: "mci", name: "texture" },
+  packaging_damage: { set: "ionicons", name: "bandage-outline" },
+  mold_spots: { set: "mci", name: "bacteria-outline" },
+  excess_moisture: { set: "ionicons", name: "water-outline" },
 };
 
 const FLAG_LIST = Object.keys(FLAG_LABELS);
+
+function FlagIcon({ flagKey, size, color }) {
+  const icon = FLAG_ICONS[flagKey];
+  if (!icon) return null;
+  return icon.set === "mci" ? (
+    <MaterialCommunityIcons name={icon.name} size={size} color={color} />
+  ) : (
+    <Ionicons name={icon.name} size={size} color={color} />
+  );
+}
 
 // ─────────────────────────────────────────────────────────────
 // Styles (simplified design)
@@ -326,11 +339,6 @@ const primaryActionDescStyle = {
 const STORAGE_ICONS = {
   freezer: { icon: "snow-outline", bg: "#E0F2FE", color: "#0284c7" },
   fridge_top: { icon: "thermometer-outline", bg: "#EFF6FF", color: "#2563eb" },
-  fridge_bottom: {
-    icon: "thermometer-outline",
-    bg: "#EFF6FF",
-    color: "#2563eb",
-  },
   pantry: {
     icon: "file-tray-stacked-outline",
     bg: "#FDF4E3",
@@ -518,6 +526,7 @@ const galleryButtonStyle = {
   alignItems: "center",
   justifyContent: "center",
   flexDirection: "row",
+  marginBottom: 8,
 };
 
 const galleryButtonTextStyle = {
@@ -589,26 +598,6 @@ const categoryPillTextStyle = (active) => ({
   fontSize: 14,
   fontWeight: "600",
   color: active ? COLORS.white : COLORS.text,
-});
-
-const storagePillStyle = (active) => ({
-  minHeight: 46,
-  paddingHorizontal: 18,
-  paddingVertical: 11,
-  marginRight: 10,
-  marginBottom: 4,
-  borderRadius: 23,
-  borderWidth: 1,
-  borderColor: active ? BRAND : COLORS.border,
-  backgroundColor: active ? "#F3E4D5" : COLORS.white,
-  alignItems: "center",
-  justifyContent: "center",
-});
-
-const storagePillTextStyle = (active) => ({
-  fontSize: 13,
-  fontWeight: "600",
-  color: active ? BRAND : COLORS.muted,
 });
 
 const flagsContainerStyle = {
@@ -690,6 +679,7 @@ const buttonTextStyle = {
 
 export function CameraScreen() {
   const navigation = useNavigation();
+  const { showToast } = useToast();
   const { addItem } = useInventory();
 
   const [step, setStep] = useState("capture"); // capture | review | result
@@ -794,10 +784,7 @@ export function CameraScreen() {
       setAnalysis(null);
       setPreview(null);
     } catch (error) {
-      Alert.alert(
-        "Unable to select image",
-        error?.message || "Please try again.",
-      );
+      showToast(error?.message || "Unable to select image.", { type: "error" });
     }
   };
 
@@ -828,7 +815,7 @@ export function CameraScreen() {
       if (result.canceled || !result.assets?.[0]?.uri) return;
       setExtraImageUris((prev) => [...prev, result.assets[0].uri]);
     } catch (error) {
-      Alert.alert("Unable to select image", error?.message || "Please try again.");
+      showToast(error?.message || "Unable to select image.", { type: "error" });
     }
   };
 
@@ -883,10 +870,7 @@ ${info.warnings[0]}` : ""}`;
       setLabelInfo(info);
       if (info.rawText) setLabelText(info.rawText);
     } catch (error) {
-      Alert.alert(
-        "Could not read the label",
-        error?.message || "Type the dates in the box below instead.",
-      );
+      showToast(error?.message || "Could not read the label — type the dates below instead.", { type: "error" });
     } finally {
       setLabelBusy(false);
     }
@@ -894,7 +878,7 @@ ${info.warnings[0]}` : ""}`;
 
   const runAnalysis = async () => {
     if (!imageUri) {
-      Alert.alert("No image", "Capture or choose a food package photo first.");
+      showToast("Capture or choose a food package photo first.", { type: "error" });
       return;
     }
 
@@ -935,10 +919,7 @@ ${info.warnings[0]}` : ""}`;
       setExcluded({});
       setStep("result");
     } catch (error) {
-      Alert.alert(
-        "Scan failed",
-        error?.message || "Unable to analyze the image.",
-      );
+      showToast(error?.message || "Scan failed — unable to analyze the image.", { type: "error" });
     } finally {
       setBusy(false);
     }
@@ -946,11 +927,11 @@ ${info.warnings[0]}` : ""}`;
 
   const saveToShelf = async () => {
     if (!activeDraft) {
-      Alert.alert("Nothing to save", "Run an analysis before saving the item.");
+      showToast("Run an analysis before saving the item.", { type: "error" });
       return;
     }
     if (blocked) {
-      Alert.alert("Confirm the food", "The models are not sure what this is. Pick the right food first.");
+      showToast("The models are not sure what this is. Pick the right food first.", { type: "error" });
       return;
     }
 
@@ -961,25 +942,15 @@ ${info.warnings[0]}` : ""}`;
       // recomputed from it every time the shelf loads.
       await addItem(activeDraft);
 
-      Alert.alert(
-        "Saved to shelf",
-        `${activeDraft.title || "This item"} was added to your shelf.`,
-        [
-          {
-            text: "View Shelf",
-            onPress: () => navigation.navigate("Shelf"),
-          },
-          {
-            text: "Scan Another",
-            onPress: reset,
-          },
-        ],
-      );
+      showToast(`${activeDraft.title || "This item"} was added to your shelf.`, {
+        type: "success",
+        onPress: () => navigation.navigate("Shelf"),
+      });
 
       // Clear the result so the same item can't be added twice.
       reset();
     } catch (error) {
-      Alert.alert("Save failed", error?.message || "Could not save the item.");
+      showToast(error?.message || "Could not save the item.", { type: "error" });
     } finally {
       setBusy(false);
     }
@@ -988,11 +959,11 @@ ${info.warnings[0]}` : ""}`;
   // A photo of several foods: add each ticked food as its own shelf item.
   const saveObjects = async () => {
     if (blocked) {
-      Alert.alert(
-        "Check the foods",
+      showToast(
         unresolved.length
           ? "Choose what the unrecognised food is, or untick it."
           : "Tick at least one food to add.",
+        { type: "error" }
       );
       return;
     }
@@ -1002,17 +973,13 @@ ${info.warnings[0]}` : ""}`;
       for (const object of includedObjects) {
         await addItem(draftFromObject(object, { imageUri, foodId: objectChoice[object.id] }));
       }
-      Alert.alert(
-        "Saved to shelf",
+      showToast(
         `${includedObjects.length} item${includedObjects.length === 1 ? " was" : "s were"} added to your shelf.`,
-        [
-          { text: "View Shelf", onPress: () => navigation.navigate("Shelf") },
-          { text: "Scan Another", onPress: reset },
-        ],
+        { type: "success", onPress: () => navigation.navigate("Shelf") }
       );
       reset();
     } catch (error) {
-      Alert.alert("Save failed", error?.message || "Could not save the items.");
+      showToast(error?.message || "Could not save the items.", { type: "error" });
     } finally {
       setBusy(false);
     }
@@ -1279,11 +1246,7 @@ ${info.warnings[0]}` : ""}`;
               <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                 {analysis.cnn.spoilage.detectedIndicators.map((key) => (
                   <View key={key} style={indicatorPillStyle}>
-                    <Ionicons
-                      name={FLAG_ICONS[key]}
-                      size={18}
-                      color={COLORS.danger}
-                    />
+                    <FlagIcon flagKey={key} size={18} color={COLORS.danger} />
                     <Text style={indicatorTextStyle}>
                       {FLAG_LABELS[key] || key}
                     </Text>
@@ -1685,7 +1648,7 @@ ${info.warnings[0]}` : ""}`;
               style={galleryButtonStyle}
             >
               <Ionicons name="create-outline" size={20} color={BRAND} />
-              <Text style={galleryButtonTextStyle}>Add food by hand</Text>
+              <Text style={galleryButtonTextStyle}>Add Food Manually</Text>
             </AnimatedTouchableOpacity>
           </>
         )}
@@ -1787,9 +1750,9 @@ ${info.warnings[0]}` : ""}`;
                     key={loc.id}
                     onPress={() => setStorageId(loc.id)}
                     activeOpacity={0.8}
-                    style={storagePillStyle(active)}
+                    style={categoryPillStyle(active)}
                   >
-                    <Text style={storagePillTextStyle(active)}>
+                    <Text style={categoryPillTextStyle(active)}>
                       {loc.label}
                     </Text>
                   </AnimatedTouchableOpacity>
@@ -1811,7 +1774,7 @@ ${info.warnings[0]}` : ""}`;
                     marginRight: 6,
                     marginBottom: 0,
                     borderRadius: 14,
-                    backgroundColor: "#F3E4D5",
+                    backgroundColor: COLORS.card,
                   },
                 ]}
               >
@@ -1946,11 +1909,7 @@ ${info.warnings[0]}` : ""}`;
                     activeOpacity={0.8}
                     style={flagPillStyle(active)}
                   >
-                    <Ionicons
-                      name={FLAG_ICONS[key]}
-                      size={14}
-                      color={active ? "#ef4444" : "#64748b"}
-                    />
+                    <FlagIcon flagKey={key} size={14} color={active ? "#ef4444" : "#64748b"} />
                     <Text style={flagPillTextStyle(active)}>
                       {FLAG_LABELS[key]}
                     </Text>
@@ -2004,7 +1963,7 @@ ${info.warnings[0]}` : ""}`;
         onClose={() => setManualOpen(false)}
         onSave={async (draft) => {
           await addItem(draft);
-          Alert.alert("Saved to shelf", `${draft.title} was added to your shelf.`);
+          showToast(`${draft.title} was added to your shelf.`, { type: "success", onPress: () => navigation.navigate("Shelf") });
         }}
       />
     </AnimatedScreen>

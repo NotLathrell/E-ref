@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useInventory } from "../context/InventoryContext";
 import { AnimatedScreen } from "../components/animations/AnimatedScreen";
-import { Ionicons, ScrollView, Text, View } from "../components/themed";
+import { Ionicons, RefreshControl, ScrollView, Text, View } from "../components/themed";
 import { Card, Chip, EmptyState, PillButton, ScreenHeader, SectionTitle } from "../components/screen";
 import { SegmentedControl } from "../components/auth";
 import { LIGHT_COLORS as C } from "../src/theme/ThemeContext";
@@ -45,7 +45,7 @@ export function formatWhen(iso) {
 
 export function HistoryScreen() {
   const navigation = useNavigation();
-  const { historyEntries = [], archive = [], restoreItem } = useInventory();
+  const { historyEntries = [], archive = [], restoreItem, syncStatus, refresh } = useInventory();
   const [tab, setTab] = useState("activity");
   const [filter, setFilter] = useState("all");
 
@@ -63,6 +63,7 @@ export function HistoryScreen() {
       <ScrollView
         style={{ flex: 1, backgroundColor: C.background }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 52, paddingBottom: 60 }}
+        refreshControl={<RefreshControl refreshing={syncStatus === "syncing"} onRefresh={refresh} tintColor={C.primary} />}
       >
         <ScreenHeader
           title="History"

@@ -20,7 +20,7 @@ const path = require('path');
 const API_URL = process.env.EREF_API_URL || 'http://127.0.0.1:8000';
 process.env.EXPO_PUBLIC_API_URL = API_URL;
 
-const { load, render, renderTree, setContext, setThemeMode } = require('./harness');
+const { load, render, renderTree, setContext, setThemeMode, setWindowSize } = require('./harness');
 
 let failures = 0;
 
@@ -267,8 +267,8 @@ function screens() {
     history: [{ at: new Date().toISOString(), event: 'Scanned (Shelf)' }], ...extra,
   });
   const items = enrich.enrichAll([
-    item('a', 'tomato', 'fridge_top', 1, 0.95), item('b', 'milk', 'fridge_bottom', 4, 0.1),
-    item('c', 'eggplant', 'counter', 2, 0.4), item('d', 'meat', 'fridge_bottom', 1, 0.8),
+    item('a', 'tomato', 'fridge_top', 1, 0.95), item('b', 'milk', 'fridge_top', 4, 0.1),
+    item('c', 'eggplant', 'counter', 2, 0.4), item('d', 'meat', 'fridge_top', 1, 0.8),
   ]);
 
   const calls = [];
@@ -368,38 +368,46 @@ async function liveScreens() {
   reportLowContrast();
 }
 
-// ------------------------------------------------------------------- settings
-async function appearanceSetting({ context, calls }) {
-  section('Appearance setting');
-  const storage = load('services/storage.js');
-  check("new installs follow the phone's setting", storage.DEFAULT_SETTINGS.themeMode === 'system');
-  check('the setting is saved with the other preferences', (await storage.loadSettings()).themeMode === 'system');
-  await storage.saveSettings({ ...storage.DEFAULT_SETTINGS, themeMode: 'dark' });
-  check('and read back on the next launch', (await storage.loadSettings()).themeMode === 'dark');
-
-  setContext(context);
-  const Profile = load('screens/ProfileScreen.js').ProfileScreen;
-  const text = render(Profile).text;
-  check('Profile offers System, Light and Dark', ['System', 'Light', 'Dark'].every((label) => text.includes(label)));
-
-  const tree = renderTree(Profile);
-  const findPress = (node, label) => {
-    if (!node) return null;
-    if (node.props && node.props.onPress && node.kids && JSON.stringify(node.kids).includes(`"text":"${label}"`) && !JSON.stringify(node.kids).includes('Appearance')) {
-      if ((node.kids.length === 1) && textOf(node) === label) return node;
-    }
-    for (const kid of node.kids || []) {
-      const hit = findPress(kid, label);
-      if (hit) return hit;
-    }
-    return null;
-  };
-  const dark = findPress(tree, 'Dark');
-  check('the Dark choice is a control that can be pressed', Boolean(dark));
-  if (dark) {
-    dark.props.onPress();
-    check('choosing Dark saves themeMode: "dark"', calls.some(([name, patch]) => name === 'updateSettings' && patch.themeMode === 'dark'));
+function findNode(node, type, predicate) {
+  if (!node) return null;
+  if (node.type === type && (!predicate || predicate(node))) return node;
+  for (const kid of node.kids || []) {
+    const hit = findNode(kid, type, predicate);
+    if (hit) return hit;
   }
+  return null;
+}
+
+function responsiveLayout() {
+  section('Responsive layout (tablets and other screen sizes)');
+  const responsive = load('src/theme/responsive.js');
+
+  setWindowSize({ width: 400 });
+  check('a phone-width screen is not treated as a tablet', responsive.useIsTablet() === false);
+  check('a phone screen gets its full width for content', responsive.useContentWidth() === 400);
+
+  setWindowSize({ width: 1024 });
+  check('a tablet-width screen is recognised as a tablet', responsive.useIsTablet() === true);
+  check('a tablet narrows its content to 70% of the screen', responsive.useContentWidth() === 1024 * 0.7);
+
+  setWindowSize({ width: 767 });
+  check('just under the breakpoint still counts as a phone', responsive.useIsTablet() === false);
+  setWindowSize({ width: 768 });
+  check('the breakpoint itself counts as a tablet', responsive.useIsTablet() === true);
+
+  setContext({ loading: false, user: { name: 'Tester', email: 'tester@example.com' }, items: [], settings: {}, taste: {}, addItem: async () => {}, prioritized: [], soonToSpoil: [], alerts: [], syncStatus: 'idle' });
+  const HomeScreen = load('screens/HomeScreen.js').HomeScreen;
+
+  setWindowSize({ width: 400 });
+  const phoneTree = renderTree(HomeScreen);
+  const phoneStage = findNode(phoneTree, 'View', (n) => n.props.style?.flex === 1 && n.props.style?.alignItems === 'center');
+  check('on a phone, Home is not squeezed into a centred column', !phoneStage);
+
+  setWindowSize({ width: 1024 });
+  const tabletTree = renderTree(HomeScreen);
+  const tabletStage = findNode(tabletTree, 'View', (n) => n.props.style?.flex === 1 && n.props.style?.alignItems === 'center');
+  check('on a tablet, Home centres its content instead of filling the screen', Boolean(tabletStage));
+  setWindowSize({ width: 400 });
 }
 
 async function main() {
@@ -407,9 +415,9 @@ async function main() {
   colourMaths();
   resolution();
   components();
-  const state = screens();
+  responsiveLayout();
+  screens();
   await liveScreens();
-  await appearanceSetting(state);
 }
 
 main()
